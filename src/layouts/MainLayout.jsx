@@ -14,6 +14,7 @@ import {
   Settings,
   LogOut,
   User,
+  Building,
 } from "lucide-react";
 
 import { useState, useEffect } from "react";
@@ -190,6 +191,21 @@ export default function MainLayout() {
             {sidebarOpen && inspectionsOpen && (
               <div className="pl-4 mt-1 space-y-1 overflow-hidden animate-in slide-in-from-top-2 duration-200">
                 <NavLink
+                  to="/inspections/instalaciones"
+                  onClick={() => isMobile && setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 p-2.5 rounded-lg transition-colors text-sm ${
+                      isActive
+                        ? "bg-slate-800/80 text-blue-400 border-l-2 border-blue-500"
+                        : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border-l-2 border-transparent"
+                    }`
+                  }
+                >
+                  <Building size={18} />
+                  Instalaciones
+                </NavLink>
+
+                <NavLink
                   to="/inspections/extinguishers"
                   onClick={() => isMobile && setSidebarOpen(false)}
                   className={({ isActive }) =>
@@ -251,7 +267,7 @@ export default function MainLayout() {
                 <span
                   className={`font-medium whitespace-nowrap transition-all duration-300 ${sidebarOpen ? "opacity-100" : "opacity-0 w-0 md:hidden"}`}
                 >
-                  Bases de Datos
+                  Insertar Datos
                 </span>
               </div>
               {sidebarOpen && (
