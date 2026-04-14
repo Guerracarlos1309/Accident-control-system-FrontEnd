@@ -8,17 +8,19 @@ import MainLayout from "./layouts/MainLayout";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 
-// Modulos
+// Componentes Core
+import MasterEntityManager from "./components/MasterEntityManager";
+
+// Módulos Especializados
 import AccidentsManager from "./pages/Accidents/AccidentsManager";
 import ExtinguisherManager from "./pages/Inspections/ExtinguisherManager";
 import VehicleManager from "./pages/Inspections/VehicleManager";
-import Instalaciones from "./pages/Inspections/Instalaciones";
-import EntitySetupManager from "./pages/EntitySetupManager";
-
-// Setup Forms
+import FacilityManager from "./pages/Infrastructure/FacilityManager";
+import ProtectionInventory from "./pages/Protection/ProtectionInventory";
+import VehicleInventory from "./pages/Fleet/VehicleInventory";
 import EmployeeForm from "./pages/Setup/EmployeeForm";
-import VehicleBaseForm from "./pages/Setup/VehicleBaseForm";
-import ExtinguisherBaseForm from "./pages/Setup/ExtinguisherBaseForm";
+import UserManager from "./pages/Admin/UserManager";
+import ProfilePage from "./pages/Admin/ProfilePage";
 
 function App() {
   return (
@@ -27,54 +29,72 @@ function App() {
         <Route path="/login" element={<Login />} />
 
         <Route path="/" element={<MainLayout />}>
-          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route index element={<Navigate to="/login" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
-          <Route path="accidents" element={<AccidentsManager />} />
 
-          <Route
-            path="inspections/extinguishers"
-            element={<ExtinguisherManager />}
-          />
+          {/* RRHH */}
+          <Route path="hr/employees" element={
+            <MasterEntityManager 
+              title="Directorio de Empleados" 
+              entityName="Empleado" 
+              FormComponent={EmployeeForm} 
+              modalMaxWidth="max-w-4xl"
+            />
+          } />
+          <Route path="hr/catalogs" element={
+            <div className="space-y-8">
+              <MasterEntityManager title="Gestión de Cargos" entityName="Cargo" />
+              <MasterEntityManager title="Departamentos" entityName="Departamento" />
+            </div>
+          } />
+
+          {/* Infraestructura */}
+          <Route path="infra/facilities" element={<FacilityManager />} />
+          <Route path="infra/locations" element={
+            <div className="space-y-8">
+              <MasterEntityManager title="Estado / Provincias" entityName="Estado" />
+              <MasterEntityManager title="Municipios y Ciudades" entityName="Ciudad" />
+            </div>
+          } />
+
+          {/* Accidentes */}
+          <Route path="accidents/register" element={<AccidentsManager />} />
+          <Route path="accidents/catalogs" element={
+            <div className="space-y-8">
+              <MasterEntityManager title="Tipos de Incidente" entityName="Tipo" />
+              <MasterEntityManager title="Causas Raíz" entityName="Causa" />
+            </div>
+          } />
+
+          {/* Inspecciones */}
+          <Route path="inspections/new" element={
+            <div className="p-12 glass-panel rounded-3xl text-center border border-slate-800/50">
+              <h2 className="text-xl font-semibold text-slate-200 mb-2">Nueva Inspección de Campo</h2>
+              <p className="text-slate-500 max-w-md mx-auto">Seleccione el tipo de inspección desde el menú lateral para comenzar el registro digital.</p>
+            </div>
+          } />
+          <Route path="inspections/extinguishers" element={<ExtinguisherManager />} />
           <Route path="inspections/vehicles" element={<VehicleManager />} />
-          <Route path="inspections/instalaciones" element={<Instalaciones />} />
 
-          <Route
-            path="setup/employees"
-            element={
-              <EntitySetupManager
-                title="Directorio de Empleados"
-                description="Administración de la nómina y datos del trabajador"
-                entityName="Empleado"
-                FormComponent={EmployeeForm}
-              />
-            }
-          />
+          {/* Flota */}
+          <Route path="fleet/inventory" element={<VehicleInventory />} />
+          <Route path="fleet/setup" element={
+            <div className="space-y-8">
+              <MasterEntityManager title="Marcas de Vehículos" entityName="Marca" />
+              <MasterEntityManager title="Modelos y Versiones" entityName="Modelo" />
+            </div>
+          } />
 
-          <Route
-            path="setup/vehicles"
-            element={
-              <EntitySetupManager
-                title="Inventario de Vehículos"
-                description="Gestión base automotriz"
-                entityName="Vehículo"
-                FormComponent={VehicleBaseForm}
-              />
-            }
-          />
+          {/* Protección EPI */}
+          <Route path="protection/inventory" element={<ProtectionInventory />} />
+          <Route path="protection/inspections" element={<div className="p-12 glass-panel rounded-3xl text-center text-slate-500">Módulo de Inspección de Equipos de Protección Personal</div>} />
+          <Route path="protection/setup" element={<MasterEntityManager title="Categorías de Equipos" entityName="Categoría" />} />
 
-          <Route
-            path="setup/extinguishers"
-            element={
-              <EntitySetupManager
-                title="Inventario de Extintores"
-                description="Red base de equipos contraincendios"
-                entityName="Extintor"
-                FormComponent={ExtinguisherBaseForm}
-              />
-            }
-          />
+          {/* Admin */}
+          <Route path="admin/users" element={<UserManager />} />
+          <Route path="profile" element={<ProfilePage />} />
 
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Route>
       </Routes>
     </Router>

@@ -48,6 +48,31 @@ body {
   }
 
   .btn-secondary {
-    @apply bg-slate-700 hover:bg-slate-600 text-white font-medium py-2 px-4 rounded-lg transition-all active:scale-95 flex items-center justify-center gap-2;
+    @apply bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium py-2 px-4 rounded-lg border border-slate-700 transition-all active:scale-95 flex items-center justify-center gap-2;
+  }
+
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  .active-dot {
+    animation: pulse-soft 2s infinite ease-in-out;
+    background-color: theme('colors.blue.500');
+    box-shadow: 0 0 8px theme('colors.blue.500');
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-800 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-700;
   }
 }
