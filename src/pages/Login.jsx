@@ -1,13 +1,29 @@
-import { Zap, Lock, User } from "lucide-react";
+import { useState } from "react";
+import { Zap, Lock, User, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
+  const [formData, setFormData] = useState({ username: "", password: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleLogin = (e) => {
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Simulate login
-    navigate("/dashboard");
+    setIsSubmitting(true);
+    
+    const result = await login(formData.username, formData.password);
+    
+    setIsSubmitting(false);
+    
+    if (result.success) {
+      navigate("/dashboard");
+    }
   };
 
   return (
@@ -48,6 +64,8 @@ export default function Login() {
                     name="username"
                     type="text"
                     required
+                    value={formData.username}
+                    onChange={handleChange}
                     placeholder="Ingrese su usuario"
                     className="input-field"
                     style={{ paddingLeft: "2.5rem" }}
@@ -68,6 +86,8 @@ export default function Login() {
                     name="password"
                     type="password"
                     required
+                    value={formData.password}
+                    onChange={handleChange}
                     placeholder="••••••••"
                     className="input-field"
                     style={{ paddingLeft: "2.5rem" }}
@@ -77,9 +97,17 @@ export default function Login() {
 
               <button
                 type="submit"
-                className="btn-primary w-full py-2.5 mt-2 transition-all hover:scale-[1.02]"
+                disabled={isSubmitting}
+                className="btn-primary w-full py-2.5 mt-2 transition-all hover:scale-[1.02] disabled:opacity-50 disabled:scale-100"
               >
-                Ingresar al Sistema
+                {isSubmitting ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    <span>Verificando...</span>
+                  </>
+                ) : (
+                  "Ingresar al Sistema"
+                )}
               </button>
             </form>
           </div>
@@ -93,17 +121,13 @@ export default function Login() {
 
       {/* Columna Derecha - Imagen */}
       <div className="hidden lg:block lg:w-1/2 relative bg-slate-900 border-l border-slate-800/50 overflow-hidden">
-        {/* 
-          Puedes cambiar esta URL de unsplash por la ruta local de tu foto. 
-          Ej: <img src="/images/mi-foto-corpoelec.jpg" ... 
-        */}
         <img 
           src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop" 
           alt="Corporative Building" 
           className="absolute inset-0 w-full h-full object-cover object-center opacity-40 hover:opacity-50 transition-opacity duration-700"
         />
         
-        {/* Gradientes decorativos para fusionar la imagen con el fondo oscuro y dar toque moderno */}
+        {/* Gradientes decorativos */}
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/20 to-transparent pointer-events-none"></div>
         <div className="absolute inset-0 bg-blue-900/10 mix-blend-overlay pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-slate-950 to-transparent pointer-events-none"></div>

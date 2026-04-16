@@ -1,12 +1,5 @@
 import { Outlet, NavLink, useLocation } from "react-router-dom";
-import {
-  Menu,
-  Zap,
-  X,
-  ChevronDown,
-  LogOut,
-  User,
-} from "lucide-react";
+import { Menu, Zap, X, ChevronDown, LogOut, User } from "lucide-react";
 
 import { useState, useEffect } from "react";
 import { NAVIGATION_CONFIG } from "../config/navigation";
@@ -34,13 +27,13 @@ export default function MainLayout() {
   // auto-open dropdown if inside that route
   useEffect(() => {
     if (!sidebarOpen) return;
-    
-    const currentModule = NAVIGATION_CONFIG.find(m => 
-      m.items?.some(item => location.pathname.startsWith(item.path))
+
+    const currentModule = NAVIGATION_CONFIG.find((m) =>
+      m.items?.some((item) => location.pathname.startsWith(item.path)),
     );
-    
+
     if (currentModule) {
-      setOpenMenus(prev => ({ ...prev, [currentModule.id]: true }));
+      setOpenMenus((prev) => ({ ...prev, [currentModule.id]: true }));
     }
   }, [location.pathname, sidebarOpen]);
 
@@ -54,7 +47,7 @@ export default function MainLayout() {
       setSidebarOpen(true);
       setOpenMenus({ [id]: true });
     } else {
-      setOpenMenus(prev => ({ ...prev, [id]: !prev[id] }));
+      setOpenMenus((prev) => ({ ...prev, [id]: !prev[id] }));
     }
   };
 
@@ -98,8 +91,12 @@ export default function MainLayout() {
             <div
               className={`flex items-center gap-2 text-blue-500 font-bold text-lg overflow-hidden transition-all ${sidebarOpen ? "opacity-100 flex-1" : "opacity-0 w-0"}`}
             >
-              <Zap size={24} fill="currentColor" className="shrink-0 animate-pulse" />
-              <span className="tracking-tight">Gerencia ASHO</span>
+              <Zap
+                size={24}
+                fill="currentColor"
+                className="shrink-0 animate-pulse"
+              />
+              <span className="tracking-tight">Corpoelec ASHO Táchira</span>
             </div>
           )}
 
@@ -113,7 +110,12 @@ export default function MainLayout() {
 
         <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto custom-scrollbar">
           {NAVIGATION_CONFIG.map((module) => (
-            <div key={module.id} className={module.separator ? "pt-4 mt-4 border-t border-slate-800/50" : ""}>
+            <div
+              key={module.id}
+              className={
+                module.separator ? "pt-4 mt-4 border-t border-slate-800/50" : ""
+              }
+            >
               {module.isRoot ? (
                 <NavLink
                   to={module.path}
@@ -126,8 +128,12 @@ export default function MainLayout() {
                     }`
                   }
                 >
-                  <div className="shrink-0"><module.icon size={20} /></div>
-                  <span className={`font-medium whitespace-nowrap transition-all duration-300 ${sidebarOpen ? "opacity-100" : "opacity-0 w-0 md:hidden"}`}>
+                  <div className="shrink-0">
+                    <module.icon size={20} />
+                  </div>
+                  <span
+                    className={`font-medium whitespace-nowrap transition-all duration-300 ${sidebarOpen ? "opacity-100" : "opacity-0 w-0 md:hidden"}`}
+                  >
                     {module.label}
                   </span>
                 </NavLink>
@@ -136,24 +142,39 @@ export default function MainLayout() {
                   <button
                     onClick={() => toggleMenu(module.id)}
                     className={`w-full flex items-center justify-between p-3 rounded-xl transition-all overflow-hidden ${
-                      location.pathname.includes(module.items[0].path.split('/')[1]) 
-                        ? "text-blue-400 bg-blue-500/5" 
+                      location.pathname.includes(
+                        module.items[0].path.split("/")[1],
+                      )
+                        ? "text-blue-400 bg-blue-500/5"
                         : "hover:bg-slate-800 text-slate-400 hover:text-slate-200"
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="shrink-0"><module.icon size={20} /></div>
-                      <span className={`font-medium whitespace-nowrap transition-all duration-300 ${sidebarOpen ? "opacity-100" : "opacity-0 w-0 md:hidden"}`}>
+                      <div className="shrink-0">
+                        <module.icon size={20} />
+                      </div>
+                      <span
+                        className={`font-medium whitespace-nowrap transition-all duration-300 ${sidebarOpen ? "opacity-100" : "opacity-0 w-0 md:hidden"}`}
+                      >
                         {module.label}
                       </span>
                     </div>
-                    {sidebarOpen && <ChevronDown size={14} className={`transition-transform duration-300 ${openMenus[module.id] ? "rotate-180" : ""}`} />}
+                    {sidebarOpen && (
+                      <ChevronDown
+                        size={14}
+                        className={`transition-transform duration-300 ${openMenus[module.id] ? "rotate-180" : ""}`}
+                      />
+                    )}
                   </button>
-                  
+
                   {sidebarOpen && openMenus[module.id] && (
                     <div className="pl-9 space-y-1 animate-in slide-in-from-top-2 duration-300">
                       {module.items.map((item) => (
-                        <SubNavLink key={item.path} to={item.path} label={item.label} />
+                        <SubNavLink
+                          key={item.path}
+                          to={item.path}
+                          label={item.label}
+                        />
                       ))}
                     </div>
                   )}
@@ -180,7 +201,7 @@ export default function MainLayout() {
               Sistema Integral ASHO
             </h1>
           </div>
-          
+
           <div className="flex items-center gap-4 relative">
             <button
               onClick={() => setProfileOpen(!profileOpen)}
@@ -191,20 +212,31 @@ export default function MainLayout() {
 
             {profileOpen && (
               <>
-                <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setProfileOpen(false)}
+                />
                 <div className="absolute right-0 top-12 w-64 bg-slate-950 border border-slate-700/60 rounded-2xl shadow-2xl py-2 z-50 animate-in slide-in-from-top-2 fade-in duration-200 ring-1 ring-white/5">
                   <div className="px-4 py-3 border-b border-slate-800/80 mb-2">
-                    <p className="text-sm font-black text-white">Usuario Administrador</p>
-                    <p className="text-[10px] text-slate-500 truncate mt-0.5 font-mono">admin.asho@corpoelec.com</p>
+                    <p className="text-sm font-black text-white">
+                      Usuario Administrador
+                    </p>
+                    <p className="text-[10px] text-slate-500 truncate mt-0.5 font-mono">
+                      admin.asho@corpoelec.com
+                    </p>
                   </div>
-                  <NavLink 
-                    to="/profile" 
-                    onClick={() => setProfileOpen(false)} 
+                  <NavLink
+                    to="/profile"
+                    onClick={() => setProfileOpen(false)}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
                   >
                     <User size={16} /> Ver Perfil
                   </NavLink>
-                  <NavLink to="/login" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-500 hover:text-red-400 hover:bg-red-500/10 transition-colors mt-1">
+                  <NavLink
+                    to="/login"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-500 hover:text-red-400 hover:bg-red-500/10 transition-colors mt-1"
+                  >
                     <LogOut size={16} /> Cerrar Sesión
                   </NavLink>
                 </div>
@@ -217,7 +249,7 @@ export default function MainLayout() {
           {/* Background decoration */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-blue-900/10 via-transparent to-transparent pointer-events-none" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-indigo-900/5 via-transparent to-transparent pointer-events-none" />
-          
+
           <div className="relative z-10 max-w-7xl mx-auto">
             <Outlet />
           </div>

@@ -1,8 +1,17 @@
+const BASE_URL = "http://localhost:3000/api";
+
 export const helpFetch = () => {
   const customFetch = (endpoint, options) => {
     const defaultHeader = {
       accept: "application/json",
+      "Content-Type": "application/json",
     };
+
+    // Include token if available
+    const token = sessionStorage.getItem("token");
+    if (token) {
+      defaultHeader["Authorization"] = `Bearer ${token}`;
+    }
 
     const controller = new AbortController();
     options.signal = controller.signal;
@@ -12,22 +21,34 @@ export const helpFetch = () => {
       ? { ...defaultHeader, ...options.headers }
       : defaultHeader;
 
-    options.body = JSON.stringify(options.body) || false;
-    if (!options.body) delete options.body;
+    if (options.body) {
+      options.body = JSON.stringify(options.body);
+    } else {
+      delete options.body;
+    }
 
     setTimeout(() => controller.abort(), 10000); // timeout 10s
 
-    return fetch(endpoint, options)
+    const url = endpoint.startsWith("http") ? endpoint : `${BASE_URL}${endpoint}`;
+
+    return fetch(url, options)
       .then((res) =>
         res.ok
           ? res.json()
-          : Promise.reject({
-              err: true,
-              status: res.status || "00",
-              statusText: res.statusText || "Oops, ha ocurrido un error",
-            })
+          : res.json().then((json) =>
+              Promise.reject({
+                err: true,
+                status: res.status || "00",
+                statusText: json.message || res.statusText || "Oops, ha ocurrido un error",
+              })
+            )
       )
-      .catch((err) => err);
+      .catch((err) => {
+        if (err.name === "AbortError") {
+          return { err: true, statusText: "La petición ha expirado" };
+        }
+        return err;
+      });
   };
 
   const get = (url, options = {}) => customFetch(url, options);

@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { Plus, Search, Edit2, Trash2, Filter, LayoutGrid, List } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, Search, Edit2, Trash2, Filter, LayoutGrid, List, Loader2 } from "lucide-react";
 import Modal from "./Modal";
+import { helpFetch } from "../helpers/helpFetch";
+import { useNotification } from "../context/NotificationContext";
 
 /**
  * MasterEntityManager - Unified component for managing any entity (Employees, Catalogs, Vehicles, etc.)
@@ -10,22 +12,56 @@ export default function MasterEntityManager({
   title, 
   description, 
   entityName, 
+  apiPath, 
   fields = [{ name: "name", label: "Nombre", type: "text", required: true }, { name: "description", label: "Descripción", type: "text" }],
-  data = [],
-  FormComponent = null, // If provided, use this instead of auto-generating fields
-  viewType = "table", // "table" or "grid"
-  modalMaxWidth = "max-w-2xl"
+  data: initialData = [],
+  FormComponent = null,
+  viewType = "table",
+  modalMaxWidth = "max-w-2xl",
+  onSuccess
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
+  const [data, setData] = useState(initialData);
+  const [loading, setLoading] = useState(!!apiPath);
   const [currentView, setCurrentView] = useState(viewType);
+  const api = helpFetch();
+  const { showNotification } = useNotification();
+
+  const fetchData = async () => {
+    if (!apiPath) return;
+    setLoading(true);
+    try {
+      const res = await api.get(apiPath);
+      if (res && !res.err && Array.isArray(res)) {
+        setData(res);
+      } else {
+        showNotification(`No se pudo obtener la lista de ${entityName.toLowerCase()}s`, "error");
+        setData([]);
+      }
+    } catch (error) {
+      showNotification(`Error al cargar ${entityName.toLowerCase()}s`, "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [apiPath]);
 
   const filteredData = data.filter(item => 
-    Object.values(item).some(val => 
-      String(val).toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    Object.values(item).some(val => {
+      if (val === null || val === undefined) return false;
+      if (typeof val === 'object') {
+        return (val.name || val.label || val.title || "")
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase());
+      }
+      return String(val).toLowerCase().includes(searchTerm.toLowerCase());
+    })
   );
 
   const handleOpenModal = (item = null) => {
@@ -38,10 +74,41 @@ export default function MasterEntityManager({
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     if (e) e.preventDefault();
-    console.log(`Saving ${entityName}...`, formData);
-    setIsModalOpen(false);
+    if (!apiPath) return;
+
+    try {
+      const method = editingItem ? "put" : "post";
+      const id = editingItem?.id || editingItem?.plate; // Support both id and plate
+      const url = editingItem ? `${apiPath}/${id}` : apiPath;
+      
+      const res = await api[method](url, { body: formData });
+      if (res && !res.err) {
+        showNotification(`${entityName} ${editingItem ? "actualizado" : "creado"}`, "success");
+        fetchData();
+        if (onSuccess) onSuccess(); // Notify parent
+        setIsModalOpen(false);
+      } else {
+        showNotification(res.statusText || "Error en la operación", "error");
+      }
+    } catch (error) {
+      showNotification("Error de conexión", "error");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm(`¿Está seguro de eliminar este registro?`)) return;
+    try {
+      const res = await api.del(`${apiPath}/${id}`);
+      if (res && !res.err) {
+        showNotification(`${entityName} eliminado`, "success");
+        fetchData();
+        if (onSuccess) onSuccess(); // Notify parent
+      }
+    } catch (error) {
+      showNotification("Error de conexión", "error");
+    }
   };
 
   return (
@@ -85,8 +152,13 @@ export default function MasterEntityManager({
       </div>
 
       {/* Data View */}
-      {currentView === "table" ? (
-        <div className="glass-panel rounded-2xl overflow-hidden border border-slate-800/50">
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20 space-y-4">
+          <Loader2 size={40} className="text-blue-500 animate-spin" />
+          <p className="text-slate-500 font-medium tracking-wide uppercase text-[10px]">Actualizando catálogo...</p>
+        </div>
+      ) : currentView === "table" ? (
+        <div className="glass-panel rounded-2xl overflow-hidden border border-slate-800/50 text-slate-200">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -100,11 +172,21 @@ export default function MasterEntityManager({
               <tbody className="divide-y divide-slate-800/50">
                 {filteredData.length > 0 ? filteredData.map((item, idx) => (
                   <tr key={idx} className="hover:bg-slate-800/30 transition-colors group">
-                    {fields.map(f => (
-                      <td key={f.name} className="px-6 py-4 text-sm text-slate-300">
-                        {item[f.name] || <span className="text-slate-600 italic">N/A</span>}
-                      </td>
-                    ))}
+                    {fields.map(field => {
+                      const value = field.displayKey ? item[field.displayKey] : item[field.name];
+                      
+                      // If we have an object, try to extract a label
+                      // If not, or if the object is missing, fallback to the raw field value (e.g. the ID)
+                      let displayValue = (typeof value === 'object' && value !== null) 
+                        ? (value.name || value.label || value.title || JSON.stringify(value)) 
+                        : (value || item[field.name]);
+                      
+                      return (
+                        <td key={field.name} className="px-6 py-4 text-sm font-medium text-slate-300">
+                          {displayValue || <span className="text-slate-600 italic">N/A</span>}
+                        </td>
+                      );
+                    })}
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
@@ -113,7 +195,10 @@ export default function MasterEntityManager({
                         >
                           <Edit2 size={16} />
                         </button>
-                        <button className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all">
+                        <button 
+                          onClick={() => handleDelete(item.id || item.plate)}
+                          className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                        >
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -136,15 +221,22 @@ export default function MasterEntityManager({
             <div key={idx} className="glass-panel p-5 rounded-2xl border border-slate-800/50 hover:border-blue-500/30 transition-all group relative">
               <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button onClick={() => handleOpenModal(item)} className="p-2 bg-slate-800 rounded-lg text-blue-400 hover:bg-blue-500/10"><Edit2 size={14} /></button>
-                <button className="p-2 bg-slate-800 rounded-lg text-red-400 hover:bg-red-500/10"><Trash2 size={14} /></button>
+                <button 
+                  onClick={() => handleDelete(item.id || item.plate)}
+                  className="p-2 bg-slate-800 rounded-lg text-red-400 hover:bg-red-500/10"
+                ><Trash2 size={14} /></button>
               </div>
               <div className="space-y-2">
-                {fields.slice(0, 3).map(f => (
-                  <div key={f.name}>
-                    <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">{f.label}</p>
-                    <p className="text-slate-200 font-medium truncate">{item[f.name] || "—"}</p>
-                  </div>
-                ))}
+                {fields.slice(0, 3).map(f => {
+                  const val = item[f.name];
+                  const disp = (typeof val === 'object' && val !== null) ? (val.name || val.label) : val;
+                  return (
+                    <div key={f.name}>
+                      <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">{f.label}</p>
+                      <p className="text-slate-200 font-medium truncate">{disp || "—"}</p>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )) : (
@@ -176,7 +268,20 @@ export default function MasterEntityManager({
                   <label className="text-sm font-medium text-slate-400">
                     {f.label} {f.required && <span className="text-red-500">*</span>}
                   </label>
-                  {f.type === "textarea" ? (
+                  {f.type === "select" ? (
+                    <select
+                      name={f.name}
+                      value={formData[f.name] || ""}
+                      onChange={handleChange}
+                      required={f.required}
+                      className="input-field h-11 text-slate-300 [&>option]:bg-slate-800"
+                    >
+                      <option value="">Seleccione...</option>
+                      {f.options?.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  ) : f.type === "textarea" ? (
                     <textarea 
                       name={f.name}
                       value={formData[f.name] || ""}

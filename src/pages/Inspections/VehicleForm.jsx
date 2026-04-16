@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { 
   Car, 
   MapPin, 
@@ -13,77 +13,238 @@ import {
   XCircle,
   Search,
   Building2,
-  Info
+  Info,
+  Loader2,
+  User
 } from "lucide-react";
+import { helpFetch } from "../../helpers/helpFetch";
+import { useNotification } from "../../context/NotificationContext";
 
-// Mock database of registered vehicles for lookup
-const REGISTERED_VEHICLES = [
-  { plate: "A12BC3D", brand: "Toyota", model: "Hilux", type: "Pick-up", color: "Blanco", year: 2022, activeNumber: "AF-100201" },
-  { plate: "G98HI7J", brand: "Ford", model: "F-150", type: "Pick-up", color: "Gris", year: 2021, activeNumber: "AF-100405" },
-  { plate: "V55XY1Z", brand: "Chevrolet", model: "N300", type: "Van", color: "Blanco", year: 2023, activeNumber: "AF-100809" },
-];
-
-export default function VehicleForm({ onCancel }) {
+export default function VehicleForm({ onCancel, onSuccess, initialData }) {
+  const api = helpFetch();
+  const { showNotification } = useNotification();
+  
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     facilityId: "",
+    statusId: 1,
+    inspectorId: "",
     selectedPlate: "",
+    inspectionNumber: "", // New field
     findings: ""
   });
 
-  const [accessories, setAccessories] = useState([
-    { id: 1, name: "Caucho de Repuesto", hasIt: true, quantity: 1, obs: "" },
-    { id: 2, name: "Gato Hidráulico", hasIt: true, quantity: 1, obs: "" },
-    { id: 3, name: "Llave de Cruz", hasIt: true, quantity: 1, obs: "" },
-    { id: 4, name: "Triángulos de Seguridad", hasIt: true, quantity: 2, obs: "" },
-    { id: 5, name: "Extintor de Incendios", hasIt: true, quantity: 1, obs: "" },
-    { id: 6, name: "Botiquín de Primeros Auxilios", hasIt: false, quantity: 0, obs: "" },
-  ]);
+  const [accessories, setAccessories] = useState([]);
+  const [lookups, setLookups] = useState({
+    vehicles: [],
+    facilities: [],
+    inspectors: [],
+    statuses: [],
+    accessoryMetadata: []
+  });
+
+  const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [vehRes, facRes, empRes, statRes, accRes] = await Promise.all([
+          api.get("/vehicles"),
+          api.get("/facilities"),
+          api.get("/employees"),
+          api.get("/lookups/inspection-status"),
+          api.get("/lookups/vehicle-accessories")
+        ]);
+
+        setLookups({
+          vehicles: vehRes || [],
+          facilities: facRes || [],
+          inspectors: empRes || [],
+          statuses: statRes || [],
+          accessoryMetadata: accRes || []
+        });
+
+        if (initialData) {
+          // If editing, use the provided data
+          setFormData({
+            date: initialData.date,
+            facilityId: initialData.facilityId,
+            statusId: initialData.statusId,
+            inspectorId: initialData.employeePersonalNumber || "",
+            selectedPlate: initialData.vehicleInspection?.plateId || "",
+            inspectionNumber: initialData.inspectionNumber || "",
+            findings: initialData.observations || ""
+          });
+
+          // If we have accessory data in initialData, use it. 
+          // Note: we fetch full details in VehicleManager before opening this, or expect it here.
+          if (initialData.vehicleInspection?.accessoryChecks) {
+            setAccessories(initialData.vehicleInspection.accessoryChecks.map(check => ({
+              accessoryId: check.accessoryId,
+              name: check.accessory?.name || "Accesorio",
+              isFunctional: check.status,
+              observation: check.observations || ""
+            })));
+          } else if (accRes) {
+            // Fallback to metadata if no checks present
+            setAccessories(accRes.map(acc => ({
+              accessoryId: acc.id,
+              name: acc.name,
+              isFunctional: true,
+              observation: ""
+            })));
+          }
+        } else if (accRes) {
+          setAccessories(accRes.map(acc => ({
+            accessoryId: acc.id,
+            name: acc.name,
+            isFunctional: true,
+            observation: ""
+          })));
+        }
+      } catch (error) {
+        showNotification("Error al cargar datos del formulario", "error");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const selectedVehicle = useMemo(() => {
-    return REGISTERED_VEHICLES.find(v => v.plate === formData.selectedPlate);
-  }, [formData.selectedPlate]);
+    return lookups.vehicles.find(v => v.plate === formData.selectedPlate);
+  }, [formData.selectedPlate, lookups.vehicles]);
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const toggleAccessory = (id) => {
     setAccessories(prev => prev.map(acc => {
-      if (acc.id === id) {
-        const hasIt = !acc.hasIt;
-        return { ...acc, hasIt, quantity: hasIt ? 1 : 0 };
+      if (acc.accessoryId === id) {
+        return { ...acc, isFunctional: !acc.isFunctional };
       }
       return acc;
     }));
   };
 
-  const updateAccessory = (id, field, value) => {
+  const updateAccessoryValue = (id, field, value) => {
     setAccessories(prev => prev.map(acc => 
-      acc.id === id ? { ...acc, [field]: value } : acc
+      acc.accessoryId === id ? { ...acc, [field]: value } : acc
     ));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Saving inspection log for vehicle:", { 
-      plate: formData.selectedPlate,
-      inspectionData: formData,
-      accessories 
-    });
+    setIsSubmitting(true);
+
+    const payload = {
+      date: formData.date,
+      facilityId: parseInt(formData.facilityId),
+      inspectorId: formData.inspectorId, // Use as string (personalNumber)
+      statusId: parseInt(formData.statusId),
+      inspectionNumber: formData.inspectionNumber,
+      observations: formData.findings,
+      type: "Vehiculo",
+      vehicleData: {
+        plateId: formData.selectedPlate,
+        description: `Inspección física de unidad ${formData.selectedPlate}`,
+        accessoryChecks: accessories.map(({ accessoryId, isFunctional, observation }) => ({
+          accessoryId,
+          status: !!isFunctional, // Match backend model
+          observations: observation // Match backend model
+        }))
+      }
+    };
+
+    const isEditing = !!initialData?.id;
+    const url = isEditing ? `/inspections/${initialData.id}` : "/inspections";
+    const method = isEditing ? "PUT" : "POST";
+
+    try {
+      const res = await api[method.toLowerCase()](url, { body: payload });
+
+      if (res && !res.err) {
+        showNotification(
+          isEditing ? "Inspección actualizada correctamente" : "Inspección guardada correctamente", 
+          "success"
+        );
+        if (onSuccess) onSuccess();
+        onCancel();
+      } else {
+        showNotification(res.statusText || "Error al procesar inspección", "error");
+      }
+    } catch (error) {
+      showNotification("Error de conexión", "error");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 space-y-4 text-slate-500">
+        <Loader2 size={40} className="animate-spin text-blue-500" />
+        <p className="text-sm font-medium tracking-wide uppercase">Preparando bitácora digital...</p>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       
-      {/* SECCIÓN 1: SELECCIÓN DEL VEHÍCULO (LOOKUP) */}
+      {/* SECCIÓN 1: METADATA E IDENTIFICACIÓN */}
       <div className="space-y-4">
         <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
           <Search size={16} className="text-blue-500" />
-          <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Búsqueda de Unidad</h4>
+          <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">General y Unidad</h4>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Placa del Vehículo *</label>
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Fecha Inspección *</label>
+            <input 
+               type="date" name="date" required value={formData.date} onChange={handleChange}
+               className="input-field h-11"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Centro de Trabajo *</label>
+            <select 
+              name="facilityId" required value={formData.facilityId} onChange={handleChange} 
+              className="input-field h-11 text-slate-300 [&>option]:bg-slate-800"
+            >
+              <option value="">Seleccione sede...</option>
+              {lookups.facilities.map(f => (
+                <option key={f.id} value={f.id}>{f.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Inspector Responsable *</label>
+            <select name="inspectorId" required value={formData.inspectorId} onChange={handleChange} className="input-field h-11 text-slate-300 [&>option]:bg-slate-800">
+              <option value="">Seleccione inspector...</option>
+              {lookups.inspectors.map(e => (
+                <option key={e.personalNumber} value={e.personalNumber}>{e.firstName} {e.lastName} ({e.personalNumber})</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">N° de Inspección / Reporte *</label>
+            <div className="relative">
+              <Hash className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
+              <input 
+                type="text" name="inspectionNumber" required value={formData.inspectionNumber} 
+                onChange={handleChange} placeholder="Ej: AS-2024-001"
+                className="input-field h-11 pl-9 font-mono text-blue-400"
+              />
+            </div>
+          </div>
+          <div className="space-y-1 col-span-2 md:col-span-1">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Unidad a Inspeccionar *</label>
             <select 
               name="selectedPlate" 
               required 
@@ -92,111 +253,104 @@ export default function VehicleForm({ onCancel }) {
               className="input-field h-11 text-blue-400 font-bold [&>option]:bg-slate-800"
             >
               <option value="">Seleccione placa registrada...</option>
-              {REGISTERED_VEHICLES.map(v => (
-                <option key={v.plate} value={v.plate}>{v.plate} ({v.brand} {v.model})</option>
+              {lookups.vehicles.map(v => (
+                <option key={v.plate} value={v.plate}>{v.plate} ({v.model?.brand?.name} {v.model?.name})</option>
               ))}
             </select>
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Centro de Trabajo / Asignación *</label>
-            <select name="facilityId" required value={formData.facilityId} onChange={handleChange} className="input-field h-11 text-slate-300 [&>option]:bg-slate-800">
-              <option value="">Seleccione sede...</option>
-              <option value="1">Sede Regional Falcón</option>
-              <option value="2">Subestación Coro I</option>
-              <option value="3">Planta Josefa Camejo</option>
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Resultado Global *</label>
+            <select 
+              name="statusId" required value={formData.statusId} onChange={handleChange} 
+              className="input-field h-11 text-slate-300 [&>option]:bg-slate-800 font-bold"
+            >
+              {lookups.statuses.map(s => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
             </select>
           </div>
         </div>
 
-        {/* INFO CARD (SOLO SI HAY VEHÍCULO SELECCIONADO) */}
+        {/* INFO CARD */}
         {selectedVehicle ? (
           <div className="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-4 md:p-5 flex flex-col md:flex-row gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
              <div className="flex-1 space-y-3">
-                <div className="flex items-center gap-2 text-blue-400 font-black text-lg">
+                <div className="flex items-center gap-2 text-blue-400 font-black text-lg leading-none">
                   <Truck size={20} />
-                  {selectedVehicle.brand} {selectedVehicle.model}
+                  {selectedVehicle.model?.brand?.name} {selectedVehicle.model?.name}
                 </div>
-                <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+                <div className="flex gap-8">
                    <div className="flex flex-col">
-                      <span className="text-[9px] uppercase font-bold text-slate-500 tracking-tighter">Nro Activo</span>
-                      <span className="text-xs font-mono text-slate-300">{selectedVehicle.activeNumber}</span>
+                      <span className="text-[9px] uppercase font-bold text-slate-500 tracking-tighter">Año Fabricación</span>
+                      <span className="text-xs font-mono text-slate-300">{selectedVehicle.year}</span>
                    </div>
                    <div className="flex flex-col">
-                      <span className="text-[9px] uppercase font-bold text-slate-500 tracking-tighter">Año / Color</span>
-                      <span className="text-xs text-slate-300">{selectedVehicle.year} - {selectedVehicle.color}</span>
+                      <span className="text-[9px] uppercase font-bold text-slate-500 tracking-tighter">Color Unidad</span>
+                      <span className="text-xs text-slate-300">{selectedVehicle.color}</span>
                    </div>
                 </div>
              </div>
              <div className="md:w-px md:bg-slate-800" />
              <div className="flex flex-col justify-center">
-                <span className="text-[9px] uppercase font-bold text-slate-500 block mb-1">Tipo de Unidad</span>
-                <span className="inline-flex px-3 py-1 rounded-full bg-slate-800 text-slate-300 text-[10px] font-bold uppercase border border-slate-700">
-                  {selectedVehicle.type}
+                <span className="text-[9px] uppercase font-bold text-slate-500 block mb-1">Tipo de Vehículo</span>
+                <span className="inline-flex px-3 py-1 rounded-full bg-slate-800 text-slate-300 text-[10px] font-black uppercase border border-slate-700">
+                  {selectedVehicle.type?.name}
                 </span>
              </div>
           </div>
         ) : (
-          <div className="p-8 border-2 border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center text-slate-600 gap-2">
+          <div className="p-8 border-2 border-dashed border-slate-800/50 rounded-2xl flex flex-col items-center justify-center text-slate-600 gap-2">
             <Info size={24} />
-            <p className="text-sm font-medium">Seleccione una placa para ver los detalles técnicos de la unidad</p>
+            <p className="text-sm font-medium">Seleccione una placa para cargar los datos técnicos automáticamente</p>
           </div>
         )}
       </div>
 
-      {/* SECCIÓN 2: INVENTARIO DE ACCESORIOS */}
+      {/* SECCIÓN 2: AUDITORÍA DE ACCESORIOS */}
       {formData.selectedPlate && (
         <div className="space-y-6 animate-in fade-in duration-500">
           <div className="space-y-4 pt-2">
             <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
               <Package size={16} className="text-amber-500" />
-              <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Auditoría de Accesorios</h4>
+              <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Checklist de Accesorios y Seguridad</h4>
             </div>
             
             <div className="glass-panel overflow-hidden border border-slate-800/50 rounded-2xl">
               <div className="overflow-x-auto">
-                 <table className="w-full text-left border-collapse min-w-[600px]">
+                 <table className="w-full text-left border-collapse min-w-[500px]">
                     <thead>
                       <tr className="bg-slate-900/50 text-[10px] font-black uppercase text-slate-500 tracking-widest border-b border-slate-800">
-                        <th className="px-5 py-4 w-1/3">Nombre del Accesorio</th>
-                        <th className="px-5 py-4 text-center">¿Lo Posee?</th>
-                        <th className="px-5 py-4 text-center">Cant.</th>
-                        <th className="px-5 py-4">Observación</th>
+                        <th className="px-5 py-4 w-1/2">Accesorio / Equipo</th>
+                        <th className="px-5 py-4 text-center">Estado Funcional</th>
+                        <th className="px-5 py-4">Observación Específica</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/40">
                       {accessories.map((acc) => (
-                        <tr key={acc.id} className="hover:bg-slate-800/20 transition-colors">
+                        <tr key={acc.accessoryId} className="hover:bg-slate-800/10 transition-colors">
                           <td className="px-5 py-4">
                             <span className="text-xs font-bold text-slate-300">{acc.name}</span>
                           </td>
                           <td className="px-5 py-4">
-                            <div className="flex justify-center bg-slate-900/60 p-1 rounded-xl w-fit mx-auto border border-slate-800">
+                            <div className="flex justify-center bg-slate-900/40 p-1 rounded-xl w-fit mx-auto border border-slate-800">
                               <button
                                 type="button"
-                                onClick={() => toggleAccessory(acc.id)}
-                                className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${acc.hasIt ? "bg-emerald-600 text-white shadow-lg shadow-emerald-500/20" : "text-slate-500"}`}
-                              >Sí</button>
+                                onClick={() => toggleAccessory(acc.accessoryId)}
+                                className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${acc.isFunctional ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20" : "text-slate-500 hover:text-slate-300"}`}
+                              >OK</button>
                               <button
                                 type="button"
-                                onClick={() => toggleAccessory(acc.id)}
-                                className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${!acc.hasIt ? "bg-red-600 text-white shadow-lg shadow-red-500/20" : "text-slate-500"}`}
-                              >No</button>
+                                onClick={() => toggleAccessory(acc.accessoryId)}
+                                className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${!acc.isFunctional ? "bg-red-600 text-white shadow-lg shadow-red-500/20" : "text-slate-500 hover:text-slate-300"}`}
+                              >Falla</button>
                             </div>
-                          </td>
-                          <td className="px-5 py-4 text-center">
-                            <input 
-                              type="number" min="0" disabled={!acc.hasIt}
-                              value={acc.quantity} 
-                              onChange={(e) => updateAccessory(acc.id, 'quantity', parseInt(e.target.value) || 0)}
-                              className={`w-14 h-9 bg-slate-900 border border-slate-800 rounded-lg text-center text-xs font-bold ${!acc.hasIt ? "opacity-20" : "text-blue-400"}`}
-                            />
                           </td>
                           <td className="px-5 py-4">
                             <input 
-                              type="text" value={acc.obs} 
-                              onChange={(e) => updateAccessory(acc.id, 'obs', e.target.value)}
+                              type="text" value={acc.observation} 
+                              onChange={(e) => updateAccessoryValue(acc.accessoryId, 'observation', e.target.value)}
                               placeholder="..."
-                              className="w-full bg-transparent border-none text-[11px] text-slate-400 focus:ring-0 italic"
+                              className="w-full bg-transparent border-none text-xs text-slate-400 focus:ring-0 italic placeholder:opacity-30"
                             />
                           </td>
                         </tr>
@@ -210,22 +364,31 @@ export default function VehicleForm({ onCancel }) {
           <div className="space-y-2">
             <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
               <AlertCircle size={16} className="text-red-500" />
-              <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Hallazgos Finales</h4>
+              <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Hallazgos y Recomendaciones Finales</h4>
             </div>
             <textarea 
               name="findings" rows="3" value={formData.findings} 
-              onChange={handleChange} className="input-field py-4 resize-none" 
-              placeholder="Reporte detallado de anomalías..." 
+              onChange={handleChange} className="input-field py-4 resize-none text-sm" 
+              placeholder="Reporte detallado de anomalías o incidencias encontradas..." 
             />
           </div>
         </div>
       )}
 
-      {/* FOOTER PEGAJOSO (SÓLIDO) */}
+      {/* FOOTER PEGAJOSO */}
       <div className="sticky bottom-0 bg-slate-900 pt-6 pb-2 border-t border-slate-800 flex justify-end gap-3 translate-y-2">
         <button type="button" onClick={onCancel} className="px-5 py-2.5 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all">Cancelar</button>
-        <button type="submit" disabled={!formData.selectedPlate} className={`btn-primary px-8 h-11 ${!formData.selectedPlate ? "opacity-50 cursor-not-allowed" : "shadow-lg shadow-blue-600/20"}`}>
-          Guardar Informe de Inspección
+        <button 
+          type="submit" 
+          disabled={!formData.selectedPlate || isSubmitting} 
+          className={`btn-primary px-10 h-11 ${(!formData.selectedPlate || isSubmitting) ? "opacity-50 cursor-not-allowed" : "shadow-lg shadow-blue-600/20"}`}
+        >
+          {isSubmitting ? (
+            <div className="flex items-center gap-2">
+              <Loader2 size={18} className="animate-spin" />
+              <span>Guardando...</span>
+            </div>
+          ) : "Finalizar y Guardar Reporte"}
         </button>
       </div>
     </form>

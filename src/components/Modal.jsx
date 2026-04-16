@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 
 export default function Modal({ isOpen, onClose, title, children, maxWidth = "max-w-2xl" }) {
   // Manejo de la tecla Esc para cerrar
@@ -19,21 +20,21 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = "ma
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-2 sm:p-6 md:p-10">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 md:p-10 pointer-events-none">
       {/* Backdrop con blur profundo */}
       <div 
-        className="absolute inset-0 bg-slate-950/80 backdrop-blur-md transition-opacity animate-in fade-in duration-300"
+        className="absolute inset-0 bg-slate-950/80 backdrop-blur-md transition-opacity animate-in fade-in duration-300 pointer-events-auto"
         onClick={onClose}
       />
       
       {/* Contenedor Modal con Flex-Col y Max-Height definida */}
       <div className={`
         relative w-full ${maxWidth} 
-        glass-panel bg-slate-900 border border-slate-700/60 rounded-2xl shadow-2xl 
+        glass-panel bg-slate-900 border border-slate-700/60 rounded-[2rem] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.8)] 
         flex flex-col 
-        animate-in fade-in zoom-in-95 duration-200 
-        max-h-full overflow-hidden
+        animate-in fade-in zoom-in-95 duration-300 
+        max-h-[90vh] overflow-hidden pointer-events-auto
       `}>
         
         {/* Cabecera (Sólida y fija en el tope del flex) */}
@@ -48,12 +49,13 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = "ma
         </div>
         
         {/* Cuerpo del modal (Única área scrolleable) */}
-        <div className="overflow-y-auto flex-1 custom-scrollbar p-1">
-          <div className="p-4 md:p-6">
+        <div className="overflow-y-auto flex-1 custom-scrollbar">
+          <div className="p-4 md:p-8">
             {children}
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.getElementById("modal-root")
   );
 }

@@ -7,7 +7,7 @@ import {
   Zap,
   Activity,
   Database,
-  BarChart3
+  BarChart3,
 } from "lucide-react";
 
 export const NAVIGATION_CONFIG = [
@@ -16,7 +16,7 @@ export const NAVIGATION_CONFIG = [
     label: "Dashboard",
     path: "/dashboard",
     icon: Activity,
-    isRoot: true
+    isRoot: true,
   },
   {
     id: "hr",
@@ -24,8 +24,8 @@ export const NAVIGATION_CONFIG = [
     icon: Users,
     items: [
       { path: "/hr/employees", label: "Directorio Personal" },
-      { path: "/hr/catalogs", label: "Cargos y Deptos" }
-    ]
+      { path: "/hr/catalogs", label: "Cargos y Deptos" },
+    ],
   },
   {
     id: "infra",
@@ -33,8 +33,8 @@ export const NAVIGATION_CONFIG = [
     icon: Building,
     items: [
       { path: "/infra/facilities", label: "Sedes y Plantas" },
-      { path: "/infra/locations", label: "Ubicación Geog." }
-    ]
+      { path: "/infra/locations", label: "Ubicación Geog." },
+    ],
   },
   {
     id: "asho",
@@ -43,28 +43,28 @@ export const NAVIGATION_CONFIG = [
     items: [
       { path: "/accidents/register", label: "Control Accidentes" },
       { path: "/inspections/extinguishers", label: "Inspecc. Extintores" },
-      { path: "/accidents/catalogs", label: "Config. Accidentes" }
-    ]
+      { path: "/accidents/catalogs", label: "Config. Accidentes" },
+    ],
   },
   {
     id: "protection",
-    label: "Protección (EPI)",
+    label: "Equipos de Protección",
     icon: Zap,
     items: [
-      { path: "/protection/inventory", label: "Inventario EPI" },
-      { path: "/protection/inspections", label: "Inspecciones EPI" },
-      { path: "/protection/setup", label: "Categorías EPI" }
-    ]
+      { path: "/protection/inventory", label: "Inventario EPP" },
+      { path: "/protection/inspections", label: "Inspecciones EPP" },
+      { path: "/protection/setup", label: "Categorías EPP" },
+    ],
   },
   {
     id: "fleet",
-    label: "Flota Vehicular",
+    label: "Inspecciones Vehiculares",
     icon: Car,
     items: [
       { path: "/fleet/inventory", label: "Inventario Flota" },
       { path: "/inspections/vehicles", label: "Inspecc. Vehículos" },
-      { path: "/fleet/setup", label: "Modelos y Marcas" }
-    ]
+      { path: "/fleet/setup", label: "Modelos y Marcas" },
+    ],
   },
   {
     id: "inspections-gen",
@@ -72,16 +72,14 @@ export const NAVIGATION_CONFIG = [
     icon: FileSearch,
     items: [
       { path: "/inspections/new", label: "Nueva Inspección" },
-      { path: "/reports", label: "Reportes Consolidados" }
-    ]
+      { path: "/reports", label: "Reportes Consolidados" },
+    ],
   },
   {
     id: "admin",
     label: "Administración",
     icon: Database,
     separator: true,
-    items: [
-      { path: "/admin/users", label: "Usuarios y Sistema" }
-    ]
-  }
+    items: [{ path: "/admin/users", label: "Usuarios y Sistema" }],
+  },
 ];
