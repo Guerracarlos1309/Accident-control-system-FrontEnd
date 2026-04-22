@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
-import Modal from "../../components/Modal";
-import InstalacionesForm from "./InstalacionesForm";
+import Modal from "../../../../components/Modal";
+import FacilityInspectionForm from "./FacilityInspectionForm";
 
-export default function Instalaciones() {
+export default function FacilityInspectionManager() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
@@ -31,7 +31,7 @@ export default function Instalaciones() {
         title="Registrar Inspección de Instalación"
         maxWidth="max-w-3xl"
       >
-        <InstalacionesForm onCancel={() => setIsModalOpen(false)} />
+        <FacilityInspectionForm onCancel={() => setIsModalOpen(false)} />
       </Modal>
     </div>
   );

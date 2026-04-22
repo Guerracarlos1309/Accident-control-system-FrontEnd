@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
-import Modal from "../../components/Modal";
+import Modal from "../../../../components/Modal";
 import ExtinguisherForm from "./ExtinguisherForm";
 
 export default function ExtinguisherManager() {

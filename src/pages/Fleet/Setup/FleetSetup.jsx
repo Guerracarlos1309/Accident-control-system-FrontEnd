@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import MasterEntityManager from "../../components/MasterEntityManager";
-import { helpFetch } from "../../helpers/helpFetch";
+import MasterEntityManager from "../../../components/MasterEntityManager";
+import { helpFetch } from "../../../helpers/helpFetch";
 import { Loader2 } from "lucide-react";
 
 export default function FleetSetup() {

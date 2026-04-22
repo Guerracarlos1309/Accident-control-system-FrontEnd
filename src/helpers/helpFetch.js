@@ -29,7 +29,7 @@ export const helpFetch = () => {
 
     setTimeout(() => controller.abort(), 10000); // timeout 10s
 
-    const url = endpoint.startsWith("http") ? endpoint : `${BASE_URL}${endpoint}`;
+    const url = endpoint.startsWith("http") ? endpoint : `${BASE_URL}/${endpoint.replace(/^\//, "")}`;
 
     return fetch(url, options)
       .then((res) =>

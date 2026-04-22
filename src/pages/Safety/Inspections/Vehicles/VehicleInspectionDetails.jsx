@@ -14,7 +14,7 @@ import {
   Building2,
   Info
 } from "lucide-react";
-import { helpFetch } from "../../helpers/helpFetch";
+import { helpFetch } from "../../../../helpers/helpFetch";
 
 export default function VehicleInspectionDetails({ inspectionId }) {
   const [inspection, setInspection] = useState(null);

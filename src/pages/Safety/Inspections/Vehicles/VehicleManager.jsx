@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { Plus, Loader2, Calendar, User, MapPin, ClipboardCheck, ArrowUpRight, Eye, Pencil } from "lucide-react";
-import Modal from "../../components/Modal";
+import Modal from "../../../../components/Modal";
 import VehicleForm from "./VehicleForm";
 import VehicleInspectionDetails from "./VehicleInspectionDetails";
-import { helpFetch } from "../../helpers/helpFetch";
-import { useNotification } from "../../context/NotificationContext";
+import { helpFetch } from "../../../../helpers/helpFetch";
+import { useNotification } from "../../../../context/NotificationContext";
 
 export default function VehicleManager() {
   const [isModalOpen, setIsModalOpen] = useState(false);

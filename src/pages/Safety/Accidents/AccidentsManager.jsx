@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
-import Modal from "../../components/Modal";
+import Modal from "../../../components/Modal";
 import AccidentForm from "./AccidentForm";
 
 export default function AccidentsManager() {

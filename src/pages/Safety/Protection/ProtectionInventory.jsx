@@ -10,7 +10,7 @@ import {
   Package,
   Building2,
 } from "lucide-react";
-import Modal from "../../components/Modal";
+import Modal from "../../../components/Modal";
 import EquipmentForm from "./EquipmentForm";
 
 const MOCK_EQUIPMENT = [

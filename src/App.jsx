@@ -18,16 +18,19 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import MasterEntityManager from "./components/MasterEntityManager";
 
 // Módulos Especializados
-import AccidentsManager from "./pages/Accidents/AccidentsManager";
-import ExtinguisherManager from "./pages/Inspections/ExtinguisherManager";
-import VehicleManager from "./pages/Inspections/VehicleManager";
+import AccidentsManager from "./pages/Safety/Accidents/AccidentsManager";
+import ExtinguisherManager from "./pages/Safety/Inspections/Extinguishers/ExtinguisherManager";
+import VehicleManager from "./pages/Safety/Inspections/Vehicles/VehicleManager";
 import FacilityManager from "./pages/Infrastructure/FacilityManager";
-import ProtectionInventory from "./pages/Protection/ProtectionInventory";
-import VehicleInventory from "./pages/Fleet/VehicleInventory";
-import EmployeeForm from "./pages/Setup/EmployeeForm";
-import UserManager from "./pages/Admin/UserManager";
-import ProfilePage from "./pages/Admin/ProfilePage";
-import FleetSetup from "./pages/Fleet/FleetSetup";
+import ProtectionInventory from "./pages/Safety/Protection/ProtectionInventory.jsx";
+import VehicleInventory from "./pages/Fleet/Inventory/VehicleInventory";
+import EmployeeForm from "./pages/HR/Employees/EmployeeForm";
+import EmployeeDetails from "./pages/HR/Employees/EmployeeDetails";
+import UserManager from "./pages/Admin/Users/UserManager";
+import ProfilePage from "./pages/Admin/Profile/ProfilePage";
+import FleetSetup from "./pages/Fleet/Setup/FleetSetup";
+import Help from "./pages/Help";
+import ReportCenter from "./pages/Reports";
 
 function App() {
   return (
@@ -49,14 +52,51 @@ function App() {
                     <MasterEntityManager 
                       title="Directorio de Empleados" 
                       entityName="Empleado" 
+                      apiPath="/employees"
+                      idField="personalNumber"
+                      fields={[
+                        { name: "personalNumber", label: "N° Personal" },
+                        { name: "idCard", label: "Cédula" },
+                        { name: "firstName", label: "Nombre" },
+                        { name: "lastName", label: "Apellido" },
+                        { name: "jobTitle", label: "Cargo", displayKey: "jobTitle" }
+                      ]}
                       FormComponent={EmployeeForm} 
+                      ViewComponent={EmployeeDetails}
                       modalMaxWidth="max-w-4xl"
+                    />
+                  } />
+                  <Route path="hr/inactive" element={
+                    <MasterEntityManager 
+                      title="Personal Inactivo / Histórico" 
+                      description="Historial del personal desactivado. Aquí puede reactivar empleados o eliminarlos permanentemente."
+                      entityName="Empleado" 
+                      apiPath="/employees?status=0" 
+                      idField="personalNumber"
+                      deleteMode="hard"
+                      allowReactivate={true}
+                      FormComponent={EmployeeForm}
+                      ViewComponent={EmployeeDetails}
+                      fields={[
+                        { name: "personalNumber", label: "N° Personal" },
+                        { name: "firstName", label: "Nombre" },
+                        { name: "lastName", label: "Apellido" },
+                        { name: "idCard", label: "Cédula" }
+                      ]}
                     />
                   } />
                   <Route path="hr/catalogs" element={
                     <div className="space-y-8">
-                      <MasterEntityManager title="Gestión de Cargos" entityName="Cargo" />
-                      <MasterEntityManager title="Departamentos" entityName="Departamento" />
+                      <MasterEntityManager 
+                        title="Gestión de Cargos" 
+                        entityName="Cargo" 
+                        apiPath="/lookups/occupations"
+                      />
+                      <MasterEntityManager 
+                        title="Departamentos" 
+                        entityName="Departamento" 
+                        apiPath="/lookups/departments"
+                      />
                     </div>
                   } />
 
@@ -97,9 +137,11 @@ function App() {
                   <Route path="protection/inspections" element={<div className="p-12 glass-panel rounded-3xl text-center text-slate-500">Módulo de Inspección de Equipos de Protección Personal</div>} />
                   <Route path="protection/setup" element={<MasterEntityManager title="Categorías de Equipos" entityName="Categoría" />} />
 
-                  {/* Admin */}
+                  {/* Admin, Reportes y Ayuda */}
                   <Route path="admin/users" element={<UserManager />} />
                   <Route path="profile" element={<ProfilePage />} />
+                  <Route path="reports" element={<ReportCenter />} />
+                  <Route path="ayuda" element={<Help />} />
                 </Route>
               </Route>
 

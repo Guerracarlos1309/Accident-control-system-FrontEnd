@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function InstalacionesForm({ onCancel }) {
+export default function FacilityInspectionForm({ onCancel }) {
   const [formData, setFormData] = useState({
     date: "",
     facilityName: "",

@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { Plus, Search, Car, Settings, Palette, Calendar as CalendarIcon, Trash2, Loader2, RefreshCw } from "lucide-react";
-import Modal from "../../components/Modal";
-import ConfirmModal from "../../components/ConfirmModal";
+import Modal from "../../../components/Modal";
+import ConfirmModal from "../../../components/ConfirmModal";
 import VehicleRegistryForm from "./VehicleRegistryForm";
-import { helpFetch } from "../../helpers/helpFetch";
-import { useNotification } from "../../context/NotificationContext";
+import { helpFetch } from "../../../helpers/helpFetch";
+import { useNotification } from "../../../context/NotificationContext";
 
 export default function VehicleInventory() {
   const api = helpFetch();

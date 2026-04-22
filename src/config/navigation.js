@@ -24,6 +24,7 @@ export const NAVIGATION_CONFIG = [
     icon: Users,
     items: [
       { path: "/hr/employees", label: "Directorio Personal" },
+      { path: "/hr/inactive", label: "Personal Inactivo" },
       { path: "/hr/catalogs", label: "Cargos y Deptos" },
     ],
   },

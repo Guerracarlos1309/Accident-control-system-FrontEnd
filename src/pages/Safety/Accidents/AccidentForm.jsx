@@ -15,7 +15,7 @@ import {
   Trash2,
   AlertCircle,
 } from "lucide-react";
-import GeographicCascade from "../../components/GeographicCascade";
+import GeographicCascade from "../../../components/GeographicCascade";
 
 export default function AccidentForm({ onCancel }) {
   const [activeTab, setActiveTab] = useState("general");

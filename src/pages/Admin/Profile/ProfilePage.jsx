@@ -9,8 +9,8 @@ import {
   UserCircle,
   Loader2
 } from "lucide-react";
-import { useAuth } from "../../context/AuthContext";
-import { useNotification } from "../../context/NotificationContext";
+import { useAuth } from "../../../context/AuthContext";
+import { useNotification } from "../../../context/NotificationContext";
 
 export default function ProfilePage() {
   const { user, updateUser } = useAuth();

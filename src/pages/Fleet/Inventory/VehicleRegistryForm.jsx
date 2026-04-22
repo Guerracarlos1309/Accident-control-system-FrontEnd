@@ -9,8 +9,8 @@ import {
   Shield,
   Loader2
 } from "lucide-react";
-import { helpFetch } from "../../helpers/helpFetch";
-import { useNotification } from "../../context/NotificationContext";
+import { helpFetch } from "../../../helpers/helpFetch";
+import { useNotification } from "../../../context/NotificationContext";
 
 export default function VehicleRegistryForm({ onCancel, initialData = null, onSuccess }) {
   const api = helpFetch();
