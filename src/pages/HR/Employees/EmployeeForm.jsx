@@ -8,7 +8,6 @@ import {
   Calendar,
   PhoneCall,
   Clock,
-  Loader2,
 } from "lucide-react";
 import GeographicCascade from "../../../components/GeographicCascade";
 import { helpFetch } from "../../../helpers/helpFetch";
@@ -296,11 +295,19 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                 disabled={!!data}
                 value={formData.personalNumber}
                 onChange={handleChange}
-                className={`input-field h-12 ${data ? "bg-bg-main/20 cursor-not-allowed opacity-70" : ""}`}
-                placeholder="Ej: 154823"
+                className={`input-field h-12 text-sm font-semibold ${data ? "bg-bg-main/20 cursor-not-allowed opacity-70" : ""}`}
+                placeholder="Numero de personal"
               />
-              {data && <p className="text-[9px] text-corpoelec-blue font-black uppercase mt-1 ml-1">El número de personal no se puede modificar una vez registrado</p>}
-              {!data && <p className="text-[9px] text-txt-muted font-bold tracking-tight mt-1 ml-1 self-end uppercase">Solo dígitos permitidos</p>}
+              {data && (
+                <p className="text-[9px] text-corpoelec-blue font-black uppercase mt-1 ml-1">
+                  El número de personal no se puede modificar una vez registrado
+                </p>
+              )}
+              {!data && (
+                <p className="text-[9px] text-txt-muted font-bold tracking-tight mt-1 ml-1 self-end uppercase">
+                  Solo dígitos permitidos
+                </p>
+              )}
             </div>
 
             <div className="space-y-1">
@@ -345,7 +352,6 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
 
             <div className="col-span-1 md:col-span-2 p-6 rounded-3xl border border-border-main/50 mt-4 bg-bg-main/5">
               <div className="flex items-center gap-2 mb-6">
-                <MapPin size={16} className="text-corpoelec-blue" />
                 <h4 className="text-[11px] font-black text-txt-main uppercase tracking-[0.2em]">
                   Lugar de Nacimiento
                 </h4>
@@ -396,7 +402,6 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
 
             <div className="col-span-1 md:col-span-2 p-6 rounded-3xl border border-border-main/50 mt-2 bg-bg-main/5">
               <div className="flex items-center gap-2 mb-6">
-                <MapPin size={16} className="text-corpoelec-blue" />
                 <h4 className="text-[11px] font-black text-txt-main uppercase tracking-[0.2em]">
                   Dirección de Habitación
                 </h4>
@@ -584,7 +589,7 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
 
             <div className="space-y-1 col-span-1 md:col-span-2">
               <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1 flex items-center gap-2">
-                <PhoneCall size={14} /> Teléfono Extensión / Oficina
+                Teléfono Extensión / Oficina
               </label>
               <input
                 type="text"
