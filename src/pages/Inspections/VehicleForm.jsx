@@ -183,9 +183,9 @@ export default function VehicleForm({ onCancel, onSuccess, initialData }) {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 space-y-4 text-slate-500">
-        <Loader2 size={40} className="animate-spin text-blue-500" />
-        <p className="text-sm font-medium tracking-wide uppercase">Preparando bitácora digital...</p>
+      <div className="flex flex-col items-center justify-center py-20 space-y-4 text-txt-muted">
+        <Loader2 size={40} className="animate-spin text-corpoelec-blue" />
+        <p className="text-[10px] font-black tracking-[0.2em] uppercase">Sincronizando bitácora digital...</p>
       </div>
     );
   }
@@ -195,24 +195,24 @@ export default function VehicleForm({ onCancel, onSuccess, initialData }) {
       
       {/* SECCIÓN 1: METADATA E IDENTIFICACIÓN */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
-          <Search size={16} className="text-blue-500" />
-          <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">General y Unidad</h4>
+        <div className="flex items-center gap-2 pb-2 border-b border-border-main">
+          <Search size={16} className="text-corpoelec-blue" />
+          <h4 className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em]">General y Unidad</h4>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Fecha Inspección *</label>
+            <label className="text-[10px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">Fecha Inspección *</label>
             <input 
                type="date" name="date" required value={formData.date} onChange={handleChange}
-               className="input-field h-11"
+               className="input-field h-12"
             />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Centro de Trabajo *</label>
+            <label className="text-[10px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">Centro de Trabajo *</label>
             <select 
               name="facilityId" required value={formData.facilityId} onChange={handleChange} 
-              className="input-field h-11 text-slate-300 [&>option]:bg-slate-800"
+              className="input-field h-12"
             >
               <option value="">Seleccione sede...</option>
               {lookups.facilities.map(f => (
@@ -221,8 +221,8 @@ export default function VehicleForm({ onCancel, onSuccess, initialData }) {
             </select>
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Inspector Responsable *</label>
-            <select name="inspectorId" required value={formData.inspectorId} onChange={handleChange} className="input-field h-11 text-slate-300 [&>option]:bg-slate-800">
+            <label className="text-[10px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">Inspector Responsable *</label>
+            <select name="inspectorId" required value={formData.inspectorId} onChange={handleChange} className="input-field h-12">
               <option value="">Seleccione inspector...</option>
               {lookups.inspectors.map(e => (
                 <option key={e.personalNumber} value={e.personalNumber}>{e.firstName} {e.lastName} ({e.personalNumber})</option>
@@ -233,24 +233,24 @@ export default function VehicleForm({ onCancel, onSuccess, initialData }) {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">N° de Inspección / Reporte *</label>
+            <label className="text-[10px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">N° de Inspección / Reporte *</label>
             <div className="relative">
-              <Hash className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
+              <Hash className="absolute left-3 top-1/2 -translate-y-1/2 text-txt-muted" size={14} />
               <input 
                 type="text" name="inspectionNumber" required value={formData.inspectionNumber} 
                 onChange={handleChange} placeholder="Ej: AS-2024-001"
-                className="input-field h-11 pl-9 font-mono text-blue-400"
+                className="input-field h-12 pl-9 font-bold text-corpoelec-blue"
               />
             </div>
           </div>
           <div className="space-y-1 col-span-2 md:col-span-1">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Unidad a Inspeccionar *</label>
+            <label className="text-[10px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">Unidad a Inspeccionar *</label>
             <select 
               name="selectedPlate" 
               required 
               value={formData.selectedPlate} 
               onChange={handleChange} 
-              className="input-field h-11 text-blue-400 font-bold [&>option]:bg-slate-800"
+              className="input-field h-12 text-corpoelec-blue font-black"
             >
               <option value="">Seleccione placa registrada...</option>
               {lookups.vehicles.map(v => (
@@ -259,10 +259,10 @@ export default function VehicleForm({ onCancel, onSuccess, initialData }) {
             </select>
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Resultado Global *</label>
+            <label className="text-[10px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">Resultado Global *</label>
             <select 
               name="statusId" required value={formData.statusId} onChange={handleChange} 
-              className="input-field h-11 text-slate-300 [&>option]:bg-slate-800 font-bold"
+              className="input-field h-12 font-black"
             >
               {lookups.statuses.map(s => (
                 <option key={s.id} value={s.id}>{s.name}</option>
@@ -273,35 +273,35 @@ export default function VehicleForm({ onCancel, onSuccess, initialData }) {
 
         {/* INFO CARD */}
         {selectedVehicle ? (
-          <div className="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-4 md:p-5 flex flex-col md:flex-row gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="bg-corpoelec-blue/5 border border-corpoelec-blue/20 rounded-2xl p-4 md:p-6 flex flex-col md:flex-row gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
              <div className="flex-1 space-y-3">
-                <div className="flex items-center gap-2 text-blue-400 font-black text-lg leading-none">
+                <div className="flex items-center gap-2 text-corpoelec-blue font-black text-lg leading-none uppercase tracking-tighter">
                   <Truck size={20} />
                   {selectedVehicle.model?.brand?.name} {selectedVehicle.model?.name}
                 </div>
                 <div className="flex gap-8">
                    <div className="flex flex-col">
-                      <span className="text-[9px] uppercase font-bold text-slate-500 tracking-tighter">Año Fabricación</span>
-                      <span className="text-xs font-mono text-slate-300">{selectedVehicle.year}</span>
+                      <span className="text-[9px] uppercase font-black text-txt-muted tracking-[0.1em]">Año Fabricación</span>
+                      <span className="text-xs font-black text-txt-main">{selectedVehicle.year}</span>
                    </div>
                    <div className="flex flex-col">
-                      <span className="text-[9px] uppercase font-bold text-slate-500 tracking-tighter">Color Unidad</span>
-                      <span className="text-xs text-slate-300">{selectedVehicle.color}</span>
+                      <span className="text-[9px] uppercase font-black text-txt-muted tracking-[0.1em]">Color Unidad</span>
+                      <span className="text-xs font-black text-txt-main">{selectedVehicle.color}</span>
                    </div>
                 </div>
              </div>
-             <div className="md:w-px md:bg-slate-800" />
+             <div className="md:w-px md:bg-border-main" />
              <div className="flex flex-col justify-center">
-                <span className="text-[9px] uppercase font-bold text-slate-500 block mb-1">Tipo de Vehículo</span>
-                <span className="inline-flex px-3 py-1 rounded-full bg-slate-800 text-slate-300 text-[10px] font-black uppercase border border-slate-700">
+                <span className="text-[9px] uppercase font-black text-txt-muted block mb-1">Tipo de Vehículo</span>
+                <span className="inline-flex px-3 py-1 rounded-full bg-bg-main/10 text-txt-main text-[10px] font-black uppercase border border-border-main">
                   {selectedVehicle.type?.name}
                 </span>
              </div>
           </div>
         ) : (
-          <div className="p-8 border-2 border-dashed border-slate-800/50 rounded-2xl flex flex-col items-center justify-center text-slate-600 gap-2">
+          <div className="p-8 border-2 border-dashed border-border-main rounded-3xl flex flex-col items-center justify-center text-txt-muted/50 gap-2 bg-bg-main/5">
             <Info size={24} />
-            <p className="text-sm font-medium">Seleccione una placa para cargar los datos técnicos automáticamente</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-center">Seleccione una placa para cargar ficha técnica</p>
           </div>
         )}
       </div>
@@ -310,47 +310,47 @@ export default function VehicleForm({ onCancel, onSuccess, initialData }) {
       {formData.selectedPlate && (
         <div className="space-y-6 animate-in fade-in duration-500">
           <div className="space-y-4 pt-2">
-            <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
-              <Package size={16} className="text-amber-500" />
-              <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Checklist de Accesorios y Seguridad</h4>
+            <div className="flex items-center gap-2 pb-2 border-b border-border-main">
+              <Package size={16} className="text-corpoelec-blue" />
+              <h4 className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em]">Checklist de Seguridad</h4>
             </div>
             
-            <div className="glass-panel overflow-hidden border border-slate-800/50 rounded-2xl">
+            <div className="overflow-hidden border border-border-main rounded-3xl bg-bg-main/5">
               <div className="overflow-x-auto">
                  <table className="w-full text-left border-collapse min-w-[500px]">
                     <thead>
-                      <tr className="bg-slate-900/50 text-[10px] font-black uppercase text-slate-500 tracking-widest border-b border-slate-800">
-                        <th className="px-5 py-4 w-1/2">Accesorio / Equipo</th>
-                        <th className="px-5 py-4 text-center">Estado Funcional</th>
-                        <th className="px-5 py-4">Observación Específica</th>
+                      <tr className="bg-bg-main/10 text-[10px] font-black uppercase text-txt-muted tracking-[0.1em] border-b border-border-main">
+                        <th className="px-6 py-4 w-1/2">Accesorio / Equipo</th>
+                        <th className="px-6 py-4 text-center">Estado</th>
+                        <th className="px-6 py-4">Observación</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/40">
+                    <tbody className="divide-y divide-border-main">
                       {accessories.map((acc) => (
-                        <tr key={acc.accessoryId} className="hover:bg-slate-800/10 transition-colors">
-                          <td className="px-5 py-4">
-                            <span className="text-xs font-bold text-slate-300">{acc.name}</span>
+                        <tr key={acc.accessoryId} className="hover:bg-bg-main/5 transition-colors">
+                          <td className="px-6 py-4">
+                            <span className="text-xs font-black text-txt-main">{acc.name}</span>
                           </td>
-                          <td className="px-5 py-4">
-                            <div className="flex justify-center bg-slate-900/40 p-1 rounded-xl w-fit mx-auto border border-slate-800">
+                          <td className="px-6 py-4">
+                            <div className="flex justify-center bg-bg-surface p-1 rounded-xl w-fit mx-auto border border-border-main">
                               <button
                                 type="button"
                                 onClick={() => toggleAccessory(acc.accessoryId)}
-                                className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${acc.isFunctional ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20" : "text-slate-500 hover:text-slate-300"}`}
+                                className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${acc.isFunctional ? "bg-corpoelec-blue text-white shadow-lg shadow-corpoelec-blue/20" : "text-txt-muted hover:text-txt-main"}`}
                               >OK</button>
                               <button
                                 type="button"
                                 onClick={() => toggleAccessory(acc.accessoryId)}
-                                className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${!acc.isFunctional ? "bg-red-600 text-white shadow-lg shadow-red-500/20" : "text-slate-500 hover:text-slate-300"}`}
+                                className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${!acc.isFunctional ? "bg-corpoelec-red text-white shadow-lg shadow-corpoelec-red/20" : "text-txt-muted hover:text-txt-main"}`}
                               >Falla</button>
                             </div>
                           </td>
-                          <td className="px-5 py-4">
+                          <td className="px-6 py-4">
                             <input 
                               type="text" value={acc.observation} 
                               onChange={(e) => updateAccessoryValue(acc.accessoryId, 'observation', e.target.value)}
                               placeholder="..."
-                              className="w-full bg-transparent border-none text-xs text-slate-400 focus:ring-0 italic placeholder:opacity-30"
+                              className="w-full bg-transparent border-none text-xs text-txt-muted focus:ring-0 italic placeholder:opacity-30"
                             />
                           </td>
                         </tr>
@@ -362,33 +362,33 @@ export default function VehicleForm({ onCancel, onSuccess, initialData }) {
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
-              <AlertCircle size={16} className="text-red-500" />
-              <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Hallazgos y Recomendaciones Finales</h4>
+            <div className="flex items-center gap-2 pb-2 border-b border-border-main">
+              <AlertCircle size={16} className="text-corpoelec-red" />
+              <h4 className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em]">Hallazgos y Observaciones</h4>
             </div>
             <textarea 
               name="findings" rows="3" value={formData.findings} 
-              onChange={handleChange} className="input-field py-4 resize-none text-sm" 
-              placeholder="Reporte detallado de anomalías o incidencias encontradas..." 
+              onChange={handleChange} className="input-field py-4 resize-none min-h-[100px]" 
+              placeholder="Reporte detallado de anomalías e incidencias..." 
             />
           </div>
         </div>
       )}
 
       {/* FOOTER PEGAJOSO */}
-      <div className="sticky bottom-0 bg-slate-900 pt-6 pb-2 border-t border-slate-800 flex justify-end gap-3 translate-y-2">
-        <button type="button" onClick={onCancel} className="px-5 py-2.5 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all">Cancelar</button>
+      <div className="sticky bottom-0 bg-bg-surface pt-6 pb-2 border-t border-border-main flex justify-end gap-3 translate-y-2">
+        <button type="button" onClick={onCancel} className="px-6 py-3 text-xs font-black uppercase tracking-widest text-txt-muted hover:text-txt-main transition-colors">Cancelar</button>
         <button 
           type="submit" 
           disabled={!formData.selectedPlate || isSubmitting} 
-          className={`btn-primary px-10 h-11 ${(!formData.selectedPlate || isSubmitting) ? "opacity-50 cursor-not-allowed" : "shadow-lg shadow-blue-600/20"}`}
+          className="btn-primary"
         >
           {isSubmitting ? (
             <div className="flex items-center gap-2">
-              <Loader2 size={18} className="animate-spin" />
+              <Loader2 size={16} className="animate-spin" />
               <span>Guardando...</span>
             </div>
-          ) : "Finalizar y Guardar Reporte"}
+          ) : "Finalizar Reporte"}
         </button>
       </div>
     </form>

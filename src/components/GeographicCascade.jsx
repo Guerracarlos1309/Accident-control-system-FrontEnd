@@ -53,13 +53,13 @@ export default function GeographicCascade({
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
       {/* Estado */}
       <div className="space-y-1">
-        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Estado {required && "*"}</label>
+        <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">Estado {required && "*"}</label>
         <select 
           name="stateId" 
           value={internalLocation.stateId} 
           onChange={handleSelectChange}
           required={required}
-          className="input-field h-10 text-sm [&>option]:bg-slate-800"
+          className="input-field h-12 text-sm font-bold"
         >
           <option value="">Seleccione...</option>
           {VENEZUELA_DATA.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -68,7 +68,7 @@ export default function GeographicCascade({
 
       {/* Ciudad */}
       <div className="space-y-1">
-        <label className={`text-[11px] font-bold uppercase tracking-wider ${!internalLocation.stateId ? 'text-slate-700' : 'text-slate-500'}`}>
+        <label className={`text-[11px] font-black uppercase tracking-[0.15em] ml-1 ${!internalLocation.stateId ? 'text-txt-muted/30' : 'text-txt-muted'}`}>
           Ciudad {required && "*"}
         </label>
         <select 
@@ -77,7 +77,7 @@ export default function GeographicCascade({
           value={internalLocation.cityId} 
           onChange={handleSelectChange}
           required={required}
-          className={`input-field h-10 text-sm [&>option]:bg-slate-800 ${!internalLocation.stateId ? 'opacity-40 cursor-not-allowed grayscale' : ''}`}
+          className={`input-field h-12 text-sm font-bold ${!internalLocation.stateId ? 'opacity-40 cursor-not-allowed grayscale' : ''}`}
         >
           <option value="">Seleccione...</option>
           {currentCities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -86,7 +86,7 @@ export default function GeographicCascade({
 
       {/* Parroquia / Localidad */}
       <div className="space-y-1">
-        <label className={`text-[11px] font-bold uppercase tracking-wider ${!internalLocation.cityId ? 'text-slate-700' : 'text-slate-500'}`}>
+        <label className={`text-[11px] font-black uppercase tracking-[0.15em] ml-1 ${!internalLocation.cityId ? 'text-txt-muted/30' : 'text-txt-muted'}`}>
           Parroquia {required && "*"}
         </label>
         <select 
@@ -95,7 +95,7 @@ export default function GeographicCascade({
           value={internalLocation.parish} 
           onChange={handleSelectChange}
           required={required}
-          className={`input-field h-10 text-sm [&>option]:bg-slate-800 ${!internalLocation.cityId ? 'opacity-40 cursor-not-allowed grayscale' : ''}`}
+          className={`input-field h-12 text-sm font-bold ${!internalLocation.cityId ? 'opacity-40 cursor-not-allowed grayscale' : ''}`}
         >
           <option value="">Seleccione...</option>
           {currentParishes.map(p => <option key={p} value={p}>{p}</option>)}

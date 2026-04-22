@@ -1,10 +1,13 @@
 import { Outlet, NavLink, useLocation } from "react-router-dom";
-import { Menu, Zap, X, ChevronDown, LogOut, User } from "lucide-react";
+import { Menu, Zap, X, ChevronDown, LogOut, User, Sun, Moon } from "lucide-react";
+import logoCorpoelec from "../assets/logoCorpoelecSinFondo.png";
+import { useTheme } from "../context/ThemeContext";
 
 import { useState, useEffect } from "react";
 import { NAVIGATION_CONFIG } from "../config/navigation";
 
 export default function MainLayout() {
+  const { theme, toggleTheme } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [openMenus, setOpenMenus] = useState({});
@@ -58,8 +61,8 @@ export default function MainLayout() {
       className={({ isActive }) =>
         `flex items-center gap-3 p-2.5 rounded-lg transition-all text-sm ${
           isActive
-            ? "text-blue-400 font-semibold bg-blue-500/5 shadow-sm"
-            : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
+            ? "text-white font-semibold bg-white/10 shadow-sm"
+            : "text-blue-100/70 hover:text-white hover:bg-white/5"
         }`
       }
     >
@@ -69,11 +72,11 @@ export default function MainLayout() {
   );
 
   return (
-    <div className="min-h-screen flex bg-slate-950 text-slate-200 selection:bg-blue-500/30">
+    <div className="min-h-screen flex bg-bg-main text-txt-main selection:bg-corpoelec-blue/30">
       {/* Mobile Overlay */}
       {isMobile && sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 animate-in fade-in duration-300"
+          className="fixed inset-0 bg-black/60 z-40 transition-opacity duration-200"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -82,30 +85,24 @@ export default function MainLayout() {
       <aside
         className={`
         fixed md:static inset-y-0 left-0 z-50
-        bg-slate-900 border-r border-slate-800 transition-all duration-300 flex flex-col
+        bg-sidebar border-r border-white/10 transition-all duration-300 flex flex-col
         ${sidebarOpen ? "w-64 translate-x-0" : "-translate-x-full md:translate-x-0 md:w-20"}
       `}
       >
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between min-h-[64px]">
+        <div className="border-b border-white/10 transition-all duration-300 overflow-hidden">
           {(sidebarOpen || !isMobile) && (
             <div
-              className={`flex items-center gap-2 text-blue-500 font-bold text-lg overflow-hidden transition-all ${sidebarOpen ? "opacity-100 flex-1" : "opacity-0 w-0"}`}
+              className={`transition-all duration-300 h-24 flex items-center justify-center ${
+                sidebarOpen ? "opacity-100" : "opacity-0 w-0 h-0"
+              }`}
             >
-              <Zap
-                size={24}
-                fill="currentColor"
-                className="shrink-0 animate-pulse"
+              <img
+                src={logoCorpoelec}
+                alt="Corpoelec"
+                className="w-full h-auto scale-90 transform hover:scale-[1.6] transition-transform pointer-events-none"
               />
-              <span className="tracking-tight">Corpoelec ASHO Táchira</span>
             </div>
           )}
-
-          <button
-            onClick={isMobile ? () => setSidebarOpen(false) : toggleSidebar}
-            className="p-2 rounded-lg hover:bg-slate-800 transition-colors mx-auto shrink-0 text-slate-400 hover:text-white"
-          >
-            {isMobile && sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
         </div>
 
         <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto custom-scrollbar">
@@ -113,7 +110,7 @@ export default function MainLayout() {
             <div
               key={module.id}
               className={
-                module.separator ? "pt-4 mt-4 border-t border-slate-800/50" : ""
+                module.separator ? "pt-4 mt-4 border-t border-white/10" : ""
               }
             >
               {module.isRoot ? (
@@ -123,8 +120,8 @@ export default function MainLayout() {
                   className={({ isActive }) =>
                     `flex items-center gap-3 p-3 rounded-xl transition-all overflow-hidden ${
                       isActive
-                        ? "bg-blue-600/10 text-blue-400 border border-blue-500/20 shadow-lg shadow-blue-500/5"
-                        : "hover:bg-slate-800 text-slate-400 hover:text-slate-200"
+                        ? "bg-white/20 text-white border border-white/20 shadow-lg"
+                        : "hover:bg-white/10 text-blue-50 hover:text-white"
                     }`
                   }
                 >
@@ -145,8 +142,8 @@ export default function MainLayout() {
                       location.pathname.includes(
                         module.items[0].path.split("/")[1],
                       )
-                        ? "text-blue-400 bg-blue-500/5"
-                        : "hover:bg-slate-800 text-slate-400 hover:text-slate-200"
+                        ? "text-white bg-white/10"
+                        : "hover:bg-white/5 text-blue-100 hover:text-white"
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -162,13 +159,13 @@ export default function MainLayout() {
                     {sidebarOpen && (
                       <ChevronDown
                         size={14}
-                        className={`transition-transform duration-300 ${openMenus[module.id] ? "rotate-180" : ""}`}
+                        className={`transition-transform duration-200 ${openMenus[module.id] ? "rotate-180" : ""}`}
                       />
                     )}
                   </button>
 
                   {sidebarOpen && openMenus[module.id] && (
-                    <div className="pl-9 space-y-1 animate-in slide-in-from-top-2 duration-300">
+                    <div className="pl-9 space-y-1 transition-all">
                       {module.items.map((item) => (
                         <SubNavLink
                           key={item.path}
@@ -187,28 +184,44 @@ export default function MainLayout() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
-        <header className="h-16 shrink-0 bg-slate-900/60 backdrop-blur-xl border-b border-slate-800 flex items-center px-4 md:px-8 justify-between z-30">
-          <div className="flex items-center gap-3">
-            {isMobile && !sidebarOpen && (
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="p-2 rounded-lg hover:bg-slate-800 transition-colors text-slate-400"
+        <header className="h-16 shrink-0 bg-bg-surface border-b border-border-main flex items-center px-4 md:px-8 justify-between z-30">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={toggleSidebar}
+              className="p-2.5 rounded-xl bg-bg-main/50 hover:bg-bg-main border border-border-main transition-all text-txt-sub hover:text-txt-main shadow-sm"
+            >
+              {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+            <div className="hidden sm:flex items-center gap-3 select-none">
+              <span
+                className="text-2xl md:text-3xl font-black text-yellow-400 uppercase tracking-tighter drop-shadow-xl"
+                style={{
+                  textShadow: "3px 3px 0px #000, 5px 5px 0px rgba(0,0,0,0.15)",
+                }}
               >
-                <Menu size={20} />
-              </button>
-            )}
-            <h1 className="text-lg md:text-xl font-bold bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent hidden sm:block">
-              Sistema Integral ASHO
-            </h1>
+                ASHO
+              </span>
+              <span className="text-xl md:text-2xl font-bold text-txt-main uppercase tracking-tight border-l border-border-main pl-3">
+                Táchira
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-4 relative">
-            <button
-              onClick={() => setProfileOpen(!profileOpen)}
-              className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-sm shadow-xl shadow-blue-600/20 hover:scale-105 active:scale-95 transition-all focus:outline-none ring-offset-2 ring-offset-slate-950 hover:ring-2 ring-blue-500"
-            >
-              U
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleTheme}
+                className="p-2.5 rounded-xl bg-bg-main/50 hover:bg-bg-main border border-border-main transition-all text-txt-sub hover:text-txt-main shadow-sm"
+                title={theme === 'light' ? 'Modo Oscuro' : 'Modo Claro'}
+              >
+                {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+              </button>
+
+              <button
+                onClick={() => setProfileOpen(!profileOpen)}
+                className="w-10 h-10 rounded-xl bg-corpoelec-blue flex items-center justify-center font-bold text-sm text-white shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all focus:outline-none ring-offset-2 ring-offset-bg-primary hover:ring-2 ring-corpoelec-blue"
+              >
+                U
+              </button>
 
             {profileOpen && (
               <>
@@ -216,26 +229,26 @@ export default function MainLayout() {
                   className="fixed inset-0 z-40"
                   onClick={() => setProfileOpen(false)}
                 />
-                <div className="absolute right-0 top-12 w-64 bg-slate-950 border border-slate-700/60 rounded-2xl shadow-2xl py-2 z-50 animate-in slide-in-from-top-2 fade-in duration-200 ring-1 ring-white/5">
-                  <div className="px-4 py-3 border-b border-slate-800/80 mb-2">
-                    <p className="text-sm font-black text-white">
+                <div className="absolute right-0 top-12 w-64 bg-bg-surface border border-border-main rounded-2xl shadow-lg py-2 z-50">
+                  <div className="px-4 py-3 border-b border-border-main mb-2">
+                    <p className="text-sm font-black text-txt-main">
                       Usuario Administrador
                     </p>
-                    <p className="text-[10px] text-slate-500 truncate mt-0.5 font-mono">
+                    <p className="text-[10px] text-txt-muted truncate mt-0.5 font-mono">
                       admin.asho@corpoelec.com
                     </p>
                   </div>
                   <NavLink
                     to="/profile"
                     onClick={() => setProfileOpen(false)}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-txt-sub hover:text-txt-main hover:bg-bg-main/50 transition-colors"
                   >
                     <User size={16} /> Ver Perfil
                   </NavLink>
                   <NavLink
                     to="/login"
                     onClick={() => setProfileOpen(false)}
-                    className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-500 hover:text-red-400 hover:bg-red-500/10 transition-colors mt-1"
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-corpoelec-red hover:bg-corpoelec-red/10 transition-colors mt-1"
                   >
                     <LogOut size={16} /> Cerrar Sesión
                   </NavLink>
@@ -246,10 +259,6 @@ export default function MainLayout() {
         </header>
 
         <div className="flex-1 overflow-auto p-4 md:p-8 relative custom-scrollbar">
-          {/* Background decoration */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-blue-900/10 via-transparent to-transparent pointer-events-none" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-indigo-900/5 via-transparent to-transparent pointer-events-none" />
-
           <div className="relative z-10 max-w-7xl mx-auto">
             <Outlet />
           </div>

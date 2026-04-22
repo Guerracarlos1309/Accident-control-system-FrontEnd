@@ -107,21 +107,21 @@ export default function AccidentForm({ onCancel }) {
     <button
       type="button"
       onClick={() => setActiveTab(id)}
-      className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-all whitespace-nowrap ${
+      className={`flex items-center gap-2 px-6 py-4 border-b-2 transition-all whitespace-nowrap ${
         activeTab === id
-          ? "border-blue-500 text-blue-400 bg-blue-500/5 font-bold"
-          : "border-transparent text-slate-500 hover:text-slate-300 hover:bg-slate-800/50"
+          ? "border-corpoelec-blue text-corpoelec-blue bg-corpoelec-blue/5 font-black uppercase tracking-tighter"
+          : "border-transparent text-txt-muted hover:text-txt-main hover:bg-bg-main/5 font-bold uppercase tracking-tighter"
       }`}
     >
-      <Icon size={16} />
-      <span className="text-sm">{label}</span>
+      <Icon size={18} />
+      <span className="text-xs">{label}</span>
     </button>
   );
 
   return (
     <div className="space-y-6">
-      <div className="flex border-b border-slate-800 overflow-x-auto no-scrollbar">
-        <TabButton id="general" label="Gral." icon={Info} />
+      <div className="flex border-b border-border-main overflow-x-auto no-scrollbar">
+        <TabButton id="general" label="General" icon={Info} />
         <TabButton id="details" label="Causa" icon={Shield} />
         <TabButton id="personnel" label="Personal" icon={Users} />
         <TabButton id="medical" label="Testigos/Salud" icon={Stethoscope} />
@@ -133,7 +133,7 @@ export default function AccidentForm({ onCancel }) {
           <div className="space-y-6 animate-in fade-in duration-300">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1 flex items-center gap-2">
                   <Calendar size={14} /> Fecha *
                 </label>
                 <input
@@ -142,11 +142,11 @@ export default function AccidentForm({ onCancel }) {
                   required
                   value={formData.date}
                   onChange={handleChange}
-                  className="input-field h-11"
+                  className="input-field h-12"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1 flex items-center gap-2">
                   <Clock size={14} /> Hora *
                 </label>
                 <input
@@ -155,34 +155,34 @@ export default function AccidentForm({ onCancel }) {
                   required
                   value={formData.time}
                   onChange={handleChange}
-                  className="input-field h-11"
+                  className="input-field h-12"
                 />
               </div>
             </div>
 
-            <div className="bg-slate-900/40 p-1 rounded-2xl border border-slate-800/60 flex gap-1">
+            <div className="bg-bg-main/5 p-1 rounded-2xl border border-border-main/50 flex gap-1">
               <button
                 type="button"
                 onClick={() => setLocationType("facility")}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl transition-all ${locationType === "facility" ? "bg-blue-500 text-white shadow-lg shadow-blue-500/20" : "text-slate-500 hover:text-slate-300"}`}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl transition-all ${locationType === "facility" ? "bg-corpoelec-blue text-white shadow-lg shadow-corpoelec-blue/20" : "text-txt-muted hover:text-txt-main"}`}
               >
                 <Home size={16} />
-                <span className="text-sm font-bold">En Sede</span>
+                <span className="text-xs font-black uppercase tracking-widest">En Sede</span>
               </button>
               <button
                 type="button"
                 onClick={() => setLocationType("custom")}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl transition-all ${locationType === "custom" ? "bg-blue-500 text-white shadow-lg shadow-blue-500/20" : "text-slate-500 hover:text-slate-300"}`}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl transition-all ${locationType === "custom" ? "bg-corpoelec-blue text-white shadow-lg shadow-corpoelec-blue/20" : "text-txt-muted hover:text-txt-main"}`}
               >
                 <MapIcon size={16} />
-                <span className="text-sm font-bold">Otra Ubicación</span>
+                <span className="text-xs font-black uppercase tracking-widest">Otra Ubicación</span>
               </button>
             </div>
 
             {locationType === "facility" ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in zoom-in-95 duration-200">
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                  <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1 flex items-center gap-2">
                     <MapPin size={14} /> Sede / Instalación Base *
                   </label>
                   <select
@@ -190,7 +190,7 @@ export default function AccidentForm({ onCancel }) {
                     required
                     value={formData.facilityId}
                     onChange={handleChange}
-                    className="input-field h-11 text-slate-300 [&>option]:bg-slate-800"
+                    className="input-field h-12"
                   >
                     <option value="">Seleccione sede...</option>
                     <option value="1">Subestación Punto Fijo IV</option>
@@ -199,7 +199,7 @@ export default function AccidentForm({ onCancel }) {
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                  <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
                     Propiedad Afectada
                   </label>
                   <input
@@ -207,15 +207,15 @@ export default function AccidentForm({ onCancel }) {
                     name="affectedProperty"
                     value={formData.affectedProperty}
                     onChange={handleChange}
-                    className="input-field h-11"
+                    className="input-field h-12"
                     placeholder="Ej: Transformador T-1"
                   />
                 </div>
               </div>
             ) : (
               <div className="space-y-4 animate-in zoom-in-95 duration-200">
-                <div className="glass-panel p-5 rounded-2xl border border-slate-800/60 bg-blue-500/5">
-                  <h4 className="text-[11px] font-bold text-blue-400 uppercase tracking-widest mb-4">
+                <div className="p-6 rounded-3xl border border-border-main/50 bg-corpoelec-blue/5">
+                  <h4 className="text-[11px] font-black text-corpoelec-blue uppercase tracking-[0.2em] mb-6">
                     Ubicación Geográfica
                   </h4>
                   <GeographicCascade
@@ -225,7 +225,7 @@ export default function AccidentForm({ onCancel }) {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                  <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
                     Dirección Detallada / Referencia *
                   </label>
                   <textarea
@@ -234,7 +234,7 @@ export default function AccidentForm({ onCancel }) {
                     rows="3"
                     value={formData.customAddressDetails}
                     onChange={handleChange}
-                    className="input-field py-3 resize-none"
+                    className="input-field py-4 resize-none min-h-[100px]"
                     placeholder="Km, sector, torre, etc."
                   />
                 </div>
@@ -242,7 +242,7 @@ export default function AccidentForm({ onCancel }) {
             )}
 
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+              <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
                 Descripción del Suceso *
               </label>
               <textarea
@@ -251,7 +251,7 @@ export default function AccidentForm({ onCancel }) {
                 required
                 value={formData.description}
                 onChange={handleChange}
-                className="input-field py-3 resize-none"
+                className="input-field py-4 resize-none min-h-[120px]"
                 placeholder="Describa los hechos cronológicamente..."
               />
             </div>
@@ -261,7 +261,7 @@ export default function AccidentForm({ onCancel }) {
         {activeTab === "details" && (
           <div className="space-y-6 animate-in fade-in duration-300">
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+              <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
                 Actividad que realizaba el trabajador *
               </label>
               <textarea
@@ -270,20 +270,20 @@ export default function AccidentForm({ onCancel }) {
                 rows="3"
                 value={formData.activity}
                 onChange={handleChange}
-                className="input-field py-3 resize-none"
+                className="input-field py-4 resize-none min-h-[100px]"
                 placeholder="¿Qué estaba haciendo antes del accidente?"
               />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
                   Tipo de Accidente
                 </label>
                 <select
                   name="accidentTypeId"
                   value={formData.accidentTypeId}
                   onChange={handleChange}
-                  className="input-field h-11 text-slate-300 [&>option]:bg-slate-800"
+                  className="input-field h-12"
                 >
                   <option value="">Seleccione...</option>
                   <option value="1">Caída a un mismo nivel</option>
@@ -292,7 +292,7 @@ export default function AccidentForm({ onCancel }) {
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
                   Agente de Daño (Categoría) *
                 </label>
                 <select
@@ -300,7 +300,7 @@ export default function AccidentForm({ onCancel }) {
                   required
                   value={formData.damageAgentType}
                   onChange={handleChange}
-                  className="input-field h-11 text-slate-300 [&>option]:bg-slate-800"
+                  className="input-field h-12"
                 >
                   <option value="">Seleccione...</option>
                   <option value="personal">Personal (Humano)</option>
@@ -310,14 +310,14 @@ export default function AccidentForm({ onCancel }) {
               </div>
               {formData.damageAgentType === "cosa" && (
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                  <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
                     Especificar Objeto
                   </label>
                   <select
                     name="damageAgentId"
                     value={formData.damageAgentId}
                     onChange={handleChange}
-                    className="input-field h-11 text-slate-300 [&>option]:bg-slate-800"
+                    className="input-field h-12"
                   >
                     <option value="">Seleccione...</option>
                     <option value="1">Herramientas</option>
@@ -333,23 +333,23 @@ export default function AccidentForm({ onCancel }) {
           <div className="space-y-8 animate-in fade-in duration-300">
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <h4 className="text-[11px] font-bold text-slate-300 uppercase tracking-widest">
+                <h4 className="text-[11px] font-black text-txt-main uppercase tracking-[0.2em] ml-1">
                   Lista de Testigos
                 </h4>
                 <button
                   type="button"
                   onClick={addWitness}
-                  className="btn-secondary py-1.5 px-3 text-xs flex items-center gap-2"
+                  className="btn-secondary h-10 px-4 text-xs"
                 >
-                  <UserPlus size={14} /> Agregar Testigo
+                  <UserPlus size={14} /> Registrar Testigo
                 </button>
               </div>
 
               {witnesses.length === 0 ? (
-                <div className="p-10 border-2 border-dashed border-slate-800 rounded-3xl text-center">
-                  <Users size={32} className="mx-auto text-slate-700 mb-2" />
-                  <p className="text-slate-500 text-sm italic">
-                    Presione el botón para añadir testigos del suceso.
+                <div className="p-12 border-2 border-dashed border-border-main rounded-3xl text-center bg-bg-main/5">
+                  <Users size={32} className="mx-auto text-txt-muted/50 mb-3" />
+                  <p className="text-txt-muted text-[10px] font-black uppercase tracking-widest italic">
+                    Sin testigos registrados.
                   </p>
                 </div>
               ) : (
@@ -357,7 +357,7 @@ export default function AccidentForm({ onCancel }) {
                   {witnesses.map((witness, index) => (
                     <div
                       key={index}
-                      className="flex flex-col md:flex-row gap-3 p-4 bg-slate-900/60 border border-slate-800 rounded-2xl animate-in slide-in-from-top-2 duration-200"
+                      className="flex flex-col md:flex-row gap-3 p-4 bg-bg-main/10 border border-border-main/50 rounded-2xl animate-in slide-in-from-top-2 duration-200"
                     >
                       <input
                         type="text"
@@ -366,7 +366,7 @@ export default function AccidentForm({ onCancel }) {
                         onChange={(e) =>
                           updateWitness(index, "name", e.target.value)
                         }
-                        className="input-field h-10 flex-[2]"
+                        className="input-field h-12 flex-[2] bg-bg-surface shadow-none"
                       />
                       <input
                         type="text"
@@ -375,7 +375,7 @@ export default function AccidentForm({ onCancel }) {
                         onChange={(e) =>
                           updateWitness(index, "idCard", e.target.value)
                         }
-                        className="input-field h-10 flex-1"
+                        className="input-field h-12 flex-1 bg-bg-surface shadow-none"
                       />
                       <input
                         type="text"
@@ -384,14 +384,14 @@ export default function AccidentForm({ onCancel }) {
                         onChange={(e) =>
                           updateWitness(index, "phone", e.target.value)
                         }
-                        className="input-field h-10 flex-1"
+                        className="input-field h-12 flex-1 bg-bg-surface shadow-none"
                       />
                       <button
                         type="button"
                         onClick={() => removeWitness(index)}
-                        className="p-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                        className="p-3 text-corpoelec-red hover:bg-corpoelec-red/10 rounded-xl transition-colors"
                       >
-                        <Trash2 size={18} />
+                        <Trash2 size={20} />
                       </button>
                     </div>
                   ))}
@@ -399,16 +399,16 @@ export default function AccidentForm({ onCancel }) {
               )}
             </div>
 
-            <div className="space-y-4 pt-4 border-t border-slate-800">
-              <div className="flex items-center gap-2 text-blue-400">
+            <div className="space-y-4 pt-6 border-t border-border-main">
+              <div className="flex items-center gap-2 text-corpoelec-blue">
                 <Stethoscope size={16} />
-                <h4 className="text-[11px] font-bold uppercase tracking-widest">
-                  Centro de Salud y Atención
+                <h4 className="text-[11px] font-black text-txt-main uppercase tracking-[0.2em]">
+                  Atención Médica
                 </h4>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1 col-span-2">
-                  <label className="text-sm font-medium text-slate-400">
+                  <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
                     Nombre del Centro de Salud
                   </label>
                   <input
@@ -416,12 +416,12 @@ export default function AccidentForm({ onCancel }) {
                     name="medicalCenterName"
                     value={formData.medicalCenterName}
                     onChange={handleChange}
-                    className="input-field h-11"
+                    className="input-field h-12"
                     placeholder="Ej: Hospital Dr. Rafael Calles Sierra"
                   />
                 </div>
-                <div className="col-span-1 md:col-span-2 bg-slate-800/20 p-5 rounded-2xl border border-slate-700/30">
-                  <p className="text-[11px] font-bold text-slate-500 uppercase mb-4">
+                <div className="col-span-1 md:col-span-2 bg-bg-main/5 p-6 rounded-3xl border border-border-main/50">
+                  <p className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] mb-6">
                     Ubicación del Centro de Salud
                   </p>
                   <GeographicCascade
@@ -430,47 +430,30 @@ export default function AccidentForm({ onCancel }) {
                   />
                 </div>
                 <div className="space-y-1 col-span-2">
-                  <label className="text-sm font-medium text-slate-400">
-                    Observaciones de la Atención / Diagnóstico Preliminar
+                  <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
+                    Diagnóstico Preliminar
                   </label>
                   <textarea
                     name="medicalObservations"
                     rows="3"
                     value={formData.medicalObservations}
                     onChange={handleChange}
-                    className="input-field py-3 resize-none"
+                    className="input-field py-4 resize-none min-h-[100px]"
                     placeholder="Especifique qué atención recibió el trabajador..."
                   />
                 </div>
               </div>
             </div>
-
-            <div className="space-y-4 pt-4 border-t border-slate-800">
-              <div className="flex items-center gap-2 text-emerald-400">
-                <AlertCircle size={16} />
-                <h4 className="text-[11px] font-bold uppercase tracking-widest">
-                  Observaciones Generales del Reporte
-                </h4>
-              </div>
-              <textarea
-                name="globalObservations"
-                rows="4"
-                value={formData.globalObservations}
-                onChange={handleChange}
-                className="input-field py-3 resize-none shadow-lg shadow-emerald-500/5"
-                placeholder="Cualquier información adicional relevante..."
-              />
-            </div>
           </div>
         )}
 
         {activeTab === "personnel" && (
-          <div className="p-10 border-2 border-dashed border-slate-800 rounded-3xl text-center animate-in fade-in duration-300">
-            <Users size={48} className="mx-auto text-slate-700 mb-4" />
-            <p className="text-slate-500 mb-6">
-              Administre aquí el personal que resultó afectado el suceso.
+          <div className="p-16 border-2 border-dashed border-border-main rounded-3xl text-center bg-bg-main/5 animate-in fade-in duration-300">
+            <Users size={48} className="mx-auto text-txt-muted/30 mb-6" />
+            <p className="text-txt-muted font-black uppercase tracking-tighter text-xs mb-8">
+              Administre aquí el personal afectado.
             </p>
-            <button type="button" className="btn-secondary px-8">
+            <button type="button" className="btn-secondary h-12 px-8">
               <Plus size={18} /> Agregar Trabajador
             </button>
           </div>
@@ -479,7 +462,7 @@ export default function AccidentForm({ onCancel }) {
         {activeTab === "docs" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-300">
             <div className="space-y-1 md:col-span-2">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+              <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
                 Nro. Expediente INPSASEL
               </label>
               <input
@@ -487,15 +470,15 @@ export default function AccidentForm({ onCancel }) {
                 name="inpsaselFile"
                 value={formData.inpsaselFile}
                 onChange={handleChange}
-                className="input-field h-11"
+                className="input-field h-12"
                 placeholder="EX-2024-XXX"
               />
             </div>
-            <div className="md:col-span-2 glass-panel rounded-2xl p-6 bg-blue-500/5 border-blue-500/20">
-              <h4 className="text-sm font-bold text-blue-400 mb-4 flex items-center gap-2">
-                <FileText size={16} /> Checklist de Documentos Obligatorios
+            <div className="md:col-span-2 p-8 rounded-3xl border border-corpoelec-blue/20 bg-corpoelec-blue/5">
+              <h4 className="text-xs font-black text-corpoelec-blue mb-6 flex items-center gap-2 uppercase tracking-widest">
+                <FileText size={20} /> Checklist Documental
               </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
                   "Declaración 24h",
                   "Informe Médico",
@@ -505,11 +488,11 @@ export default function AccidentForm({ onCancel }) {
                 ].map((doc) => (
                   <label
                     key={doc}
-                    className="flex items-center gap-3 text-sm text-slate-400 cursor-pointer hover:text-slate-200 transition-colors p-2 hover:bg-slate-800/30 rounded-lg"
+                    className="flex items-center gap-3 text-xs font-bold text-txt-sub cursor-pointer hover:text-txt-main transition-colors p-3 hover:bg-bg-main/5 rounded-xl border border-transparent hover:border-border-main/50"
                   >
                     <input
                       type="checkbox"
-                      className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-blue-500 focus:ring-blue-500/50"
+                      className="w-5 h-5 rounded-lg border-border-main bg-bg-surface text-corpoelec-blue focus:ring-corpoelec-blue/50"
                     />
                     {doc}
                   </label>
@@ -519,17 +502,17 @@ export default function AccidentForm({ onCancel }) {
           </div>
         )}
 
-        <div className="sticky bottom-0 bg-slate-900 pt-6 pb-2 border-t border-slate-800 flex justify-end gap-3 translate-y-2">
+        <div className="sticky bottom-0 bg-bg-surface pt-6 pb-2 border-t border-border-main flex justify-end gap-3 translate-y-2">
           <button
             type="button"
             onClick={onCancel}
-            className="px-5 py-2.5 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all"
+            className="px-6 py-3 text-xs font-black uppercase tracking-widest text-txt-muted hover:text-txt-main transition-colors"
           >
             Cancelar
           </button>
           <button
             type="submit"
-            className="btn-primary px-8 h-11 shadow-lg shadow-blue-500/40"
+            className="btn-primary"
           >
             Guardar Reporte Técnico
           </button>

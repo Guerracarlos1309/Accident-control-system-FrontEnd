@@ -1,26 +1,51 @@
 @import "tailwindcss";
 
 @theme {
-  --color-corpoelec: #0f4c81; /* Blue standard color */
-  --color-corpoelec-light: #1d6fa5;
-  --color-corpoelec-dark: #0a3359;
+  --color-corpoelec-blue: #005C9E;
+  --color-corpoelec-red: #E30613;
+  --color-corpoelec-blue-dark: #004577;
+  --color-corpoelec-red-dark: #b9050f;
+  
+  --color-bg-main: var(--bg-primary);
+  --color-bg-surface: var(--bg-secondary);
+  --color-sidebar: var(--bg-sidebar);
+  
+  --color-txt-main: var(--text-primary);
+  --color-txt-sub: var(--text-secondary);
+  --color-txt-muted: var(--text-muted);
+  
+  --color-border-main: var(--border-color);
 }
 
 :root {
-  /* Dark mode by default based on user request */
+  /* Dynamic Speed for Lite Version */
+  --transition-speed: 150ms;
+}
+
+:root.light {
+  color-scheme: light;
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-sidebar: #005C9E;
+  
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  
+  --border-color: #e2e8f0;
+}
+
+:root.dark {
   color-scheme: dark;
-  --bg-primary: #0f111a;
-  --bg-secondary: #1a1d2d;
-  --bg-tertiary: #262a40;
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-sidebar: #0f172a;
   
   --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
+  --text-secondary: #cbd5e1;
   --text-muted: #64748b;
   
   --border-color: #334155;
-  
-  --accent-color: var(--color-corpoelec);
-  --accent-hover: var(--color-corpoelec-light);
 }
 
 body {
@@ -29,50 +54,49 @@ body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  transition: background-color var(--transition-speed), color var(--transition-speed);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Base custom classes to match the design requested */
 @layer utilities {
   .glass-panel {
-    @apply bg-slate-900/60 backdrop-blur-md border border-slate-700/50 shadow-xl;
+    @apply bg-bg-surface border border-border-main/80 shadow-xl;
   }
   
   .input-field {
-    @apply w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all;
+    @apply w-full rounded-xl px-4 py-3 transition-all outline-none bg-bg-surface text-txt-main border border-border-main;
+    background-color: color-mix(in srgb, var(--color-bg-surface), var(--color-bg-main) 40%);
+  }
+
+  .input-field::placeholder { @apply text-txt-muted/50 font-medium uppercase tracking-tighter text-[10px]; }
+  
+  .input-field:focus {
+    @apply border-corpoelec-blue ring-4 ring-corpoelec-blue/10 bg-bg-surface;
+    outline: none;
   }
   
   .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 px-4 rounded-lg shadow-lg shadow-blue-500/30 transition-all active:scale-95 flex items-center justify-center gap-2;
+    @apply bg-corpoelec-blue hover:bg-corpoelec-blue-dark text-white font-bold py-3 px-8 rounded-2xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2;
+  }
+
+  .btn-danger {
+    @apply bg-corpoelec-red hover:bg-corpoelec-red-dark text-white font-bold py-3 px-8 rounded-2xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2;
   }
 
   .btn-secondary {
-    @apply bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium py-2 px-4 rounded-lg border border-slate-700 transition-all active:scale-95 flex items-center justify-center gap-2;
+    @apply font-bold py-3 px-4 rounded-2xl border transition-all active:scale-95 flex items-center justify-center gap-2 bg-bg-surface border-border-main text-txt-sub;
   }
-
-  @keyframes pulse-soft {
-    0%, 100% { opacity: 0.5; }
-    50% { opacity: 1; }
+  
+  .btn-secondary:hover {
+    @apply bg-bg-main text-txt-main shadow-md;
   }
 
   .active-dot {
-    animation: pulse-soft 2s infinite ease-in-out;
-    background-color: theme('colors.blue.500');
-    box-shadow: 0 0 8px theme('colors.blue.500');
+    @apply w-2 h-2 rounded-full bg-corpoelec-blue shadow-sm;
   }
 
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    @apply bg-slate-800 rounded-full;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-slate-700;
-  }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { @apply rounded-full; background-color: var(--border-color); }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-txt-muted; }
 }

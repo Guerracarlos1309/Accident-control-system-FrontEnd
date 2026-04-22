@@ -22,35 +22,34 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = "ma
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 md:p-10 pointer-events-none">
-      {/* Backdrop con blur profundo */}
+      {/* Backdrop con color plano */}
       <div 
-        className="absolute inset-0 bg-slate-950/80 backdrop-blur-md transition-opacity animate-in fade-in duration-300 pointer-events-auto"
+        className="absolute inset-0 bg-black/60 transition-opacity duration-200 pointer-events-auto"
         onClick={onClose}
       />
       
-      {/* Contenedor Modal con Flex-Col y Max-Height definida */}
+      {/* Contenedor Modal */}
       <div className={`
         relative w-full ${maxWidth} 
-        glass-panel bg-slate-900 border border-slate-700/60 rounded-[2rem] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.8)] 
+        bg-bg-surface border border-border-main/50 rounded-[2.5rem] shadow-lg
         flex flex-col 
-        animate-in fade-in zoom-in-95 duration-300 
         max-h-[90vh] overflow-hidden pointer-events-auto
       `}>
         
-        {/* Cabecera (Sólida y fija en el tope del flex) */}
-        <div className="flex justify-between items-center p-4 md:p-5 border-b border-slate-800 bg-slate-900 shrink-0 select-none">
-          <h3 className="text-lg md:text-xl font-bold text-slate-100 line-clamp-1">{title}</h3>
+        {/* Cabecera */}
+        <div className="flex justify-between items-center p-6 border-b border-border-main bg-bg-surface shrink-0 select-none">
+          <h3 className="text-xl font-black text-txt-main tracking-tighter uppercase">{title}</h3>
           <button 
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all active:scale-90"
+            className="p-2 rounded-xl text-txt-muted hover:text-corpoelec-red hover:bg-corpoelec-red/10 transition-all active:scale-95 border border-border-main/50 hover:border-corpoelec-red/20 shadow-sm hover:shadow-md"
           >
-            <X size={20} />
+            <X size={20} strokeWidth={3} />
           </button>
         </div>
         
-        {/* Cuerpo del modal (Única área scrolleable) */}
+        {/* Cuerpo del modal */}
         <div className="overflow-y-auto flex-1 custom-scrollbar">
-          <div className="p-4 md:p-8">
+          <div className="p-6 md:p-10">
             {children}
           </div>
         </div>

@@ -36,44 +36,44 @@ export default function UserForm({ onCancel }) {
         
         {/* Información Personal */}
         <div className="col-span-1 md:col-span-2 space-y-4">
-           <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
-             <User size={16} className="text-blue-500" />
-             <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Información Personal</h4>
+           <div className="flex items-center gap-2 pb-2 border-b border-border-main">
+             <User size={16} className="text-corpoelec-blue" />
+             <h4 className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">Información Personal</h4>
            </div>
            
            <div className="space-y-1">
-             <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Nombre Completo *</label>
+             <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">Nombre Completo *</label>
              <input 
                type="text" name="fullName" required value={formData.fullName} onChange={handleChange}
-               className="input-field h-11" placeholder="Ej: Juan Pérez"
+               className="input-field h-12" placeholder="Ej: Juan Pérez"
              />
            </div>
         </div>
 
         {/* Credenciales */}
         <div className="space-y-4">
-           <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
-             <Lock size={16} className="text-emerald-500" />
-             <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Credenciales de Acceso</h4>
+           <div className="flex items-center gap-2 pb-2 border-b border-border-main">
+             <Lock size={16} className="text-corpoelec-blue" />
+             <h4 className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">Credenciales de Acceso</h4>
            </div>
            <div className="space-y-3">
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Nombre de Usuario *</label>
+                <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">Nombre de Usuario *</label>
                 <div className="relative">
-                  <UserPlus className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
+                  <UserPlus className="absolute left-4 top-1/2 -translate-y-1/2 text-txt-muted" size={16} />
                   <input 
                     type="text" name="username" required value={formData.username} onChange={handleChange}
-                    className="input-field h-10 pl-10" placeholder="jperez"
+                    className="input-field h-12 pl-12" placeholder="jperez"
                   />
                 </div>
               </div>
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Correo Electrónico</label>
+                <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">Correo Electrónico</label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-txt-muted" size={16} />
                   <input 
                     type="email" name="email" value={formData.email} onChange={handleChange}
-                    className="input-field h-10 pl-10" placeholder="juan.perez@empresa.com"
+                    className="input-field h-12 pl-12" placeholder="juan.perez@empresa.com"
                   />
                 </div>
               </div>
@@ -82,16 +82,16 @@ export default function UserForm({ onCancel }) {
 
         {/* Seguridad y Roles */}
         <div className="space-y-4">
-           <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
-             <Shield size={16} className="text-amber-500" />
-             <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Permisos y Estatus</h4>
+           <div className="flex items-center gap-2 pb-2 border-b border-border-main">
+             <Shield size={16} className="text-corpoelec-blue" />
+             <h4 className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">Permisos y Estatus</h4>
            </div>
            <div className="space-y-3">
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Rol de Sistema</label>
+                <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">Rol de Sistema</label>
                 <select 
                   name="role" value={formData.role} onChange={handleChange}
-                  className="input-field h-10 text-slate-300 [&>option]:bg-slate-800"
+                  className="input-field h-12 font-bold"
                 >
                   <option value="admin">Administrador (Control Total)</option>
                   <option value="inspector">Inspector (Registro y Búsqueda)</option>
@@ -99,19 +99,19 @@ export default function UserForm({ onCancel }) {
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Contraseña *</label>
+                <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">Contraseña *</label>
                 <div className="relative">
                   <input 
                     type={showPassword ? "text" : "password"} 
                     name="password" required value={formData.password} onChange={handleChange}
-                    className="input-field h-10 pr-10" placeholder="••••••••"
+                    className="input-field h-12 pr-12 font-bold" placeholder="••••••••"
                   />
                   <button 
                     type="button" 
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-txt-muted hover:text-txt-main transition-colors"
                   >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
               </div>
@@ -119,18 +119,18 @@ export default function UserForm({ onCancel }) {
         </div>
       </div>
 
-      {/* FOOTER PEGAJOSO (SÓLIDO) */}
-      <div className="sticky bottom-0 bg-slate-900 pt-6 pb-2 border-t border-slate-800 flex justify-end gap-3 translate-y-2">
+      {/* Footer */}
+      <div className="sticky bottom-0 bg-bg-surface pt-6 pb-2 border-t border-border-main flex justify-end gap-3 translate-y-2">
         <button 
           type="button" 
           onClick={onCancel} 
-          className="px-5 py-2.5 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all"
+          className="px-6 py-3 text-xs font-black uppercase tracking-widest text-txt-muted hover:text-txt-main transition-colors"
         >
           Cancelar
         </button>
         <button 
           type="submit" 
-          className="btn-primary px-8 h-11"
+          className="btn-primary"
         >
           Crear Usuario Admin
         </button>

@@ -34,17 +34,17 @@ const Notification = ({ message, type = "info", onClose }) => {
     <div
       className={`
         pointer-events-auto
-        flex items-center gap-3 p-4 rounded-xl border backdrop-blur-md shadow-2xl
-        transition-all duration-300 transform
-        ${isExiting ? "opacity-0 translate-x-10" : "opacity-100 translate-x-0 animate-in slide-in-from-right-full"}
+        flex items-center gap-3 p-4 rounded-xl border bg-bg-secondary shadow-lg
+        transition-opacity duration-200
+        ${isExiting ? "opacity-0" : "opacity-100"}
         ${borders[type]} ${backgrounds[type]}
       `}
     >
       <div className="flex-shrink-0">{icons[type]}</div>
-      <div className="flex-1 text-sm font-medium text-slate-200">{message}</div>
+      <div className="flex-1 text-sm font-bold text-txt-main">{message}</div>
       <button
         onClick={handleClose}
-        className="flex-shrink-0 text-slate-500 hover:text-slate-300 transition-colors"
+        className="flex-shrink-0 text-txt-muted hover:text-txt-main transition-colors"
       >
         <X size={16} />
       </button>
