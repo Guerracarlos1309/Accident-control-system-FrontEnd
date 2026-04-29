@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   User,
   Contact,
@@ -8,6 +8,7 @@ import {
   Calendar,
   PhoneCall,
   Clock,
+  Camera,
 } from "lucide-react";
 import GeographicCascade from "../../../components/GeographicCascade";
 import { helpFetch } from "../../../helpers/helpFetch";
@@ -46,6 +47,10 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
 
   const [idPrefix, setIdPrefix] = useState("V");
   const [idNumber, setIdNumber] = useState("");
+  
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const fileInputRef = useRef(null);
 
   const api = helpFetch();
 
@@ -75,6 +80,10 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
             jobTitleId: data.jobTitleId?.toString() || "",
             occupationId: data.occupationId?.toString() || "",
           });
+          
+          if (data.imageUrl) {
+            setImagePreview(`http://localhost:3000${data.imageUrl}`);
+          }
 
           // Sync ID Card prefix and number
           if (data.idCard && typeof data.idCard === "string") {
@@ -172,6 +181,18 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
     setFormData((prev) => ({ ...prev, homeAddress: geoData.fullText }));
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const { showNotification } = useNotification();
 
   const handleSubmit = (e) => {
@@ -200,7 +221,19 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
       ...formData,
       idCard: `${idPrefix}-${idNumber}`,
     };
-    onSubmit(finalData);
+    
+    const formDataToSend = new FormData();
+    Object.keys(finalData).forEach((key) => {
+      if (finalData[key] !== null && finalData[key] !== undefined) {
+        formDataToSend.append(key, finalData[key]);
+      }
+    });
+    
+    if (imageFile) {
+      formDataToSend.append("image", imageFile);
+    }
+    
+    onSubmit(formDataToSend);
   };
 
   const TabButton = ({ id, label, icon: Icon }) => (
@@ -231,6 +264,38 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
         {/* TAB 1: IDENTIDAD */}
         {activeTab === "identity" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Image Upload */}
+            <div className="col-span-1 md:col-span-2 flex flex-col items-center justify-center p-6 mb-2">
+              <div 
+                className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-bg-surface shadow-xl shadow-corpoelec-blue/10 bg-bg-main/5 group cursor-pointer flex items-center justify-center"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {imagePreview ? (
+                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <User size={48} className="text-txt-muted/30" />
+                )}
+                
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Camera className="text-white" size={24} />
+                </div>
+              </div>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleImageChange} 
+                accept="image/*" 
+                className="hidden" 
+              />
+              <button 
+                type="button" 
+                onClick={() => fileInputRef.current?.click()}
+                className="mt-4 text-[10px] font-black uppercase tracking-widest text-corpoelec-blue hover:text-corpoelec-blue/80 transition-colors"
+              >
+                {imagePreview ? 'Cambiar Fotografía' : 'Añadir Fotografía'}
+              </button>
+            </div>
+
             <div className="space-y-1">
               <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">
                 Nombres *

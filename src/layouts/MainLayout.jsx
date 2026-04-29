@@ -1,5 +1,14 @@
 import { Outlet, NavLink, useLocation } from "react-router-dom";
-import { Menu, Zap, X, ChevronDown, LogOut, User, Sun, Moon } from "lucide-react";
+import {
+  Menu,
+  Zap,
+  X,
+  ChevronDown,
+  LogOut,
+  User,
+  Sun,
+  Moon,
+} from "lucide-react";
 import logoCorpoelec from "../assets/logoCorpoelecSinFondo.png";
 import { useTheme } from "../context/ThemeContext";
 
@@ -207,21 +216,21 @@ export default function MainLayout() {
             </div>
           </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                onClick={toggleTheme}
-                className="p-2.5 rounded-xl bg-bg-main/50 hover:bg-bg-main border border-border-main transition-all text-txt-sub hover:text-txt-main shadow-sm"
-                title={theme === 'light' ? 'Modo Oscuro' : 'Modo Claro'}
-              >
-                {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-              </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleTheme}
+              className="p-2.5 rounded-xl bg-bg-main/50 hover:bg-bg-main border border-border-main transition-all text-txt-sub hover:text-txt-main shadow-sm"
+              title={theme === "light" ? "Modo Oscuro" : "Modo Claro"}
+            >
+              {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
+            </button>
 
-              <button
-                onClick={() => setProfileOpen(!profileOpen)}
-                className="w-10 h-10 rounded-xl bg-corpoelec-blue flex items-center justify-center font-bold text-sm text-white shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all focus:outline-none ring-offset-2 ring-offset-bg-primary hover:ring-2 ring-corpoelec-blue"
-              >
-                U
-              </button>
+            <button
+              onClick={() => setProfileOpen(!profileOpen)}
+              className="w-10 h-10 rounded-xl bg-corpoelec-blue flex items-center justify-center font-bold text-sm text-white shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all focus:outline-none ring-offset-2 ring-offset-bg-primary hover:ring-2 ring-corpoelec-blue"
+            >
+              U
+            </button>
 
             {profileOpen && (
               <>

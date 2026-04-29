@@ -22,7 +22,12 @@ export const helpFetch = () => {
       : defaultHeader;
 
     if (options.body) {
-      options.body = JSON.stringify(options.body);
+      if (options.body instanceof FormData) {
+        // Let the browser set the boundary for multipart/form-data
+        delete options.headers["Content-Type"];
+      } else {
+        options.body = JSON.stringify(options.body);
+      }
     } else {
       delete options.body;
     }

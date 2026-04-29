@@ -68,15 +68,6 @@ export const NAVIGATION_CONFIG = [
     ],
   },
   {
-    id: "inspections-gen",
-    label: "Inspecciones Gral.",
-    icon: FileSearch,
-    items: [
-      { path: "/inspections/new", label: "Nueva Inspección" },
-      { path: "/reports", label: "Reportes Consolidados" },
-    ],
-  },
-  {
     id: "reports",
     label: "Reportes",
     path: "/reports",

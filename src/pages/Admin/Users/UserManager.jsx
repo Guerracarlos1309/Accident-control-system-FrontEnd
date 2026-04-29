@@ -96,7 +96,7 @@ export default function UserManager() {
         </div>
         <button onClick={handleOpenCreate} className="btn-primary">
           <UserPlus size={18} />
-          <span>Nuevo Usuario Admin</span>
+          <span>Nuevo Usuario</span>
         </button>
       </div>
 

@@ -72,8 +72,12 @@ export default function EmployeeDetails({ data }) {
     <div className="space-y-8 max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border-main">
       {/* Profiler Header */}
       <div className="flex items-center gap-6 p-6 glass-panel rounded-3xl border border-corpoelec-blue/20 bg-gradient-to-br from-corpoelec-blue/5 to-transparent">
-        <div className="h-16 w-16 rounded-2xl bg-corpoelec-blue/10 border border-corpoelec-blue/20 flex items-center justify-center text-corpoelec-blue">
-          <UserCircle size={40} />
+        <div className="h-20 w-20 rounded-full overflow-hidden border-4 border-bg-surface shadow-xl shadow-corpoelec-blue/10 bg-corpoelec-blue/5 flex items-center justify-center text-corpoelec-blue shrink-0">
+          {data.imageUrl ? (
+            <img src={`http://localhost:3000${data.imageUrl}`} alt="Employee" className="w-full h-full object-cover" />
+          ) : (
+            <UserCircle size={48} />
+          )}
         </div>
         <div>
           <h2 className="text-xl font-bold text-txt-main leading-tight">{data.firstName} {data.lastName}</h2>
