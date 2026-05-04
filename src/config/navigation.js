@@ -34,6 +34,7 @@ export const NAVIGATION_CONFIG = [
     icon: Building,
     items: [
       { path: "/infra/facilities", label: "Sedes y Plantas" },
+      { path: "/infra/inactive", label: "Sedes Inactivas" },
       { path: "/infra/locations", label: "Ubicación Geog." },
     ],
   },

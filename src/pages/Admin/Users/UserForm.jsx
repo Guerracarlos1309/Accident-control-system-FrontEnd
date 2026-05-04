@@ -54,6 +54,12 @@ export default function UserForm({
         email: formData.username, // Make email = username as requested
       };
 
+      // BUG FIX: If editing and password is empty, remove it from payload
+      // to prevent overwriting the current password with an empty one.
+      if (isEditing && !payload.password) {
+        delete payload.password;
+      }
+
       const method = isEditing ? "put" : "post";
       const url = isEditing ? `users/${editingData.id}` : "users";
 

@@ -38,10 +38,12 @@ export default function MasterEntityManager({
   deleteMode = "soft", // "soft" (status update) or "hard" (destroy)
   allowReactivate = false,
   onSuccess,
+  initialLimit = 5, // Default limit for display
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [editingItem, setEditingItem] = useState(null);
@@ -91,6 +93,8 @@ export default function MasterEntityManager({
       return String(val).toLowerCase().includes(searchTerm.toLowerCase());
     }),
   );
+
+  const displayData = isExpanded ? filteredData : filteredData.slice(0, initialLimit);
 
   const handleOpenModal = (item = null) => {
     setEditingItem(item);
@@ -277,24 +281,25 @@ export default function MasterEntityManager({
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-main/30">
-                {filteredData.length > 0 ? (
-                  filteredData.map((item, idx) => (
+                {displayData.length > 0 ? (
+                  displayData.map((item, idx) => (
                     <tr
                       key={idx}
                       className="hover:bg-bg-main/5 transition-colors group"
                     >
                       {fields.map((field) => {
-                        const value = field.displayKey
-                          ? item[field.displayKey]
-                          : item[field.name];
+                        // Display logic: prioritize joined object names
+                        const relationObj = field.displayKey ? item[field.displayKey] : null;
+                        const value = item[field.name];
 
-                        let displayValue =
-                          typeof value === "object" && value !== null
-                            ? value.name ||
-                              value.label ||
-                              value.title ||
-                              JSON.stringify(value)
-                            : value || item[field.name];
+                        let displayValue = "";
+                        if (relationObj && typeof relationObj === "object") {
+                          displayValue = relationObj.name || relationObj.label || relationObj.title;
+                        } else if (typeof value === "object" && value !== null) {
+                          displayValue = value.name || value.label || value.title;
+                        } else {
+                          displayValue = value;
+                        }
 
                         return (
                           <td
@@ -303,7 +308,7 @@ export default function MasterEntityManager({
                           >
                             {displayValue || (
                               <span className="text-txt-muted/50 italic font-normal">
-                                N/A
+                                —
                               </span>
                             )}
                           </td>
@@ -367,8 +372,8 @@ export default function MasterEntityManager({
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredData.length > 0 ? (
-            filteredData.map((item, idx) => (
+          {displayData.length > 0 ? (
+            displayData.map((item, idx) => (
               <div
                 key={idx}
                 className="glass-panel p-6 rounded-3xl border border-border-main/50 transition-colors group relative"
@@ -413,11 +418,18 @@ export default function MasterEntityManager({
                 </div>
                 <div className="space-y-4">
                   {fields.slice(0, 3).map((f) => {
+                    const relationObj = f.displayKey ? item[f.displayKey] : null;
                     const val = item[f.name];
-                    const disp =
-                      typeof val === "object" && val !== null
-                        ? val.name || val.label
-                        : val;
+
+                    let disp = "";
+                    if (relationObj && typeof relationObj === "object") {
+                      disp = relationObj.name || relationObj.label;
+                    } else if (typeof val === "object" && val !== null) {
+                      disp = val.name || val.label;
+                    } else {
+                      disp = val;
+                    }
+
                     return (
                       <div key={f.name}>
                         <p className="text-[9px] uppercase tracking-[0.2em] text-txt-muted font-black mb-1">
@@ -437,6 +449,22 @@ export default function MasterEntityManager({
               No hay registros para mostrar en esta vista.
             </div>
           )}
+        </div>
+      )}
+
+      {/* Expand/Collapse Toggle */}
+      {filteredData.length > initialLimit && (
+        <div className="flex justify-center mt-8">
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="flex items-center gap-2 px-8 py-3 bg-bg-main/5 hover:bg-bg-main/10 text-txt-main rounded-2xl border border-border-main/50 transition-all text-xs font-black uppercase tracking-widest shadow-sm hover:shadow-md"
+          >
+            {isExpanded ? (
+              <>Ocultar registros adicionales</>
+            ) : (
+              <>Ver todos los registros ({filteredData.length})</>
+            )}
+          </button>
         </div>
       )}
 

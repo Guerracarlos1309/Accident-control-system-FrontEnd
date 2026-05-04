@@ -7,7 +7,6 @@ export const helpFetch = () => {
       "Content-Type": "application/json",
     };
 
-    // Include token if available
     const token = sessionStorage.getItem("token");
     if (token) {
       defaultHeader["Authorization"] = `Bearer ${token}`;

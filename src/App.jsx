@@ -20,6 +20,7 @@ import AccidentCatalogs from "./pages/Safety/Accidents/AccidentCatalogs";
 import ExtinguisherManager from "./pages/Safety/Inspections/Extinguishers/ExtinguisherManager";
 import VehicleManager from "./pages/Safety/Inspections/Vehicles/VehicleManager";
 import FacilityManager from "./pages/Infrastructure/FacilityManager";
+import InactiveFacilityManager from "./pages/Infrastructure/InactiveFacilityManager";
 import LocationSetup from "./pages/Infrastructure/LocationSetup";
 import ProtectionInventory from "./pages/Safety/Protection/ProtectionInventory.jsx";
 import ProtectionSetup from "./pages/Safety/Protection/ProtectionSetup";
@@ -55,6 +56,7 @@ function App() {
 
                   {/* Infraestructura */}
                   <Route path="infra/facilities" element={<FacilityManager />} />
+                  <Route path="infra/inactive" element={<InactiveFacilityManager />} />
                   <Route path="infra/locations" element={<LocationSetup />} />
 
                   {/* Accidentes */}
