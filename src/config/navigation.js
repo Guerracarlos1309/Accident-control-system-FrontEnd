@@ -25,7 +25,7 @@ export const NAVIGATION_CONFIG = [
     items: [
       { path: "/hr/employees", label: "Directorio Personal" },
       { path: "/hr/inactive", label: "Personal Inactivo" },
-      { path: "/hr/catalogs", label: "Cargos y Deptos" },
+      { path: "/hr/catalogs", label: "Cargos y Gerencias" },
     ],
   },
   {

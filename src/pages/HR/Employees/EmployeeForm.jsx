@@ -18,7 +18,7 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
   const [activeTab, setActiveTab] = useState("identity");
   const [loadingCatalogs, setLoadingCatalogs] = useState(true);
   const [catalogs, setCatalogs] = useState({
-    departments: [],
+    managements: [],
     jobTitles: [],
     occupations: [],
   });
@@ -34,7 +34,7 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
     birthDate: "",
     maritalStatus: "",
     dominantHand: "",
-    departmentId: "",
+    managementId: "",
     jobTitleId: "",
     occupationId: "",
     birthPlace: "",
@@ -60,13 +60,13 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
       setLoadingCatalogs(true);
       try {
         const [depRes, jobRes, occRes] = await Promise.all([
-          api.get("/lookups/departments"),
+          api.get("/lookups/managements"),
           api.get("/lookups/job-titles"),
           api.get("/lookups/occupations"),
         ]);
 
         setCatalogs({
-          departments: Array.isArray(depRes) ? depRes : [],
+          managements: Array.isArray(depRes) ? depRes : [],
           jobTitles: Array.isArray(jobRes) ? jobRes : [],
           occupations: Array.isArray(occRes) ? occRes : [],
         });
@@ -76,7 +76,7 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
           setFormData({
             ...formData,
             ...data,
-            departmentId: data.departmentId?.toString() || "",
+            managementId: data.managementId?.toString() || "",
             jobTitleId: data.jobTitleId?.toString() || "",
             occupationId: data.occupationId?.toString() || "",
           });
@@ -203,7 +203,7 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
       { key: "firstName", label: "Nombres" },
       { key: "lastName", label: "Apellidos" },
       { key: "personalNumber", label: "N° de Personal" },
-      { key: "departmentId", label: "Departamento" },
+      { key: "managementId", label: "Gerencia" },
       { key: "jobTitleId", label: "Cargo Institucional" },
       { key: "occupationId", label: "Ocupación" },
       { key: "gender", label: "Sexo" },
@@ -550,11 +550,11 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="space-y-1">
               <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">
-                Departamento
+                Gerencia
               </label>
               <select
-                name="departmentId"
-                value={formData.departmentId}
+                name="managementId"
+                value={formData.managementId}
                 onChange={handleChange}
                 className="input-field h-12"
                 required
@@ -562,9 +562,9 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                 <option value="">
                   {loadingCatalogs ? "Cargando..." : "Seleccione..."}
                 </option>
-                {catalogs.departments.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
+                {catalogs.managements.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
                   </option>
                 ))}
               </select>

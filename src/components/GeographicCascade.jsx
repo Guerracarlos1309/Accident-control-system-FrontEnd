@@ -7,7 +7,8 @@ import { helpFetch } from "../helpers/helpFetch";
 export default function GeographicCascade({ 
   value = { stateId: "", cityId: "", parish: "" }, 
   onChange,
-  required = false 
+  required = false,
+  disabled = false
 }) {
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
@@ -113,7 +114,8 @@ export default function GeographicCascade({
           value={value.stateId} 
           onChange={handleSelectChange}
           required={required}
-          className="input-field h-12 text-sm font-bold"
+          disabled={disabled}
+          className={`input-field h-12 text-sm font-bold ${disabled ? 'opacity-50 cursor-not-allowed bg-bg-main/5' : ''}`}
         >
           <option value="">{loadingStates ? "Cargando..." : "Seleccione..."}</option>
           {states.map(s => <option key={s.id} value={s.id}>{s.name.toUpperCase()}</option>)}
@@ -122,16 +124,16 @@ export default function GeographicCascade({
 
       {/* Ciudad */}
       <div className="space-y-1">
-        <label className={`text-[11px] font-black uppercase tracking-[0.15em] ml-1 ${!value.stateId ? 'text-txt-muted/30' : 'text-txt-muted'}`}>
+        <label className={`text-[11px] font-black uppercase tracking-[0.15em] ml-1 ${!value.stateId || disabled ? 'text-txt-muted/30' : 'text-txt-muted'}`}>
           Ciudad {required && "*"}
         </label>
         <select 
           name="cityId" 
-          disabled={!value.stateId || loadingCities}
+          disabled={disabled || !value.stateId || loadingCities}
           value={value.cityId} 
           onChange={handleSelectChange}
           required={required}
-          className={`input-field h-12 text-sm font-bold ${!value.stateId ? 'opacity-40 cursor-not-allowed grayscale' : ''}`}
+          className={`input-field h-12 text-sm font-bold ${disabled || !value.stateId ? 'opacity-40 cursor-not-allowed grayscale' : ''}`}
         >
           <option value="">{loadingCities ? "Cargando..." : "Seleccione..."}</option>
           {cities.map(c => <option key={c.id} value={c.id}>{c.name.toUpperCase()}</option>)}
@@ -140,16 +142,16 @@ export default function GeographicCascade({
 
       {/* Parroquia / Localidad */}
       <div className="space-y-1">
-        <label className={`text-[11px] font-black uppercase tracking-[0.15em] ml-1 ${!value.cityId ? 'text-txt-muted/30' : 'text-txt-muted'}`}>
+        <label className={`text-[11px] font-black uppercase tracking-[0.15em] ml-1 ${!value.cityId || disabled ? 'text-txt-muted/30' : 'text-txt-muted'}`}>
           Parroquia {required && "*"}
         </label>
         <select 
           name="parish" 
-          disabled={!value.cityId || loadingParishes}
+          disabled={disabled || !value.cityId || loadingParishes}
           value={value.parish} 
           onChange={handleSelectChange}
           required={required}
-          className={`input-field h-12 text-sm font-bold ${!value.cityId ? 'opacity-40 cursor-not-allowed grayscale' : ''}`}
+          className={`input-field h-12 text-sm font-bold ${disabled || !value.cityId ? 'opacity-40 cursor-not-allowed grayscale' : ''}`}
         >
           <option value="">{loadingParishes ? "Cargando..." : "Seleccione..."}</option>
           {parishes.map(p => <option key={p.id} value={p.id}>{p.name.toUpperCase()}</option>)}

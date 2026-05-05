@@ -225,7 +225,7 @@ export default function EquipmentForm({ onCancel }) {
                 value={formData.organizationalUnit}
                 onChange={handleChange}
                 className="input-field h-10"
-                placeholder="Ej: Departamento de Mantenimiento"
+                placeholder="Ej: Gerencia de Mantenimiento"
               />
             </div>
           </div>

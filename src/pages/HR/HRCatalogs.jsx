@@ -9,9 +9,9 @@ export default function HRCatalogs() {
         apiPath="/lookups/occupations"
       />
       <MasterEntityManager 
-        title="Departamentos" 
-        entityName="Departamento" 
-        apiPath="/lookups/departments"
+        title="Gerencias" 
+        entityName="Gerencia" 
+        apiPath="/lookups/managements"
       />
     </div>
   );

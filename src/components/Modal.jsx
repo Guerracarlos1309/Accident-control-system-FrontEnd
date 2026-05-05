@@ -2,11 +2,11 @@ import { X } from "lucide-react";
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 
-export default function Modal({ isOpen, onClose, title, children, maxWidth = "max-w-2xl" }) {
+export default function Modal({ isOpen, onClose, title, children, maxWidth = "max-w-2xl", closeOnOutsideClick = true }) {
   // Manejo de la tecla Esc para cerrar
   useEffect(() => {
     const handleEsc = (e) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && closeOnOutsideClick) onClose();
     };
     if (isOpen) {
       window.addEventListener("keydown", handleEsc);
@@ -16,7 +16,7 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = "ma
       window.removeEventListener("keydown", handleEsc);
       document.body.style.overflow = "unset";
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, closeOnOutsideClick]);
 
   if (!isOpen) return null;
 
@@ -25,7 +25,7 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = "ma
       {/* Backdrop con color plano */}
       <div 
         className="absolute inset-0 bg-black/60 transition-opacity duration-200 pointer-events-auto"
-        onClick={onClose}
+        onClick={() => closeOnOutsideClick && onClose()}
       />
       
       {/* Contenedor Modal */}

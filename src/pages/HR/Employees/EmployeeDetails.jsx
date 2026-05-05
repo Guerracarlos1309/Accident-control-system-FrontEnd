@@ -106,7 +106,7 @@ export default function EmployeeDetails({ data }) {
 
         {/* Datos Laborales */}
         <Section title="Datos Institucionales" icon={Briefcase}>
-          <DetailItem icon={MapPin} label="Departamento" value={data.department?.name} />
+          <DetailItem icon={Briefcase} label="Gerencia" value={data.management?.name} />
           <DetailItem icon={Briefcase} label="Ocupación Específica" value={data.occupation?.name} />
           <DetailItem icon={Calendar} label="Fecha de Ingreso" value={data.hireDate} />
           <DetailItem icon={GraduationCap} label="Nivel Educativo" value={getEducationLabel(data.educationLevel)} />
