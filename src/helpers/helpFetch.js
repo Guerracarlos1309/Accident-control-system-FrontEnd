@@ -22,7 +22,6 @@ export const helpFetch = () => {
 
     if (options.body) {
       if (options.body instanceof FormData) {
-        // Let the browser set the boundary for multipart/form-data
         delete options.headers["Content-Type"];
       } else {
         options.body = JSON.stringify(options.body);
@@ -31,9 +30,11 @@ export const helpFetch = () => {
       delete options.body;
     }
 
-    setTimeout(() => controller.abort(), 10000); // timeout 10s
+    setTimeout(() => controller.abort(), 10000);
 
-    const url = endpoint.startsWith("http") ? endpoint : `${BASE_URL}/${endpoint.replace(/^\//, "")}`;
+    const url = endpoint.startsWith("http")
+      ? endpoint
+      : `${BASE_URL}/${endpoint.replace(/^\//, "")}`;
 
     return fetch(url, options)
       .then((res) =>
@@ -43,9 +44,12 @@ export const helpFetch = () => {
               Promise.reject({
                 err: true,
                 status: res.status || "00",
-                statusText: json.message || res.statusText || "Oops, ha ocurrido un error",
-              })
-            )
+                statusText:
+                  json.message ||
+                  res.statusText ||
+                  "Oops, ha ocurrido un error",
+              }),
+            ),
       )
       .catch((err) => {
         if (err.name === "AbortError") {

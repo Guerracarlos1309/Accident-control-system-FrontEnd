@@ -84,7 +84,6 @@ export default function UserForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Credenciales */}
         <div className="space-y-5">
           <div className="flex items-center gap-2 pb-2 border-b border-border-main">
             <Mail size={16} className="text-corpoelec-blue" />
@@ -147,7 +146,6 @@ export default function UserForm({
           </div>
         </div>
 
-        {/* Estatus y Permisos */}
         <div className="space-y-5">
           <div className="flex items-center gap-2 pb-2 border-b border-border-main">
             <Shield size={16} className="text-corpoelec-blue" />
@@ -190,7 +188,6 @@ export default function UserForm({
         </div>
       </div>
 
-      {/* Footer */}
       <div className="sticky bottom-0 bg-bg-surface pt-6 pb-2 border-t border-border-main flex justify-end gap-3 translate-y-2">
         <button
           type="button"

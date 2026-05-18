@@ -43,6 +43,15 @@ export default function AccidentCatalogs() {
               entityName="Magnitud" 
               apiPath="/lookups/magnitudes"
             />
+            <MasterEntityManager 
+              title="Años / Períodos de Gestión" 
+              description="Períodos anuales para clasificar y organizar las estadísticas de incidentes."
+              entityName="Período" 
+              apiPath="/lookups/periods"
+              fields={[
+                { name: "annuality", label: "Año (Ej: 2026)", type: "number", required: true }
+              ]}
+            />
           </div>
         );
       case "medical":

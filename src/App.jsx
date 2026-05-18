@@ -33,6 +33,7 @@ import ProfilePage from "./pages/Admin/Profile/ProfilePage";
 import FleetSetup from "./pages/Fleet/Setup/FleetSetup";
 import Help from "./pages/Help";
 import ReportCenter from "./pages/Reports";
+import ProtectionManager from "./pages/Safety/Inspections/Protection/ProtectionManager";
 
 function App() {
   return (
@@ -79,7 +80,7 @@ function App() {
 
                   {/* Protección EPI */}
                   <Route path="protection/inventory" element={<ProtectionInventory />} />
-                  <Route path="protection/inspections" element={<div className="p-12 glass-panel rounded-3xl text-center text-slate-500">Módulo de Inspección de Equipos de Protección Personal</div>} />
+                  <Route path="protection/inspections" element={<ProtectionManager />} />
                   <Route path="protection/setup" element={<ProtectionSetup />} />
 
                   {/* Admin, Reportes y Ayuda */}

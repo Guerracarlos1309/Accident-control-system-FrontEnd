@@ -1,244 +1,471 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
-  Plus,
-  Search,
-  ShieldCheck,
-  AlertTriangle,
-  RefreshCw,
-  Layers,
-  Filter,
+  ShieldAlert,
+  Edit,
   Package,
-  Building2,
+  Layers,
+  Search,
+  Loader2,
+  Calendar,
+  Building,
+  Tag,
+  Boxes,
+  ClipboardList,
 } from "lucide-react";
-import Modal from "../../../components/Modal";
+import { helpFetch } from "../../../helpers/helpFetch";
+import { useNotification } from "../../../context/NotificationContext";
 import EquipmentForm from "./EquipmentForm";
-
-const MOCK_EQUIPMENT = [
-  {
-    id: 1,
-    name: "Casco Dieléctrico Clase E",
-    type: "EPP",
-    category: "Craneal",
-    unit: "piezas",
-    total: 150,
-    operative: 142,
-    management: "Distribución",
-    lastUpdate: "2024-04-10",
-  },
-  {
-    id: 2,
-    name: "Guantes Dieléctricos Класс 2",
-    type: "EPP",
-    category: "Manual",
-    unit: "pares",
-    total: 40,
-    operative: 32,
-    management: "Mantenimiento",
-    lastUpdate: "2024-04-12",
-  },
-  {
-    id: 3,
-    name: "Extintor PQS 10lb",
-    type: "EPC",
-    category: "Incendio",
-    unit: "piezas",
-    total: 25,
-    operative: 25,
-    management: "Seguridad ASHO",
-    lastUpdate: "2024-04-14",
-  },
-];
+import Modal from "../../../components/Modal";
+import { useNavigate } from "react-router-dom";
 
 export default function ProtectionInventory() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("todos"); // todos | epp | epc
+  const api = helpFetch();
+  const navigate = useNavigate();
+  const { showNotification } = useNotification();
 
-  const filteredEquipment = MOCK_EQUIPMENT.filter((item) => {
-    const matchesSearch =
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.category.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType =
-      filterType === "todos" || item.type.toLowerCase() === filterType;
-    return matchesSearch && matchesType;
+  const [categories, setCategories] = useState([]);
+  const [equipmentList, setEquipmentList] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Modal states
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingEquipment, setEditingEquipment] = useState(null);
+
+  // Filter/Search states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState("TODOS"); // TODOS | EPP | EPC
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [catsRes, equipRes] = await Promise.all([
+        api.get("/lookups/protection-equipment-categories"),
+        api.get("/protection/equipment"),
+      ]);
+
+      if (catsRes && !catsRes.err) {
+        setCategories(catsRes);
+      } else {
+        showNotification("Error al cargar categorías de EPP/EPC", "error");
+      }
+
+      if (equipRes && !equipRes.err) {
+        setEquipmentList(equipRes);
+      }
+    } catch (error) {
+      showNotification("Error de conexión al servidor", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const handleEdit = (item) => {
+    setEditingEquipment(item);
+    setIsModalOpen(true);
+  };
+
+  const handleFormSubmit = async (payload) => {
+    const isEditing = !!editingEquipment && editingEquipment.id !== null;
+    const url = isEditing
+      ? `/protection/equipment/${editingEquipment.id}`
+      : "/protection/equipment";
+    const method = isEditing ? "PUT" : "POST";
+
+    try {
+      const res = await api[method.toLowerCase()](url, { body: payload });
+      if (res && !res.err) {
+        showNotification(
+          "Especificación de equipo guardada con éxito",
+          "success",
+        );
+        setIsModalOpen(false);
+        setEditingEquipment(null);
+        loadData();
+      } else {
+        showNotification(
+          res.statusText || "Error al procesar el guardado",
+          "error",
+        );
+      }
+    } catch (error) {
+      showNotification("Error al enviar datos al servidor", "error");
+    }
+  };
+
+  // Helper to extract bodily classification from packed description string
+  const getClassification = (descriptionStr, isEPC) => {
+    if (isEPC) return "OTROS";
+
+    if (descriptionStr && descriptionStr.includes("CLASIF:")) {
+      const parts = descriptionStr.split(" | ");
+      const clasifPart = parts.find((p) => p.startsWith("CLASIF:"));
+      if (clasifPart) {
+        return clasifPart.split(": ")[1] || "OTROS";
+      }
+    }
+    return "OTROS";
+  };
+
+  // Helper to extract clean tech specifications from packed description string
+  const getCleanSpecs = (descriptionStr) => {
+    if (!descriptionStr) return "N/A";
+
+    if (descriptionStr.includes("MARCA:")) {
+      const parts = descriptionStr.split(" | ");
+      const specs = parts.filter((p) => !p.startsWith("CLASIF:"));
+      return specs.join(" | ");
+    }
+    return descriptionStr;
+  };
+
+  // Merge the 38 official categories with any configured user specifications
+  const mergedEquipment = categories.map((cat) => {
+    const config = equipmentList.find((eq) => eq.categoryId === cat.id);
+    const isEPP = cat.protectionTypeId === 1;
+    const defaultClassification = isEPP ? "CABEZA" : "OTROS";
+
+    return {
+      id: config ? config.id : null,
+      categoryId: cat.id,
+      name: cat.name,
+      category: cat,
+      description: config
+        ? config.description
+        : `CLASIF: ${defaultClassification} | MARCA: GENÉRICO | MODELO: N/A | COD: S/N`,
+      lastUpdate: config
+        ? config.lastUpdate
+        : new Date().toISOString().split("T")[0],
+    };
   });
 
+  // Filter list by search term and EPP/EPC category types
+  const filteredEquipment = mergedEquipment.filter((item) => {
+    const isEPP = item.category?.protectionTypeId === 1;
+    const classification = getClassification(item.description, !isEPP);
+    const cleanSpecs = getCleanSpecs(item.description);
+
+    const matchesSearch =
+      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      classification.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cleanSpecs.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesTab =
+      activeTab === "TODOS" ||
+      (activeTab === "EPP" && isEPP) ||
+      (activeTab === "EPC" && !isEPP);
+
+    return matchesSearch && matchesTab;
+  });
+
+  // Calculate live Stock statistics (Counts of registered unique items/models)
+  const totalItemsCount = mergedEquipment.length;
+  const totalEPPCount = mergedEquipment.filter(
+    (item) => item.category?.protectionTypeId === 1,
+  ).length;
+  const totalEPCCount = mergedEquipment.filter(
+    (item) => item.category?.protectionTypeId === 2,
+  ).length;
+  const configuredItems = equipmentList.length;
+
+  // Render Bodily Classification badge
+  const renderClassificationBadge = (classification) => {
+    const upper = classification.toUpperCase();
+    let style = "bg-slate-500/10 text-slate-500 border-slate-500/15";
+    let label = "OTROS / GRAL";
+
+    if (upper === "CABEZA") {
+      style = "bg-sky-500/10 text-sky-500 border-sky-500/15";
+      label = "👤 CABEZA";
+    } else if (upper === "PECHO") {
+      style = "bg-emerald-500/10 text-emerald-500 border-emerald-500/15";
+      label = "🎽 PECHO";
+    } else if (upper === "PIERNAS") {
+      style = "bg-purple-500/10 text-purple-500 border-purple-500/15";
+      label = "👖 PIERNAS";
+    } else if (upper === "PIES") {
+      style = "bg-amber-500/10 text-amber-500 border-amber-500/15";
+      label = "🥾 PIES";
+    }
+
+    return (
+      <span
+        className={`text-[8px] font-black px-2 py-0.5 rounded-md border uppercase tracking-wider ${style}`}
+      >
+        {label}
+      </span>
+    );
+  };
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 text-txt-main">
+      {/* HEADER SECTION */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
-            <Package className="text-blue-500" />
-            Inventario Técnico de Seguridad
-          </h2>
-          <p className="text-slate-400 mt-1 text-sm">
-            Control centralizado de Equipos de Protección Personal (EPP) y
-            Colectiva (EPC).
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-corpoelec-blue/10 flex items-center justify-center text-corpoelec-blue border border-corpoelec-blue/20 shadow-sm shrink-0">
+            <Package size={24} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-black text-txt-main tracking-tighter">
+              Catálogo de Equipos Existentes
+            </h2>
+            <p className="text-txt-muted text-xs md:text-sm">
+              Lista oficial ASHO de los 38 equipos de protección. Seleccione un
+              material para configurar su especificación de fabricante y
+              clasificación corporal.
+            </p>
+          </div>
         </div>
-        <button onClick={() => setIsModalOpen(true)} className="btn-primary">
-          <Plus size={18} />
-          <span>Nuevo Equipo</span>
-        </button>
+
+        <div className="w-full md:w-auto"></div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* KPI METRIC CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-black tracking-tighter">
         <StatCard
-          label="Total Unidades"
-          value="215"
+          label="Total Renglones Oficiales"
+          value={totalItemsCount}
+          icon={Boxes}
+          color="text-corpoelec-blue bg-corpoelec-blue/10 border-corpoelec-blue/20"
+          subtitle="Formulario ASHO"
+        />
+        <StatCard
+          label="Equipos EPP"
+          value={totalEPPCount}
           icon={Layers}
-          color="text-blue-500"
+          color="text-emerald-500 bg-emerald-500/10 border-emerald-500/20"
+          subtitle="Protección Personal (1-23)"
         />
         <StatCard
-          label="Equipos Operativos"
-          value="199"
-          icon={ShieldCheck}
-          color="text-emerald-500"
+          label="Equipos EPC"
+          value={totalEPCCount}
+          icon={Building}
+          color="text-purple-500 bg-purple-500/10 border-purple-500/20"
+          subtitle="Protección Colectiva (24-38)"
         />
         <StatCard
-          label="Alertas de Stock"
-          value="03"
-          icon={AlertTriangle}
-          color="text-amber-500"
-        />
-        <StatCard
-          label="Próximas Revisiones"
-          value="12"
-          icon={RefreshCw}
-          color="text-purple-500"
+          label="Renglones Configurados"
+          value={configuredItems}
+          icon={Tag}
+          color="text-amber-500 bg-amber-500/10 border-amber-500/20"
+          subtitle="Detalles personalizados"
         />
       </div>
 
+      {/* FILTERS & SEARCH */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+        {/* Search input */}
         <div className="relative w-full md:max-w-md">
           <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-txt-muted/50"
             size={18}
           />
           <input
             type="text"
-            placeholder="Buscar por nombre o categoría..."
+            placeholder="Buscar por descripción, marca, serial o clasificación..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="input-field pl-10 h-11"
+            className="input-field pl-11 h-12 border border-border-main focus:border-corpoelec-blue text-xs uppercase"
           />
         </div>
 
-        <div className="flex bg-slate-900/50 p-1 rounded-xl border border-slate-800 w-full md:w-auto">
-          {["todos", "epp", "epc"].map((type) => (
+        {/* Tab selector */}
+        <div className="flex bg-bg-main/30 p-1.5 rounded-2xl border border-border-main/50 w-full md:w-auto">
+          {[
+            { id: "TODOS", label: "Ver Todos" },
+            { id: "EPP", label: "EPP (Personal)" },
+            { id: "EPC", label: "EPC (Colectivo)" },
+          ].map((tab) => (
             <button
-              key={type}
-              onClick={() => setFilterType(type)}
-              className={`px-4 py-2 text-xs font-bold uppercase transition-all rounded-lg ${
-                filterType === type
-                  ? "bg-blue-500 text-white shadow-lg shadow-blue-500/20"
-                  : "text-slate-500 hover:text-slate-300"
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 md:flex-initial px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all rounded-xl cursor-pointer ${
+                activeTab === tab.id
+                  ? "bg-corpoelec-blue text-white shadow-md shadow-corpoelec-blue/15"
+                  : "text-txt-muted hover:text-txt-main"
               }`}
             >
-              {type}
+              {tab.label}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="glass-panel rounded-2xl overflow-hidden border border-slate-800/50 overflow-x-auto">
-        <table className="w-full text-left min-w-[800px]">
-          <thead>
-            <tr className="bg-slate-900/50 border-b border-slate-800 text-slate-400 uppercase tracking-widest text-[10px] font-bold">
-              <th className="px-6 py-4">Equipo / Serial</th>
-              <th className="px-6 py-4">Clasificación</th>
-              <th className="px-6 py-4">Gerencia</th>
-              <th className="px-6 py-4 text-center">Und. Medida</th>
-              <th className="px-6 py-4 text-center">Stock</th>
-              <th className="px-6 py-4 text-center">Estado</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-800/50">
-            {filteredEquipment.map((item) => {
-              const operativePercent = (item.operative / item.total) * 100;
-              return (
-                <tr
-                  key={item.id}
-                  className="hover:bg-slate-800/30 transition-colors group"
-                >
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-bold text-slate-200 group-hover:text-blue-400 transition-colors">
-                      {item.name}
-                    </div>
-                    <div className="text-[10px] text-zinc-500 font-mono">
-                      SN: {item.id} - {item.category}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col gap-1">
-                      <span
-                        className={`text-[10px] font-black px-2 py-0.5 rounded-full w-fit ${item.type === "EPP" ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-purple-500/10 text-purple-400 border border-purple-500/20"}`}
-                      >
-                        {item.type}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2 text-xs text-slate-400">
-                      <Building2 size={12} className="text-slate-500" />
-                      {item.management}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <span className="text-xs font-medium text-slate-500 italic">
-                      {item.unit}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <div className="text-sm text-slate-300 font-bold">
-                      {item.operative}{" "}
-                      <span className="text-[10px] text-slate-600">
-                        / {item.total}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2 justify-center">
-                      <div className="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${operativePercent === 100 ? "bg-emerald-500" : operativePercent > 80 ? "bg-amber-500" : "bg-red-500"}`}
-                          style={{ width: `${operativePercent}%` }}
-                        />
-                      </div>
-                    </div>
-                  </td>
+      {/* DATA CATALOG TABLE */}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20 space-y-3 text-txt-muted">
+          <Loader2 size={36} className="animate-spin text-corpoelec-blue" />
+          <p className="text-[10px] font-black uppercase tracking-widest">
+            Cargando catálogo oficial...
+          </p>
+        </div>
+      ) : (
+        <div className="glass-panel overflow-hidden rounded-3xl border border-border-main shadow-md bg-bg-surface">
+          <div className="overflow-x-auto no-scrollbar">
+            <table className="w-full text-left border-collapse min-w-[800px]">
+              <thead>
+                <tr className="bg-bg-main/30 border-b border-border-main text-[9px] font-black uppercase text-txt-muted tracking-widest">
+                  <th className="px-6 py-4 w-16 text-center">Renglón</th>
+                  <th className="px-6 py-4">Nombre Oficial del Material</th>
+                  <th className="px-6 py-4">Clasificación Corporal</th>
+                  <th className="px-6 py-4">Especificación Técnica / Serial</th>
+                  <th className="px-6 py-4 text-center w-36">Tipo</th>
+                  <th className="px-6 py-4 text-center w-36">Unidad</th>
+                  <th className="px-6 py-4 text-right w-24">Acciones</th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody className="divide-y divide-border-main/45">
+                {filteredEquipment.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan="7"
+                      className="text-center py-16 text-txt-muted"
+                    >
+                      <ShieldAlert
+                        size={36}
+                        className="mx-auto mb-3 opacity-25 text-txt-muted"
+                      />
+                      <p className="font-black uppercase tracking-widest text-xs">
+                        Sin registros encontrados
+                      </p>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredEquipment.map((item) => {
+                    const isEPP = item.category?.protectionTypeId === 1;
+                    const classification = getClassification(
+                      item.description,
+                      !isEPP,
+                    );
+                    const cleanSpecs = getCleanSpecs(item.description);
+                    const isConfigured = item.id !== null;
 
+                    return (
+                      <tr
+                        key={item.categoryId}
+                        className="hover:bg-bg-main/5 transition-colors group"
+                      >
+                        {/* Category ID as Renglón */}
+                        <td className="px-6 py-4 text-center text-xs font-mono font-bold text-txt-muted">
+                          {item.categoryId.toString().padStart(2, "0")}
+                        </td>
+
+                        {/* Name */}
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col">
+                            <span className="text-xs font-bold text-txt-main group-hover:text-corpoelec-blue transition-colors uppercase leading-tight">
+                              {item.name}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Body Classification Badge */}
+                        <td className="px-6 py-4">
+                          {renderClassificationBadge(classification)}
+                        </td>
+
+                        {/* Description / Brand info */}
+                        <td className="px-6 py-4">
+                          <span
+                            className={`text-xs font-semibold uppercase ${isConfigured ? "text-txt-sub font-semibold" : "text-txt-muted/40 font-normal italic"}`}
+                          >
+                            {cleanSpecs}
+                          </span>
+                        </td>
+
+                        {/* Type Badge */}
+                        <td className="px-6 py-4 text-center">
+                          <span
+                            className={`text-[8px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider ${
+                              isEPP
+                                ? "bg-corpoelec-blue/10 text-corpoelec-blue border border-corpoelec-blue/15"
+                                : "bg-purple-500/10 text-purple-500 border border-purple-500/15"
+                            }`}
+                          >
+                            {isEPP ? "EPP" : "EPC"}
+                          </span>
+                        </td>
+
+                        {/* Unit */}
+                        <td className="px-6 py-4 text-center">
+                          <span className="text-[9px] font-black uppercase text-txt-muted bg-bg-main/30 px-2 py-0.5 rounded border border-border-main/50 tracking-wider">
+                            {item.category?.description || "PIEZAS"}
+                          </span>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="px-6 py-4 text-right">
+                          <button
+                            onClick={() => handleEdit(item)}
+                            className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${
+                              isConfigured
+                                ? "border-border-main text-txt-muted hover:text-corpoelec-blue hover:border-corpoelec-blue/20 hover:bg-corpoelec-blue/5"
+                                : "border-amber-500/30 text-amber-500 hover:text-amber-600 hover:border-amber-500/50 hover:bg-amber-500/5 animate-pulse"
+                            }`}
+                            title={
+                              isConfigured
+                                ? "Editar especificación"
+                                : "Configurar especificación técnica"
+                            }
+                          >
+                            <Edit size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* PORTAL MODAL INTEGRATION */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Registro Técnico de Equipo"
-        maxWidth="max-w-3xl"
+        title={
+          editingEquipment?.id !== null
+            ? "Editar Especificación de Equipo"
+            : "Configurar Especificación de Equipo"
+        }
+        maxWidth="max-w-2xl"
       >
-        <EquipmentForm onCancel={() => setIsModalOpen(false)} />
+        <EquipmentForm
+          initialData={editingEquipment}
+          onCancel={() => setIsModalOpen(false)}
+          onSubmit={handleFormSubmit}
+        />
       </Modal>
     </div>
   );
 }
 
-function StatCard({ label, value, icon: Icon, color }) {
+function StatCard({ label, value, icon: Icon, color, subtitle }) {
   return (
-    <div className="glass-panel rounded-2xl p-4 flex items-center gap-4 border border-slate-800/30">
+    <div className="bg-bg-surface border border-border-main p-5 rounded-3xl flex items-center gap-4.5 shadow-sm hover:shadow-md hover:border-corpoelec-blue/20 transition-all">
       <div
-        className={`w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center ${color} shadow-inner`}
+        className={`w-11 h-11 rounded-2xl flex items-center justify-center border ${color} shadow-sm shrink-0`}
       >
         <Icon size={20} />
       </div>
       <div>
-        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+        <div className="text-[10px] font-black text-txt-muted uppercase tracking-[0.15em] mb-0.5">
           {label}
         </div>
-        <div className="text-xl font-black text-white">{value}</div>
+        <div className="text-xl font-black text-txt-main leading-tight">
+          {value}
+        </div>
+        {subtitle && (
+          <div className="text-[8px] font-bold text-txt-muted uppercase tracking-wider mt-0.5">
+            {subtitle}
+          </div>
+        )}
       </div>
     </div>
   );

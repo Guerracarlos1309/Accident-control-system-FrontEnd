@@ -76,17 +76,18 @@ export const NAVIGATION_CONFIG = [
     isRoot: true,
   },
   {
-    id: "admin",
-    label: "Administración",
-    icon: Database,
-    separator: true,
-    items: [{ path: "/admin/users", label: "Usuarios y Sistema" }],
-  },
-  {
     id: "ayuda",
     label: "Ayuda",
     path: "/ayuda",
     icon: FileSearch,
     isRoot: true,
+  },
+
+  {
+    id: "admin",
+    label: "Administración",
+    icon: Database,
+    separator: true,
+    items: [{ path: "/admin/users", label: "Usuarios y Sistema" }],
   },
 ];

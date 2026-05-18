@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Car, Settings, Palette, Calendar as CalendarIcon, Trash2, Loader2, RefreshCw } from "lucide-react";
+import {
+  Plus,
+  Car,
+  Settings,
+  Calendar as CalendarIcon,
+  Trash2,
+  Loader2,
+  RefreshCw,
+} from "lucide-react";
 import Modal from "../../../components/Modal";
 import ConfirmModal from "../../../components/ConfirmModal";
 import VehicleRegistryForm from "./VehicleRegistryForm";
@@ -40,7 +48,7 @@ export default function VehicleInventory() {
 
   const handleDelete = async () => {
     if (!selectedVehicle) return;
-    
+
     try {
       const res = await api.del(`/vehicles/${selectedVehicle.plate}`);
       if (res && !res.err) {
@@ -54,31 +62,34 @@ export default function VehicleInventory() {
     }
   };
 
-  const filteredVehicles = vehicles.filter(v => 
-    v.plate.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    v.model?.brand?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    v.model?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredVehicles = vehicles.filter(
+    (v) =>
+      v.plate.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      v.model?.brand?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      v.model?.name?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
-             <Car className="text-blue-500" />
-             Inventario de Flota Vehicular
+          <h2 className="text-2xl font-bold text-txt-main tracking-tight flex items-center gap-3 tracking-tighter">
+            <Car className="text-blue-500" />
+            Inventario de Flota Vehicular
           </h2>
-          <p className="text-slate-400 mt-1 text-sm">Registro centralizado de unidades de transporte y equipo pesado.</p>
+          <p className="text-slate-400 mt-1 text-sm">
+            Registro centralizado de unidades de transporte y equipo pesado.
+          </p>
         </div>
         <div className="flex gap-2 w-full md:w-auto">
-          <button 
+          <button
             onClick={fetchVehicles}
             className="p-2.5 rounded-xl bg-bg-surface border border-border-main text-txt-muted hover:text-txt-main hover:bg-bg-main/5 transition-all"
             title="Refrescar lista"
           >
             <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
           </button>
-          <button 
+          <button
             onClick={() => {
               setSelectedVehicle(null);
               setIsModalOpen(true);
@@ -92,9 +103,8 @@ export default function VehicleInventory() {
       </div>
 
       <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-txt-muted" size={18} />
-        <input 
-          type="text" 
+        <input
+          type="text"
           placeholder="Buscar por placa, marca o modelo..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -105,7 +115,9 @@ export default function VehicleInventory() {
       {loading && vehicles.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
           <Loader2 size={40} className="text-corpoelec-blue animate-spin" />
-          <p className="text-txt-muted font-medium">Sincronizando con el servidor...</p>
+          <p className="text-txt-muted font-medium">
+            Sincronizando con el servidor...
+          </p>
         </div>
       ) : (
         <div className="bg-bg-surface border border-border-main rounded-3xl overflow-hidden shadow-sm">
@@ -121,14 +133,21 @@ export default function VehicleInventory() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-main">
-                {filteredVehicles.map(vehicle => (
-                  <tr key={vehicle.plate} className="hover:bg-bg-main/5 transition-colors group">
+                {filteredVehicles.map((vehicle) => (
+                  <tr
+                    key={vehicle.plate}
+                    className="hover:bg-bg-main/5 transition-colors group"
+                  >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-xl bg-bg-main/5 border border-border-main flex items-center justify-center text-corpoelec-blue overflow-hidden shrink-0 relative">
                           {vehicle.images && vehicle.images.length > 0 ? (
                             <>
-                              <img src={`http://localhost:3000${vehicle.images[0].imageUrl}`} alt="Vehículo" className="w-full h-full object-cover" />
+                              <img
+                                src={`http://localhost:3000${vehicle.images[0].imageUrl}`}
+                                alt="Vehículo"
+                                className="w-full h-full object-cover"
+                              />
                               {vehicle.images.length > 1 && (
                                 <div className="absolute bottom-0 right-0 bg-black/70 text-white text-[8px] font-bold px-1 rounded-tl-lg">
                                   +{vehicle.images.length - 1}
@@ -140,7 +159,9 @@ export default function VehicleInventory() {
                           )}
                         </div>
                         <div>
-                          <div className="text-sm font-black text-txt-main">{vehicle.plate}</div>
+                          <div className="text-sm font-black text-txt-main">
+                            {vehicle.plate}
+                          </div>
                           <div className="text-[10px] font-bold text-txt-muted uppercase tracking-widest mt-0.5">
                             {vehicle.model?.brand?.name} {vehicle.model?.name}
                           </div>
@@ -148,17 +169,23 @@ export default function VehicleInventory() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-xs font-bold text-txt-main capitalize">{vehicle.type?.name || "N/A"}</span>
+                      <span className="text-xs font-bold text-txt-main capitalize">
+                        {vehicle.type?.name || "N/A"}
+                      </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-xs font-bold text-txt-main">{vehicle.color || "—"}</span>
+                      <span className="text-xs font-bold text-txt-main">
+                        {vehicle.color || "—"}
+                      </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-xs font-bold text-txt-main">{vehicle.year}</span>
+                      <span className="text-xs font-bold text-txt-main">
+                        {vehicle.year}
+                      </span>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button 
+                        <button
                           onClick={() => {
                             setSelectedVehicle(vehicle);
                             setIsDetailsModalOpen(true);
@@ -167,7 +194,7 @@ export default function VehicleInventory() {
                         >
                           Ver Detalles
                         </button>
-                        <button 
+                        <button
                           onClick={() => {
                             setSelectedVehicle(vehicle);
                             setIsModalOpen(true);
@@ -177,7 +204,7 @@ export default function VehicleInventory() {
                         >
                           <Settings size={16} />
                         </button>
-                        <button 
+                        <button
                           onClick={() => {
                             setSelectedVehicle(vehicle);
                             setIsConfirmOpen(true);
@@ -195,7 +222,10 @@ export default function VehicleInventory() {
                 {filteredVehicles.length === 0 && (
                   <tr>
                     <td colSpan="5" className="py-16 text-center">
-                      <p className="text-txt-muted text-sm">No se encontraron vehículos que coincidan con la búsqueda.</p>
+                      <p className="text-txt-muted text-sm">
+                        No se encontraron vehículos que coincidan con la
+                        búsqueda.
+                      </p>
                     </td>
                   </tr>
                 )}
@@ -205,29 +235,33 @@ export default function VehicleInventory() {
         </div>
       )}
 
-      <Modal 
-        isOpen={isDetailsModalOpen} 
-        onClose={() => setIsDetailsModalOpen(false)} 
-        title={`Detalles de Vehículo ${selectedVehicle?.plate}`} 
+      <Modal
+        isOpen={isDetailsModalOpen}
+        onClose={() => setIsDetailsModalOpen(false)}
+        title={`Detalles de Vehículo ${selectedVehicle?.plate}`}
         maxWidth="max-w-4xl"
       >
         <VehicleDetails data={selectedVehicle} />
       </Modal>
 
-      <Modal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        title={selectedVehicle ? `Editar Vehículo ${selectedVehicle.plate}` : "Registrar Vehículo en la Flota"} 
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={
+          selectedVehicle
+            ? `Editar Vehículo ${selectedVehicle.plate}`
+            : "Registrar Vehículo en la Flota"
+        }
         maxWidth="max-w-2xl"
       >
-        <VehicleRegistryForm 
-          onCancel={() => setIsModalOpen(false)} 
+        <VehicleRegistryForm
+          onCancel={() => setIsModalOpen(false)}
           initialData={selectedVehicle}
           onSuccess={fetchVehicles}
         />
       </Modal>
 
-      <ConfirmModal 
+      <ConfirmModal
         isOpen={isConfirmOpen}
         onClose={() => setIsConfirmOpen(false)}
         onConfirm={handleDelete}
@@ -239,4 +273,3 @@ export default function VehicleInventory() {
     </div>
   );
 }
-

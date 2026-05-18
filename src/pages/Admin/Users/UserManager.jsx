@@ -1,13 +1,9 @@
 import { useState, useEffect } from "react";
 import {
   Users,
-  Search,
   UserPlus,
   UserCog,
-  ShieldCheck,
-  CircleDot,
   Trash2,
-  Lock,
   Loader2,
   AlertTriangle,
 } from "lucide-react";
@@ -102,10 +98,6 @@ export default function UserManager() {
 
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1 group">
-          <Search
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-txt-muted group-focus-within:text-corpoelec-blue transition-colors"
-            size={18}
-          />
           <input
             type="text"
             placeholder="Buscar por usuario o rol..."

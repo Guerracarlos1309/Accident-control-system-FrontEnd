@@ -13,6 +13,7 @@ export default function AccidentsManager() {
   const [accidents, setAccidents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState("grid"); // 'grid' o 'table'
+  const [filterStatus, setFilterStatus] = useState(1); // 1: Activos, 0: Archivados
   
   const api = helpFetch();
   const { showNotification } = useNotification();
@@ -100,7 +101,20 @@ export default function AccidentsManager() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-black text-txt-main tracking-tighter">Control de Accidentes</h2>
-          <p className="text-txt-sub mt-1 text-xs font-bold uppercase tracking-widest">Gestión e investigación técnica de incidentes laborales.</p>
+          <div className="flex items-center gap-4 mt-2">
+            <button 
+              onClick={() => setFilterStatus(1)}
+              className={`text-[10px] font-black uppercase tracking-[0.2em] pb-1 border-b-2 transition-all ${filterStatus === 1 ? 'border-corpoelec-blue text-corpoelec-blue' : 'border-transparent text-txt-muted hover:text-txt-main'}`}
+            >
+              Activos ({accidents.filter(a => a.status === 1).length})
+            </button>
+            <button 
+              onClick={() => setFilterStatus(0)}
+              className={`text-[10px] font-black uppercase tracking-[0.2em] pb-1 border-b-2 transition-all ${filterStatus === 0 ? 'border-corpoelec-red text-corpoelec-red' : 'border-transparent text-txt-muted hover:text-txt-main'}`}
+            >
+              Archivados ({accidents.filter(a => a.status === 0).length})
+            </button>
+          </div>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
           {/* Selector de Vista */}
@@ -142,7 +156,7 @@ export default function AccidentsManager() {
         <>
           {viewMode === "grid" ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-500">
-              {accidents.map((acc) => (
+              {accidents.filter(a => a.status === filterStatus).map((acc) => (
                 <div key={acc.id} className={`glass-panel p-6 rounded-3xl border ${acc.status === 1 ? 'border-border-main/50' : 'border-corpoelec-red/20 opacity-75'} hover:border-corpoelec-blue/30 transition-all group relative overflow-hidden`}>
                   <div className={`absolute top-0 right-0 w-32 h-32 ${acc.status === 1 ? 'bg-corpoelec-red/5' : 'bg-txt-muted/5'} rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500`}></div>
                   
@@ -230,7 +244,7 @@ export default function AccidentsManager() {
                   </tr>
                 </thead>
                 <tbody>
-                  {accidents.map((acc) => (
+                  {accidents.filter(a => a.status === filterStatus).map((acc) => (
                     <tr key={acc.id} className={`border-b border-border-main/50 hover:bg-bg-main/20 transition-colors ${acc.status === 0 ? 'opacity-60 bg-bg-main/10' : ''}`}>
                       <td className="p-5">
                         <div className="flex flex-col gap-1">

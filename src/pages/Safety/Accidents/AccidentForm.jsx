@@ -49,7 +49,7 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
         return {
           ...sanitizedData,
           affectedPersonnel:
-            initialData.involvedEmployees?.map((inv) => inv.employee) || [],
+            initialData.involvedEmployees?.map((inv) => inv.employee).filter(Boolean) || [],
           documentsCheck:
             initialData.documentsCheck?.map(
               (doc) => doc.documentId || doc.document_id,
@@ -85,6 +85,7 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
     employees: [],
     inspectionStatuses: [],
     managements: [],
+    medicalCenters: [],
   });
 
   const [formData, setFormData] = useState({
@@ -96,11 +97,12 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
     facilityId: "",
     accidentTypeId: "",
     periodId: "",
-    processStatusId: 1,
+    processStatusId: 2,
     damageAgentId: "",
     contactTypeId: "",
     customAddressDetails: "",
     activity: "",
+    medicalCenterId: "",
     medicalCenterName: "",
     medicalCenterAddress: "",
     medicalObservations: "",
@@ -123,6 +125,70 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
 
   const [errors, setErrors] = useState({});
 
+  // Sincronizar automáticamente la gerencia responsable con el primer trabajador afectado vinculado
+  useEffect(() => {
+    if (formData.affectedPersonnel && formData.affectedPersonnel.length > 0) {
+      const firstEmp = formData.affectedPersonnel[0];
+      const targetManagementId = firstEmp.managementId || firstEmp.management?.id || "";
+      if (targetManagementId) {
+        setFormData((prev) => {
+          if (prev.managementId === targetManagementId) return prev;
+          return {
+            ...prev,
+            managementId: targetManagementId,
+          };
+        });
+      }
+    } else {
+      setFormData((prev) => {
+        if (prev.managementId === "") return prev;
+        return {
+          ...prev,
+          managementId: "",
+        };
+      });
+    }
+  }, [formData.affectedPersonnel]);
+
+  // Auto-seleccionar el período/año basándose en la fecha del accidente
+  useEffect(() => {
+    if (formData.accidentDate && catalogs.periods && catalogs.periods.length > 0) {
+      const dateParts = formData.accidentDate.split("-");
+      if (dateParts.length > 0) {
+        const year = parseInt(dateParts[0], 10);
+        if (!isNaN(year)) {
+          const matchingPeriod = catalogs.periods.find(
+            (p) => parseInt(p.annuality) === year
+          );
+          if (matchingPeriod) {
+            setFormData((prev) => {
+              if (Number(prev.periodId) === Number(matchingPeriod.id)) return prev;
+              return {
+                ...prev,
+                periodId: matchingPeriod.id,
+              };
+            });
+            if (errors.periodId) {
+              setErrors((prev) => ({ ...prev, periodId: null }));
+            }
+          } else {
+            // Si el año de la fecha no existe en los períodos de la base de datos,
+            // limpiamos la selección para alertar al usuario y que seleccione/cree uno válido
+            setFormData((prev) => {
+              if (prev.periodId === "") return prev;
+              return {
+                ...prev,
+                periodId: "",
+              };
+            });
+          }
+        }
+      }
+    }
+  }, [formData.accidentDate, catalogs.periods, errors.periodId]);
+
+
+
   const filteredEmployees =
     employeeSearch.length > 1 && catalogs?.employees
       ? catalogs.employees
@@ -144,6 +210,8 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
           )
       : [];
 
+
+
   useEffect(() => {
     const fetchCatalogs = async () => {
       try {
@@ -157,6 +225,7 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
           employees,
           inspectionStatus,
           managements,
+          medicalCenters,
         ] = await Promise.all([
           api.get("/facilities"),
           api.get("/lookups/accident-types"),
@@ -167,6 +236,7 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
           api.get("/employees"),
           api.get("/lookups/inspection-status"),
           api.get("/lookups/managements"),
+          api.get("/lookups/medical-centers"),
         ]);
 
         const flatten = (arr) => {
@@ -212,6 +282,11 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
             : Array.isArray(managements)
               ? managements
               : [],
+          medicalCenters: medicalCenters.err
+            ? []
+            : Array.isArray(medicalCenters)
+              ? medicalCenters
+              : [],
         });
       } catch (error) {
         showNotification("Error al cargar catálogos técnicos", "error");
@@ -250,7 +325,30 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    if (name === "medicalCenterId") {
+      const center = catalogs.medicalCenters.find(c => c.id === parseInt(value));
+      if (center) {
+        setFormData(prev => ({
+          ...prev,
+          medicalCenterId: value,
+          medicalCenterName: center.name,
+          medicalCenterAddress: center.address || ""
+        }));
+        if (center.parish) {
+          setMedicalLocation({
+            stateId: center.parish.city?.stateId || "",
+            cityId: center.parish.cityId || "",
+            parish: center.parishId || ""
+          });
+        }
+      } else {
+        setFormData(prev => ({ ...prev, [name]: value }));
+      }
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+    
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: null }));
   };
 
@@ -291,6 +389,9 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (activeTab !== "docs") {
+      return;
+    }
     if (!validateForm()) {
       const currentErrors = {};
       if (!formData.accidentDate) currentErrors.d = "Fecha";
@@ -308,10 +409,21 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
       if (!formData.accidentTypeId) currentErrors.at = "Tipo Accidente";
       if (!formData.damageAgentId) currentErrors.da = "Agente Daño";
       if (!formData.contactTypeId) currentErrors.ct = "Tipo Contacto";
-      if (!formData.periodId) currentErrors.p = "Periodo";
+      
+      if (!formData.periodId) {
+        if (formData.accidentDate) {
+          const year = formData.accidentDate.split("-")[0];
+          showNotification(`El año ${year} no está registrado en los períodos del sistema. Por favor, registre este período primero.`, "error");
+          return;
+        } else {
+          currentErrors.p = "Periodo (requiere fecha)";
+        }
+      }
 
       const missingNames = Object.values(currentErrors).join(", ");
-      showNotification(`Faltan campos obligatorios: ${missingNames}`, "error");
+      if (missingNames) {
+        showNotification(`Faltan campos obligatorios: ${missingNames}`, "error");
+      }
       return;
     }
 
@@ -333,6 +445,27 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
       await onSubmit(finalData);
     }
   };
+
+  const tabsOrder = ["general", "details", "personnel", "medical", "docs"];
+
+  const handleNextTab = () => {
+    const currentIndex = tabsOrder.indexOf(activeTab);
+    if (currentIndex < tabsOrder.length - 1) {
+      setActiveTab(tabsOrder[currentIndex + 1]);
+    }
+  };
+
+  const handlePrevTab = () => {
+    const currentIndex = tabsOrder.indexOf(activeTab);
+    if (currentIndex > 0) {
+      setActiveTab(tabsOrder[currentIndex - 1]);
+    }
+  };
+
+  const accidentYear = formData.accidentDate ? formData.accidentDate.split("-")[0] : null;
+  const isPeriodFound = accidentYear && catalogs.periods
+    ? catalogs.periods.some(p => String(p.annuality) === String(accidentYear))
+    : false;
 
   const TabButton = ({ id, label, icon: Icon }) => (
     <button
@@ -387,6 +520,19 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                     <p className="text-[9px] text-corpoelec-red font-black uppercase mt-1">
                       {errors.accidentDate}
                     </p>
+                  )}
+                  {accidentYear && (
+                    isPeriodFound ? (
+                      <p className="text-[10px] text-green-600 dark:text-green-400 font-bold mt-1.5 flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 px-3 py-1.5 rounded-xl w-fit animate-in fade-in duration-300">
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                        <span>Período fiscal {accidentYear} asignado automáticamente</span>
+                      </p>
+                    ) : (
+                      <p className="text-[10px] text-corpoelec-red font-bold mt-1.5 flex items-center gap-1.5 bg-corpoelec-red/10 border border-corpoelec-red/20 px-3 py-1.5 rounded-xl w-fit animate-in fade-in duration-300">
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-corpoelec-red animate-pulse"></span>
+                        <span>Error: El año {accidentYear} no está registrado en los períodos del sistema.</span>
+                      </p>
+                    )
                   )}
                 </div>
                 <div className="space-y-1">
@@ -623,30 +769,6 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                   </p>
                 )}
               </div>
-              <div className="space-y-1">
-                <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
-                  Período / Jornada *
-                </label>
-                <select
-                  name="periodId"
-                  required
-                  value={formData.periodId}
-                  onChange={handleChange}
-                  className={`input-field h-12 ${errors.periodId ? "border-corpoelec-red" : ""}`}
-                >
-                  <option value="">Seleccione...</option>
-                  {catalogs.periods.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.annuality || p.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.periodId && (
-                  <p className="text-[9px] text-corpoelec-red font-black uppercase mt-1">
-                    {errors.periodId}
-                  </p>
-                )}
-              </div>
             </div>
           </div>
         )}
@@ -731,17 +853,38 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1 col-span-2">
                   <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
-                    Nombre del Centro de Salud
+                    Nombre del Centro de Salud (Catálogo)
                   </label>
-                  <input
-                    type="text"
-                    name="medicalCenterName"
-                    value={formData.medicalCenterName}
+                  <select
+                    name="medicalCenterId"
+                    value={formData.medicalCenterId}
                     onChange={handleChange}
                     className="input-field h-12"
-                    placeholder="Ej: Hospital Dr. Rafael Calles Sierra"
-                  />
+                  >
+                    <option value="">-- Seleccione del Catálogo --</option>
+                    {catalogs.medicalCenters.map((center) => (
+                      <option key={center.id} value={center.id}>
+                        {center.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+                {/* Campo de respaldo por si no está en catálogo */}
+                {!formData.medicalCenterId && (
+                  <div className="space-y-1 col-span-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <label className="text-[11px] font-black text-corpoelec-blue uppercase tracking-[0.2em] ml-1">
+                      O escriba el nombre manualmente
+                    </label>
+                    <input
+                      type="text"
+                      name="medicalCenterName"
+                      value={formData.medicalCenterName}
+                      onChange={handleChange}
+                      className="input-field h-12"
+                      placeholder="Ej: Hospital Dr. Rafael Calles Sierra"
+                    />
+                  </div>
+                )}
                 <div className="col-span-1 md:col-span-2 bg-bg-main/5 p-6 rounded-3xl border border-border-main/50">
                   <p className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] mb-6">
                     Ubicación del Centro de Salud
@@ -792,6 +935,7 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                   />
                   {employeeSearch && (
                     <button
+                      type="button"
                       onClick={() => setEmployeeSearch("")}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-corpoelec-red hover:underline"
                     >
@@ -820,9 +964,6 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                               ...formData.affectedPersonnel,
                               emp,
                             ],
-                            // Auto-guess Gerencia if not already set
-                            managementId:
-                              formData.managementId || emp.managementId || "",
                           });
                           setEmployeeSearch("");
                         }}
@@ -867,9 +1008,16 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                 <select
                   name="managementId"
                   required
+                  disabled={formData.affectedPersonnel.length > 0}
                   value={formData.managementId}
                   onChange={handleChange}
-                  className={`input-field h-12 ${errors.managementId ? "border-corpoelec-red" : ""}`}
+                  className={`input-field h-12 transition-all ${
+                    errors.managementId ? "border-corpoelec-red" : ""
+                  } ${
+                    formData.affectedPersonnel.length > 0
+                      ? "bg-bg-main/20 border-dashed border-corpoelec-blue/30 text-corpoelec-blue font-bold cursor-not-allowed"
+                      : ""
+                  }`}
                 >
                   <option value="">Seleccione Gerencia...</option>
                   {catalogs.managements.map((m) => (
@@ -878,11 +1026,16 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                     </option>
                   ))}
                 </select>
-                {errors.managementId && (
+                {formData.affectedPersonnel.length > 0 ? (
+                  <p className="text-[9px] text-corpoelec-blue font-black uppercase tracking-wider mt-1.5 flex items-center gap-1.5 animate-pulse">
+                    <span className="h-1.5 w-1.5 rounded-full bg-corpoelec-blue"></span>
+                    Asignado automáticamente por el personal vinculado
+                  </p>
+                ) : errors.managementId ? (
                   <p className="text-[9px] text-corpoelec-red font-black uppercase mt-1">
                     {errors.managementId}
                   </p>
-                )}
+                ) : null}
               </div>
             </div>
 
@@ -907,16 +1060,16 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                   >
                     <div className="flex items-center gap-4">
                       <div className="h-12 w-12 bg-corpoelec-blue/5 text-corpoelec-blue border border-corpoelec-blue/10 rounded-2xl flex items-center justify-center font-black text-xs shadow-inner">
-                        {person.firstName[0]}
-                        {person.lastName[0]}
+                        {person?.firstName?.[0] || "?"}
+                        {person?.lastName?.[0] || ""}
                       </div>
                       <div>
                         <p className="text-xs font-black text-txt-main uppercase tracking-tight">
-                          {person.firstName} {person.lastName}
+                          {person?.firstName || "N/A"} {person?.lastName || ""}
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-[9px] font-black text-txt-muted uppercase tracking-tighter bg-bg-main px-2 py-0.5 rounded-md border border-border-main">
-                            CI: {person.idCard}
+                            CI: {person?.idCard || "---"}
                           </span>
                           <span className="text-[9px] font-black text-corpoelec-blue uppercase tracking-tighter bg-corpoelec-blue/5 px-2 py-0.5 rounded-md border border-corpoelec-blue/10">
                             Nro: {person.personalNumber}
@@ -1010,17 +1163,40 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
           </div>
         )}
 
-        <div className="sticky bottom-0 bg-bg-surface pt-6 pb-2 border-t border-border-main flex justify-end gap-3 translate-y-2">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-6 py-3 text-xs font-black uppercase tracking-widest text-txt-muted hover:text-txt-main transition-colors"
-          >
-            Cancelar
-          </button>
-          <button type="submit" className="btn-primary">
-            Guardar Reporte Técnico
-          </button>
+        <div className="sticky bottom-0 bg-bg-surface pt-6 pb-2 border-t border-border-main flex justify-between items-center translate-y-2">
+          <div>
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-6 py-3 text-xs font-black uppercase tracking-widest text-txt-muted hover:text-txt-main transition-colors"
+            >
+              Cancelar
+            </button>
+          </div>
+          <div className="flex gap-3">
+            {activeTab !== "general" && (
+              <button
+                type="button"
+                onClick={handlePrevTab}
+                className="px-6 py-3 border border-border-main/50 bg-bg-main/5 hover:bg-bg-main/10 rounded-xl text-xs font-black uppercase tracking-widest text-txt-main transition-all flex items-center gap-2"
+              >
+                ← Atrás
+              </button>
+            )}
+            {activeTab !== "docs" ? (
+              <button
+                type="button"
+                onClick={handleNextTab}
+                className="btn-primary flex items-center gap-2"
+              >
+                Siguiente →
+              </button>
+            ) : (
+              <button type="submit" className="btn-primary">
+                Guardar Reporte Técnico
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Mini Card de Personal */}
@@ -1033,6 +1209,7 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                     <User size={32} />
                   </div>
                   <button
+                    type="button"
                     onClick={() => setShowEmployeeCard(null)}
                     className="h-8 w-8 rounded-full hover:bg-bg-main flex items-center justify-center text-txt-muted transition-colors"
                   >
@@ -1102,6 +1279,7 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setShowEmployeeCard(null)}
                 className="w-full py-4 bg-bg-main border-t border-border-main text-[10px] font-black text-txt-muted uppercase tracking-[0.2em] hover:text-corpoelec-blue transition-colors"
               >

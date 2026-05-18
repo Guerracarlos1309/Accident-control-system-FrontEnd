@@ -2,26 +2,26 @@ import React from "react";
 import { AlertTriangle, X } from "lucide-react";
 import Modal from "./Modal";
 
-export default function ConfirmModal({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
-  title = "Confirmar Acción", 
-  message = "¿Está seguro de realizar esta acción?", 
-  confirmText = "Confirmar", 
+export default function ConfirmModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  title = "Confirmar Acción",
+  message = "¿Está seguro de realizar esta acción?",
+  confirmText = "Confirmar",
   cancelText = "Cancelar",
-  variant = "danger" // danger | warning | info
+  variant = "danger",
 }) {
   const variantStyles = {
     danger: "bg-red-600 hover:bg-red-700 shadow-red-600/20 text-white",
     warning: "bg-amber-600 hover:bg-amber-700 shadow-amber-600/20 text-white",
-    info: "bg-blue-600 hover:bg-blue-700 shadow-blue-600/20 text-white"
+    info: "bg-blue-600 hover:bg-blue-700 shadow-blue-600/20 text-white",
   };
 
   const iconStyles = {
     danger: "text-red-500 bg-red-500/10",
     warning: "text-amber-500 bg-amber-500/10",
-    info: "text-blue-500 bg-blue-500/10"
+    info: "text-blue-500 bg-blue-500/10",
   };
 
   return (
@@ -32,10 +32,10 @@ export default function ConfirmModal({
             <AlertTriangle size={24} />
           </div>
           <div className="space-y-2">
-            <h3 className="text-lg font-bold text-white leading-tight">{title}</h3>
-            <p className="text-sm text-slate-400 leading-relaxed">
-              {message}
-            </p>
+            <h3 className="text-lg font-bold text-white leading-tight">
+              {title}
+            </h3>
+            <p className="text-sm text-slate-400 leading-relaxed">{message}</p>
           </div>
         </div>
 
