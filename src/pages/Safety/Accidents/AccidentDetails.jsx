@@ -14,12 +14,33 @@ import {
   Plus,
   Eye,
   Briefcase,
+  Download,
+  Loader2
 } from "lucide-react";
+import { helpFetch } from "../../../helpers/helpFetch";
+import { useNotification } from "../../../context/NotificationContext";
 
 export default function AccidentDetails({ accident }) {
   const [showEmployeeCard, setShowEmployeeCard] = useState(null);
+  const [downloading, setDownloading] = useState(false);
+
+  const api = helpFetch();
+  const { showNotification } = useNotification();
 
   if (!accident) return null;
+
+  const handleDownloadPdf = async () => {
+    setDownloading(true);
+    try {
+      showNotification("Generando PDF...", "info");
+      await api.download(`/reports/accidents/${accident.id}`, `accidente_${accident.inpsaselFileNumber || accident.id}.pdf`);
+      showNotification("PDF descargado con éxito", "success");
+    } catch (e) {
+      showNotification("Error al generar PDF", "error");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const SectionTitle = ({
     icon: Icon,
@@ -65,27 +86,41 @@ export default function AccidentDetails({ accident }) {
             </div>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-2">
-          <span
-            className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${
-              accident.status === 1
-                ? "bg-green-500/10 text-green-500 border-green-500/20"
-                : "bg-corpoelec-red/10 text-corpoelec-red border-corpoelec-red/20"
-            }`}
+        <div className="flex flex-col md:flex-row items-end md:items-center gap-3">
+          <div className="flex flex-col items-end gap-1.5">
+            <span
+              className={`px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
+                accident.status === 1
+                  ? "bg-green-500/10 text-green-500 border-green-500/20"
+                  : "bg-corpoelec-red/10 text-corpoelec-red border-corpoelec-red/20"
+              }`}
+            >
+              {accident.status === 1 ? "Registro Activo" : "Registro Archivado"}
+            </span>
+            <span
+              className={`px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
+                accident.processStatusId === 3
+                  ? "bg-green-500/10 text-green-500 border-green-500/20"
+                  : accident.processStatusId === 2
+                    ? "bg-corpoelec-blue/10 text-corpoelec-blue border-corpoelec-blue/20"
+                    : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+              }`}
+            >
+              {accident.processStatus?.name || "Pendiente"}
+            </span>
+          </div>
+          <button 
+            disabled={downloading}
+            onClick={handleDownloadPdf}
+            className="btn-primary h-10 text-[10px] font-black uppercase tracking-widest gap-2 bg-corpoelec-blue hover:bg-corpoelec-blue/90"
           >
-            {accident.status === 1 ? "Registro Activo" : "Registro Archivado"}
-          </span>
-          <span
-            className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${
-              accident.processStatusId === 3
-                ? "bg-green-500/10 text-green-500 border-green-500/20"
-                : accident.processStatusId === 2
-                  ? "bg-corpoelec-blue/10 text-corpoelec-blue border-corpoelec-blue/20"
-                  : "bg-amber-500/10 text-amber-500 border-amber-500/20"
-            }`}
-          >
-            {accident.processStatus?.name || "Pendiente"}
-          </span>
+            {downloading ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Download size={14} />
+            )}
+            <span>Exportar PDF</span>
+          </button>
         </div>
       </div>
 

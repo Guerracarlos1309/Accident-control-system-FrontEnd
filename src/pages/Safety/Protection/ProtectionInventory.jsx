@@ -304,21 +304,21 @@ export default function ProtectionInventory() {
           </p>
         </div>
       ) : (
-        <div className="glass-panel overflow-hidden rounded-3xl border border-border-main shadow-md bg-bg-surface">
+        <div className="glass-panel overflow-hidden border border-border-main/50 rounded-[2rem]">
           <div className="overflow-x-auto no-scrollbar">
             <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
-                <tr className="bg-bg-main/30 border-b border-border-main text-[9px] font-black uppercase text-txt-muted tracking-widest">
-                  <th className="px-6 py-4 w-16 text-center">Renglón</th>
-                  <th className="px-6 py-4">Nombre Oficial del Material</th>
-                  <th className="px-6 py-4">Clasificación Corporal</th>
-                  <th className="px-6 py-4">Especificación Técnica / Serial</th>
-                  <th className="px-6 py-4 text-center w-36">Tipo</th>
-                  <th className="px-6 py-4 text-center w-36">Unidad</th>
-                  <th className="px-6 py-4 text-right w-24">Acciones</th>
+                <tr className="bg-bg-main/5 text-[10px] font-black uppercase text-txt-muted tracking-[0.2em] border-b border-border-main">
+                  <th className="px-8 py-5 w-16 text-center">Renglón</th>
+                  <th className="px-8 py-5">Nombre Oficial del Material</th>
+                  <th className="px-8 py-5">Clasificación Corporal</th>
+                  <th className="px-8 py-5">Especificación Técnica / Serial</th>
+                  <th className="px-8 py-5 text-center w-36">Tipo</th>
+                  <th className="px-8 py-5 text-center w-36">Unidad</th>
+                  <th className="px-8 py-5 text-right w-24">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border-main/45">
+              <tbody className="divide-y divide-border-main/20">
                 {filteredEquipment.length === 0 ? (
                   <tr>
                     <td
@@ -350,12 +350,12 @@ export default function ProtectionInventory() {
                         className="hover:bg-bg-main/5 transition-colors group"
                       >
                         {/* Category ID as Renglón */}
-                        <td className="px-6 py-4 text-center text-xs font-mono font-bold text-txt-muted">
+                        <td className="px-8 py-5 text-center text-xs font-mono font-bold text-txt-muted">
                           {item.categoryId.toString().padStart(2, "0")}
                         </td>
 
                         {/* Name */}
-                        <td className="px-6 py-4">
+                        <td className="px-8 py-5">
                           <div className="flex flex-col">
                             <span className="text-xs font-bold text-txt-main group-hover:text-corpoelec-blue transition-colors uppercase leading-tight">
                               {item.name}
@@ -364,12 +364,12 @@ export default function ProtectionInventory() {
                         </td>
 
                         {/* Body Classification Badge */}
-                        <td className="px-6 py-4">
+                        <td className="px-8 py-5">
                           {renderClassificationBadge(classification)}
                         </td>
 
                         {/* Description / Brand info */}
-                        <td className="px-6 py-4">
+                        <td className="px-8 py-5">
                           <span
                             className={`text-xs font-semibold uppercase ${isConfigured ? "text-txt-sub font-semibold" : "text-txt-muted/40 font-normal italic"}`}
                           >
@@ -378,7 +378,7 @@ export default function ProtectionInventory() {
                         </td>
 
                         {/* Type Badge */}
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-8 py-5 text-center">
                           <span
                             className={`text-[8px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider ${
                               isEPP
@@ -391,14 +391,14 @@ export default function ProtectionInventory() {
                         </td>
 
                         {/* Unit */}
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-8 py-5 text-center">
                           <span className="text-[9px] font-black uppercase text-txt-muted bg-bg-main/30 px-2 py-0.5 rounded border border-border-main/50 tracking-wider">
                             {item.category?.description || "PIEZAS"}
                           </span>
                         </td>
 
                         {/* Actions */}
-                        <td className="px-6 py-4 text-right">
+                        <td className="px-8 py-5 text-right">
                           <button
                             onClick={() => handleEdit(item)}
                             className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${

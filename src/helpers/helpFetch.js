@@ -76,10 +76,45 @@ export const helpFetch = () => {
     return customFetch(url, options);
   };
 
+  const download = (endpoint, filename) => {
+    const defaultHeader = {};
+    const token = sessionStorage.getItem("token");
+    if (token) {
+      defaultHeader["Authorization"] = `Bearer ${token}`;
+    }
+    const url = endpoint.startsWith("http")
+      ? endpoint
+      : `${BASE_URL}/${endpoint.replace(/^\//, "")}`;
+
+    return fetch(url, {
+      method: "GET",
+      headers: defaultHeader,
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Error al descargar archivo");
+        return res.blob();
+      })
+      .then((blob) => {
+        const fileUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = fileUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(fileUrl);
+      })
+      .catch((err) => {
+        console.error("Download error:", err);
+        throw err;
+      });
+  };
+
   return {
     get,
     post,
     put,
     del,
+    download,
   };
 };

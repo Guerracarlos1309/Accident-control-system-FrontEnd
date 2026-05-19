@@ -12,9 +12,15 @@ import {
   Loader2
 } from "lucide-react";
 import { helpFetch } from "../helpers/helpFetch";
+import { useNotification } from "../context/NotificationContext";
 
 export default function ReportCenter() {
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState({
+    payroll: false,
+    accidents: false,
+    inspections: false
+  });
   const [stats, setStats] = useState({
     accidents: 0,
     employees: 0,
@@ -23,22 +29,24 @@ export default function ReportCenter() {
   });
 
   const api = helpFetch();
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     const fetchStats = async () => {
       setLoading(true);
       try {
-        const [accRes, empRes, userRes] = await Promise.all([
+        const [accRes, empRes, userRes, inspRes] = await Promise.all([
           api.get("/accidents"),
           api.get("/employees"),
-          api.get("/users")
+          api.get("/users"),
+          api.get("/inspections")
         ]);
 
         setStats({
           accidents: Array.isArray(accRes) ? accRes.length : 0,
           employees: Array.isArray(empRes) ? empRes.length : 0,
           users: Array.isArray(userRes) ? userRes.length : 0,
-          inspections: 124
+          inspections: Array.isArray(inspRes) ? inspRes.length : 0
         });
       } catch (error) {
         console.error("Error loading stats:", error);
@@ -49,6 +57,19 @@ export default function ReportCenter() {
 
     fetchStats();
   }, []);
+
+  const handleDownload = async (type, endpoint, defaultName) => {
+    setDownloading(prev => ({ ...prev, [type]: true }));
+    try {
+      showNotification("Generando y descargando PDF...", "info");
+      await api.download(endpoint, defaultName);
+      showNotification("Reporte descargado con éxito", "success");
+    } catch (error) {
+      showNotification("Error al generar el archivo PDF", "error");
+    } finally {
+      setDownloading(prev => ({ ...prev, [type]: false }));
+    }
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -172,6 +193,96 @@ export default function ReportCenter() {
                   </div>
                </div>
             </div>
+        </div>
+      </div>
+
+      {/* PDF Export Section */}
+      <div className="glass-panel p-8 rounded-[2.5rem] border border-border-main/50 space-y-6">
+        <div>
+          <h3 className="text-sm font-black text-txt-main uppercase tracking-widest flex items-center gap-2">
+            <Download size={18} className="text-corpoelec-blue" />
+            Descarga de Reportes y Documentación Oficial (PDF)
+          </h3>
+          <p className="text-txt-muted mt-1 text-[10px] uppercase font-bold tracking-wider">Generación de archivos certificados por el departamento de ASHO.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          {/* Payroll PDF */}
+          <div className="bg-bg-main/30 p-6 rounded-3xl border border-border-main/30 flex flex-col justify-between space-y-4 hover:border-corpoelec-blue/40 transition-all group">
+            <div className="space-y-2">
+              <div className="p-3 bg-corpoelec-blue/10 text-corpoelec-blue rounded-2xl w-fit">
+                <Users size={22} />
+              </div>
+              <h4 className="font-black text-txt-main text-xs uppercase tracking-wider">Roster / Nómina de Personal</h4>
+              <p className="text-[10px] text-txt-muted font-semibold leading-relaxed uppercase">
+                Listado oficial completo de todo el personal activo en el sistema, detallando cargo, gerencia y cédula de identidad.
+              </p>
+            </div>
+            <button 
+              disabled={downloading.payroll}
+              onClick={() => handleDownload("payroll", "/reports/payroll", "nomina_personal.pdf")}
+              className="btn-primary w-full h-11 text-xs justify-center gap-2"
+            >
+              {downloading.payroll ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <Download size={16} />
+              )}
+              <span>Descargar Nómina</span>
+            </button>
+          </div>
+
+          {/* Accidents List PDF */}
+          <div className="bg-bg-main/30 p-6 rounded-3xl border border-border-main/30 flex flex-col justify-between space-y-4 hover:border-corpoelec-red/40 transition-all group">
+            <div className="space-y-2">
+              <div className="p-3 bg-corpoelec-red/10 text-corpoelec-red rounded-2xl w-fit">
+                <ShieldAlert size={22} />
+              </div>
+              <h4 className="font-black text-txt-main text-xs uppercase tracking-wider">Histórico de Accidentes</h4>
+              <p className="text-[10px] text-txt-muted font-semibold leading-relaxed uppercase">
+                Reporte consolidado del listado general de todos los accidentes e incidentes registrados, con fecha, tipo y estatus del caso.
+              </p>
+            </div>
+            <button 
+              disabled={downloading.accidents}
+              onClick={() => handleDownload("accidents", "/reports/accidents", "listado_accidentes.pdf")}
+              className="btn-primary w-full h-11 text-xs justify-center gap-2 !bg-corpoelec-red hover:!bg-corpoelec-red/90"
+            >
+              {downloading.accidents ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <Download size={16} />
+              )}
+              <span>Descargar Accidentes</span>
+            </button>
+          </div>
+
+          {/* Inspections List PDF */}
+          <div className="bg-bg-main/30 p-6 rounded-3xl border border-border-main/30 flex flex-col justify-between space-y-4 hover:border-amber-500/40 transition-all group">
+            <div className="space-y-2">
+              <div className="p-3 bg-amber-500/10 text-amber-500 rounded-2xl w-fit">
+                <FileText size={22} />
+              </div>
+              <h4 className="font-black text-txt-main text-xs uppercase tracking-wider">Histórico de Inspecciones</h4>
+              <p className="text-[10px] text-txt-muted font-semibold leading-relaxed uppercase">
+                Compendio completo de todas las inspecciones de seguridad realizadas (generales, extintores y vehicular).
+              </p>
+            </div>
+            <button 
+              disabled={downloading.inspections}
+              onClick={() => handleDownload("inspections", "/reports/inspections", "listado_inspecciones.pdf")}
+              className="btn-primary w-full h-11 text-xs justify-center gap-2 !bg-amber-500 hover:!bg-amber-600"
+            >
+              {downloading.inspections ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <Download size={16} />
+              )}
+              <span>Descargar Inspecciones</span>
+            </button>
+          </div>
+
         </div>
       </div>
     </div>

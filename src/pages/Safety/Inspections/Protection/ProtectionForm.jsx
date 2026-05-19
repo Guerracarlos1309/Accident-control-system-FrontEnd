@@ -399,21 +399,21 @@ export default function ProtectionForm({ onCancel, onSuccess, initialData, inspe
             </div>
 
             {/* The Checked Stock Grid List */}
-            <div className="border border-border-main rounded-2xl overflow-hidden bg-bg-surface">
+            <div className="glass-panel overflow-hidden border border-border-main/50 rounded-[2rem]">
               <div className="overflow-x-auto no-scrollbar">
                 <table className="w-full text-left border-collapse min-w-[700px]">
                   <thead>
-                    <tr className="bg-bg-main/20 text-[9px] uppercase font-black text-txt-muted tracking-widest border-b border-border-main">
-                      <th className="px-4 py-3.5 w-12 text-center">Nro</th>
-                      <th className="px-4 py-3.5">Equipo en Stock Inspeccionado</th>
-                      <th className="px-4 py-3.5 text-center w-24">Medida</th>
-                      <th className="px-3 py-3.5 text-center w-24 bg-emerald-500/5 text-emerald-500">Buenos</th>
-                      <th className="px-3 py-3.5 text-center w-24 bg-corpoelec-red/5 text-corpoelec-red">No Sirven</th>
-                      <th className="px-3 py-3.5 text-center w-24 bg-amber-500/5 text-amber-500">No Existen</th>
-                      <th className="px-4 py-3.5">Observaciones Técnicas</th>
+                    <tr className="bg-bg-main/5 text-[10px] font-black uppercase text-txt-muted tracking-[0.2em] border-b border-border-main">
+                      <th className="px-6 py-4 w-12 text-center">Nro</th>
+                      <th className="px-6 py-4">Equipo en Stock Inspeccionado</th>
+                      <th className="px-6 py-4 text-center w-24">Medida</th>
+                      <th className="px-6 py-4 text-center w-24 bg-emerald-500/5 text-emerald-500">Buenos</th>
+                      <th className="px-6 py-4 text-center w-24 bg-corpoelec-red/5 text-corpoelec-red">No Sirven</th>
+                      <th className="px-6 py-4 text-center w-24 bg-amber-500/5 text-amber-500">No Existen</th>
+                      <th className="px-6 py-4">Observaciones Técnicas</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border-main/50">
+                  <tbody className="divide-y divide-border-main/20">
                     {filteredEquipToInspect.length === 0 ? (
                       <tr>
                         <td colSpan="7" className="text-center py-12 text-txt-muted">
@@ -426,11 +426,11 @@ export default function ProtectionForm({ onCancel, onSuccess, initialData, inspe
                         const idx = eq.originalIndex;
                         return (
                           <tr key={eq.id} className="hover:bg-bg-main/5 transition-colors">
-                            <td className="px-4 py-3.5 text-center text-xs font-mono font-bold text-txt-muted">
+                            <td className="px-6 py-4 text-center text-xs font-mono font-bold text-txt-muted">
                               {(eq.category?.id || eq.categoryId || 0).toString().padStart(2, "0")}
                             </td>
                             
-                            <td className="px-4 py-3.5">
+                            <td className="px-6 py-4">
                               <div className="flex flex-col">
                                 <span className="text-xs font-bold text-txt-main uppercase tracking-tight leading-tight">
                                   {eq.name}
@@ -441,14 +441,14 @@ export default function ProtectionForm({ onCancel, onSuccess, initialData, inspe
                               </div>
                             </td>
 
-                            <td className="px-4 py-3.5 text-center">
+                            <td className="px-6 py-4 text-center">
                               <span className="text-[9px] font-black uppercase text-txt-muted bg-bg-main/30 px-2 py-0.5 rounded border border-border-main/60 tracking-wider">
                                 {eq.category?.description || "PIEZAS"}
                               </span>
                             </td>
 
                             {/* Buenos */}
-                            <td className="px-2 py-2 bg-emerald-500/5">
+                            <td className="px-4 py-3 bg-emerald-500/5">
                               <input
                                 type="number"
                                 min="0"
@@ -459,7 +459,7 @@ export default function ProtectionForm({ onCancel, onSuccess, initialData, inspe
                             </td>
 
                             {/* No Sirven */}
-                            <td className="px-2 py-2 bg-corpoelec-red/5">
+                            <td className="px-4 py-3 bg-corpoelec-red/5">
                               <input
                                 type="number"
                                 min="0"
@@ -470,7 +470,7 @@ export default function ProtectionForm({ onCancel, onSuccess, initialData, inspe
                             </td>
 
                             {/* No Existen */}
-                            <td className="px-2 py-2 bg-amber-500/5">
+                            <td className="px-4 py-3 bg-amber-500/5">
                               <input
                                 type="number"
                                 min="0"
@@ -481,7 +481,7 @@ export default function ProtectionForm({ onCancel, onSuccess, initialData, inspe
                             </td>
 
                             {/* Extra observations for this item */}
-                            <td className="px-3 py-2">
+                            <td className="px-6 py-4">
                               <input
                                 type="text"
                                 value={eq.commentText}

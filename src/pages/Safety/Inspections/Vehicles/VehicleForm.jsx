@@ -20,7 +20,7 @@ import {
 import { helpFetch } from "../../../../helpers/helpFetch";
 import { useNotification } from "../../../../context/NotificationContext";
 
-export default function VehicleForm({ onCancel, onSuccess, initialData }) {
+export default function VehicleForm({ onCancel, onSuccess, initialData, inspectionsList = [] }) {
   const api = helpFetch();
   const { showNotification } = useNotification();
   
@@ -78,20 +78,51 @@ export default function VehicleForm({ onCancel, onSuccess, initialData }) {
           });
 
           // If we have accessory data in initialData, use it. 
-          // Note: we fetch full details in VehicleManager before opening this, or expect it here.
           if (initialData.vehicleInspection?.accessoryChecks) {
-            setAccessories(initialData.vehicleInspection.accessoryChecks.map(check => ({
-              accessoryId: check.accessoryId,
-              name: check.accessory?.name || "Accesorio",
-              isFunctional: check.status,
-              observation: check.observations || ""
-            })));
+            setAccessories(initialData.vehicleInspection.accessoryChecks.map(check => {
+              let buenos = check.status ? 1 : 0;
+              let malos = check.status ? 0 : 1;
+              let noExisten = 0;
+              let commentText = "";
+              if (check.observations && check.observations.includes("|")) {
+                const parts = check.observations.split("|");
+                parts.forEach(part => {
+                  const [key, val] = part.split(":");
+                  if (key === "B") buenos = parseInt(val) || 0;
+                  else if (key === "M") malos = parseInt(val) || 0;
+                  else if (key === "NE") noExisten = parseInt(val) || 0;
+                  else if (key === "Obs") commentText = val || "";
+                });
+              } else {
+                commentText = check.observations || "";
+                if (!check.status) {
+                  malos = 1;
+                  buenos = 0;
+                } else {
+                  buenos = 1;
+                  malos = 0;
+                }
+              }
+              const exists = noExisten === 0;
+              return {
+                accessoryId: check.accessoryId,
+                name: check.accessory?.name || "Accesorio",
+                exists,
+                buenos: exists ? buenos : 0,
+                malos: exists ? malos : 0,
+                noExisten,
+                observation: commentText
+              };
+            }));
           } else if (accRes) {
             // Fallback to metadata if no checks present
             setAccessories(accRes.map(acc => ({
               accessoryId: acc.id,
               name: acc.name,
-              isFunctional: true,
+              exists: true,
+              buenos: 1,
+              malos: 0,
+              noExisten: 0,
               observation: ""
             })));
           }
@@ -99,7 +130,10 @@ export default function VehicleForm({ onCancel, onSuccess, initialData }) {
           setAccessories(accRes.map(acc => ({
             accessoryId: acc.id,
             name: acc.name,
-            isFunctional: true,
+            exists: true,
+            buenos: 1,
+            malos: 0,
+            noExisten: 0,
             observation: ""
           })));
         }
@@ -109,51 +143,91 @@ export default function VehicleForm({ onCancel, onSuccess, initialData }) {
         setLoading(false);
       }
     };
-
+ 
     fetchData();
   }, []);
-
+ 
   const selectedVehicle = useMemo(() => {
     return lookups.vehicles.find(v => v.plate === formData.selectedPlate);
   }, [formData.selectedPlate, lookups.vehicles]);
-
+ 
+  const generatedInspectionNumber = useMemo(() => {
+    if (initialData?.inspectionNumber) {
+      return initialData.inspectionNumber;
+    }
+    if (!formData.selectedPlate) {
+      return "SELECCIONE PLACA...";
+    }
+    const year = formData.date ? new Date(formData.date).getFullYear() : new Date().getFullYear();
+    const plate = formData.selectedPlate.trim().toUpperCase();
+    
+    let nextSeq = 1;
+    if (inspectionsList && inspectionsList.length > 0) {
+      const matchingInsps = inspectionsList.filter(
+        i => (i.vehicleInspection?.plateId?.toUpperCase() === plate || i.selectedPlate?.toUpperCase() === plate)
+      );
+      nextSeq = matchingInsps.length + 1;
+    }
+    return `${year}-${plate}-${nextSeq}`;
+  }, [formData.date, formData.selectedPlate, inspectionsList, initialData]);
+ 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
-
-  const toggleAccessory = (id) => {
+ 
+  const toggleExists = (id, currentVal) => {
     setAccessories(prev => prev.map(acc => {
       if (acc.accessoryId === id) {
-        return { ...acc, isFunctional: !acc.isFunctional };
+        const nextVal = !currentVal;
+        return {
+          ...acc,
+          exists: nextVal,
+          buenos: nextVal ? 1 : 0,
+          malos: nextVal ? 0 : 0,
+          noExisten: nextVal ? 0 : 1,
+          observation: nextVal ? "" : "NO EXISTE EN LA UNIDAD"
+        };
       }
       return acc;
     }));
   };
-
+ 
   const updateAccessoryValue = (id, field, value) => {
     setAccessories(prev => prev.map(acc => 
       acc.accessoryId === id ? { ...acc, [field]: value } : acc
     ));
   };
-
+ 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-
+ 
+    const finalInspectionNumber = initialData?.id ? formData.inspectionNumber : generatedInspectionNumber;
+ 
     const payload = {
       date: formData.date,
       facilityId: parseInt(formData.facilityId),
       inspectorId: formData.inspectorId, // Use as string (personalNumber)
       statusId: parseInt(formData.statusId),
-      inspectionNumber: formData.inspectionNumber,
+      inspectionNumber: finalInspectionNumber,
       observations: formData.findings,
       type: "Vehiculo",
       vehicleData: {
         plateId: formData.selectedPlate,
         description: `Inspección física de unidad ${formData.selectedPlate}`,
-        accessoryChecks: accessories.map(({ accessoryId, isFunctional, observation }) => ({
-          accessoryId,
-          status: !!isFunctional, // Match backend model
-          observations: observation // Match backend model
-        }))
+        accessoryChecks: accessories.map(({ accessoryId, exists, buenos, malos, noExisten, observation }) => {
+          const cleanComment = observation ? observation.trim().replace(/[|:]/g, "").slice(0, 100).toUpperCase() : "";
+          const actualNE = exists ? 0 : 1;
+          const actualBuenos = exists ? (buenos || 0) : 0;
+          const actualMalos = exists ? (malos || 0) : 0;
+          
+          const serializedObservations = `B:${actualBuenos}|M:${actualMalos}|NE:${actualNE}|Obs:${cleanComment || (exists ? "" : "NO EXISTE EN LA UNIDAD")}`;
+          const isFunctional = exists && (actualMalos === 0);
+          
+          return {
+            accessoryId,
+            status: isFunctional, // Match backend model
+            observations: serializedObservations // Match backend model
+          };
+        })
       }
     };
 
@@ -233,13 +307,15 @@ export default function VehicleForm({ onCancel, onSuccess, initialData }) {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-1">
-            <label className="text-[10px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">N° de Inspección / Reporte *</label>
+            <label className="text-[10px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">N° de Inspección / Reporte (Auto)</label>
             <div className="relative">
-              <Hash className="absolute left-3 top-1/2 -translate-y-1/2 text-txt-muted" size={14} />
+              <Hash className="absolute left-3 top-1/2 -translate-y-1/2 text-txt-muted/70" size={14} />
               <input 
-                type="text" name="inspectionNumber" required value={formData.inspectionNumber} 
-                onChange={handleChange} placeholder="Ej: AS-2024-001"
-                className="input-field h-12 pl-9 font-bold text-corpoelec-blue"
+                type="text" 
+                name="inspectionNumber" 
+                readOnly 
+                value={generatedInspectionNumber}
+                className="input-field h-12 pl-9 font-black text-corpoelec-blue bg-bg-main/5 border-dashed cursor-not-allowed select-none outline-none focus:ring-0 focus:border-border-main"
               />
             </div>
           </div>
@@ -315,42 +391,86 @@ export default function VehicleForm({ onCancel, onSuccess, initialData }) {
               <h4 className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em]">Checklist de Seguridad</h4>
             </div>
             
-            <div className="overflow-hidden border border-border-main rounded-3xl bg-bg-main/5">
-              <div className="overflow-x-auto">
-                 <table className="w-full text-left border-collapse min-w-[500px]">
+            <div className="glass-panel overflow-hidden border border-border-main/50 rounded-[2rem]">
+              <div className="overflow-x-auto no-scrollbar">
+                 <table className="w-full text-left border-collapse min-w-[800px]">
                     <thead>
-                      <tr className="bg-bg-main/10 text-[10px] font-black uppercase text-txt-muted tracking-[0.1em] border-b border-border-main">
-                        <th className="px-6 py-4 w-1/2">Accesorio / Equipo</th>
-                        <th className="px-6 py-4 text-center">Estado</th>
-                        <th className="px-6 py-4">Observación</th>
+                      <tr className="bg-bg-main/5 text-[10px] font-black uppercase text-txt-muted tracking-[0.2em] border-b border-border-main">
+                        <th className="px-6 py-4 w-12 text-center">Nro</th>
+                        <th className="px-6 py-4">Accesorio / Equipo</th>
+                        <th className="px-6 py-4 text-center w-36">¿Existe?</th>
+                        <th className="px-4 py-4 text-center w-24 bg-emerald-500/5 text-emerald-500">Sirve</th>
+                        <th className="px-4 py-4 text-center w-24 bg-corpoelec-red/5 text-corpoelec-red">No Sirve</th>
+                        <th className="px-4 py-4 text-center w-28 bg-bg-main/5 text-txt-muted">Cantidad</th>
+                        <th className="px-6 py-4">Observación del Inspector</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-border-main">
-                      {accessories.map((acc) => (
-                        <tr key={acc.accessoryId} className="hover:bg-bg-main/5 transition-colors">
-                          <td className="px-6 py-4">
-                            <span className="text-xs font-black text-txt-main">{acc.name}</span>
+                    <tbody className="divide-y divide-border-main/20">
+                      {accessories.map((acc, index) => (
+                        <tr key={acc.accessoryId} className={`transition-colors duration-350 ${acc.exists ? "hover:bg-bg-main/5" : "bg-bg-main/5/10 bg-black/5"}`}>
+                          <td className="px-6 py-4 text-center text-xs font-mono font-bold text-txt-muted">
+                            {(index + 1).toString().padStart(2, "0")}
                           </td>
                           <td className="px-6 py-4">
-                            <div className="flex justify-center bg-bg-surface p-1 rounded-xl w-fit mx-auto border border-border-main">
+                            <span className="text-xs font-black text-txt-main uppercase tracking-tight leading-tight">{acc.name}</span>
+                          </td>
+
+                          {/* Toggle Switch: Existe */}
+                          <td className="px-6 py-4">
+                            <div className="flex justify-center bg-bg-surface p-1 rounded-xl w-fit mx-auto border border-border-main shadow-inner">
                               <button
                                 type="button"
-                                onClick={() => toggleAccessory(acc.accessoryId)}
-                                className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${acc.isFunctional ? "bg-corpoelec-blue text-white shadow-lg shadow-corpoelec-blue/20" : "text-txt-muted hover:text-txt-main"}`}
-                              >OK</button>
+                                onClick={() => toggleExists(acc.accessoryId, acc.exists)}
+                                className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all cursor-pointer ${acc.exists ? "bg-corpoelec-blue text-white shadow-md shadow-corpoelec-blue/20" : "text-txt-muted hover:text-txt-main"}`}
+                              >SÍ</button>
                               <button
                                 type="button"
-                                onClick={() => toggleAccessory(acc.accessoryId)}
-                                className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${!acc.isFunctional ? "bg-corpoelec-red text-white shadow-lg shadow-corpoelec-red/20" : "text-txt-muted hover:text-txt-main"}`}
-                              >Falla</button>
+                                onClick={() => toggleExists(acc.accessoryId, acc.exists)}
+                                className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all cursor-pointer ${!acc.exists ? "bg-corpoelec-red text-white shadow-md shadow-corpoelec-red/20" : "text-txt-muted hover:text-txt-main"}`}
+                              >NO</button>
                             </div>
                           </td>
-                          <td className="px-6 py-4">
+                          
+                          {/* Sirve (Buenos) */}
+                          <td className={`px-4 py-3 bg-emerald-500/5 transition-all duration-300 ${!acc.exists ? "opacity-20" : ""}`}>
+                            <input
+                              type="number"
+                              min="0"
+                              disabled={!acc.exists}
+                              value={!acc.exists ? "0" : (acc.buenos === 0 ? "" : acc.buenos)}
+                              onChange={(e) => updateAccessoryValue(acc.accessoryId, "buenos", parseInt(e.target.value) || 0)}
+                              className="w-full rounded-xl px-2.5 py-2 text-center text-xs font-black bg-bg-surface border border-emerald-500/30 text-emerald-500 focus:border-emerald-500 outline-none shadow-inner disabled:cursor-not-allowed"
+                            />
+                          </td>
+
+                          {/* No Sirve (Fallas) */}
+                          <td className={`px-4 py-3 bg-corpoelec-red/5 transition-all duration-300 ${!acc.exists ? "opacity-20" : ""}`}>
+                            <input
+                              type="number"
+                              min="0"
+                              disabled={!acc.exists}
+                              value={!acc.exists ? "0" : (acc.malos === 0 ? "" : acc.malos)}
+                              onChange={(e) => updateAccessoryValue(acc.accessoryId, "malos", parseInt(e.target.value) || 0)}
+                              className="w-full rounded-xl px-2.5 py-2 text-center text-xs font-black bg-bg-surface border border-corpoelec-red/30 text-corpoelec-red focus:border-corpoelec-red outline-none shadow-inner disabled:cursor-not-allowed"
+                            />
+                          </td>
+
+                          {/* Cantidad Total */}
+                          <td className={`px-4 py-3 bg-bg-main/5 text-center transition-all duration-300 ${!acc.exists ? "opacity-20" : ""}`}>
+                            <span className="inline-flex px-3 py-1 rounded-full bg-bg-surface border border-border-main/50 text-[11px] font-black text-txt-main min-w-[45px] justify-center shadow-sm">
+                              {!acc.exists ? 0 : (acc.buenos + acc.malos)}
+                            </span>
+                          </td>
+
+                          {/* Observation */}
+                          <td className={`px-6 py-4 transition-all duration-300 ${!acc.exists ? "opacity-40" : ""}`}>
                             <input 
-                              type="text" value={acc.observation} 
+                              type="text" 
+                              disabled={!acc.exists}
+                              value={acc.observation} 
                               onChange={(e) => updateAccessoryValue(acc.accessoryId, 'observation', e.target.value)}
-                              placeholder="..."
-                              className="w-full bg-transparent border-none text-xs text-txt-muted focus:ring-0 italic placeholder:opacity-30"
+                              placeholder={acc.exists ? "..." : "BLOQUEADO - NO EXISTE"}
+                              className="w-full bg-transparent border-none text-xs text-txt-muted focus:ring-0 italic placeholder:opacity-30 uppercase font-semibold disabled:cursor-not-allowed disabled:text-txt-muted/30"
                             />
                           </td>
                         </tr>

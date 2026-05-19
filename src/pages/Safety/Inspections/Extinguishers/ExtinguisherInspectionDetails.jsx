@@ -12,14 +12,18 @@ import {
   Info,
   Check,
   X,
-  FileText
+  FileText,
+  Download
 } from "lucide-react";
 import { helpFetch } from "../../../../helpers/helpFetch";
+import { useNotification } from "../../../../context/NotificationContext";
 
 export default function ExtinguisherInspectionDetails({ inspectionId }) {
   const [inspection, setInspection] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
   const api = helpFetch();
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -181,11 +185,44 @@ export default function ExtinguisherInspectionDetails({ inspectionId }) {
     );
   }
 
+  const handleDownloadPdf = async () => {
+    setDownloading(true);
+    try {
+      showNotification("Generando PDF...", "info");
+      await api.download(`/reports/inspections/${inspectionId}`, `inspeccion_${inspection.inspectionNumber || inspection.id}.pdf`);
+      showNotification("PDF descargado con éxito", "success");
+    } catch (e) {
+      showNotification("Error al generar PDF", "error");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const extInsp = inspection.extinguisherInspection || {};
   const detailsList = extInsp.details || [];
 
   return (
     <div className="space-y-8 pb-4 text-txt-main">
+
+      {/* TOP HEADER WITH EXPORT BUTTON */}
+      <div className="flex justify-between items-center bg-bg-main/30 p-4 rounded-2xl border border-border-main">
+        <div>
+          <h3 className="text-xs font-black text-txt-main uppercase tracking-widest">Reporte Técnico (Cilindros)</h3>
+          <p className="text-[9px] text-txt-muted font-bold uppercase tracking-wider mt-0.5">Inspección de Extintores contra Incendios</p>
+        </div>
+        <button 
+          disabled={downloading}
+          onClick={handleDownloadPdf}
+          className="btn-primary h-10 text-[10px] font-black uppercase tracking-widest gap-2 bg-corpoelec-blue hover:bg-corpoelec-blue/90 px-4 rounded-xl text-white transition-all flex items-center"
+        >
+          {downloading ? (
+            <Loader2 size={14} className="animate-spin" />
+          ) : (
+            <Download size={14} />
+          )}
+          <span>Exportar PDF</span>
+        </button>
+      </div>
       
       {/* HEADER: STATUS & KEY INFO */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-4 duration-300">

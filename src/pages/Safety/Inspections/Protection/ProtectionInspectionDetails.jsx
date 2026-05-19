@@ -11,14 +11,18 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
-  Info
+  Info,
+  Download
 } from "lucide-react";
 import { helpFetch } from "../../../../helpers/helpFetch";
+import { useNotification } from "../../../../context/NotificationContext";
 
 export default function ProtectionInspectionDetails({ inspectionId }) {
   const [inspection, setInspection] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
   const api = helpFetch();
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -56,6 +60,19 @@ export default function ProtectionInspectionDetails({ inspectionId }) {
     );
   }
 
+  const handleDownloadPdf = async () => {
+    setDownloading(true);
+    try {
+      showNotification("Generando PDF...", "info");
+      await api.download(`/reports/inspections/${inspectionId}`, `inspeccion_${inspection.inspectionNumber || inspection.id}.pdf`);
+      showNotification("PDF descargado con éxito", "success");
+    } catch (e) {
+      showNotification("Error al generar PDF", "error");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const protInsp = inspection.protectionInspection || {};
   const detailsList = protInsp.details || [];
 
@@ -64,6 +81,26 @@ export default function ProtectionInspectionDetails({ inspectionId }) {
 
   return (
     <div className="space-y-8 pb-4 text-txt-main">
+
+      {/* TOP HEADER WITH EXPORT BUTTON */}
+      <div className="flex justify-between items-center bg-bg-main/30 p-4 rounded-2xl border border-border-main">
+        <div>
+          <h3 className="text-xs font-black text-txt-main uppercase tracking-widest">Reporte de Lote (EPI)</h3>
+          <p className="text-[9px] text-txt-muted font-bold uppercase tracking-wider mt-0.5">Gestión de Inventario y Protección</p>
+        </div>
+        <button 
+          disabled={downloading}
+          onClick={handleDownloadPdf}
+          className="btn-primary h-10 text-[10px] font-black uppercase tracking-widest gap-2 bg-corpoelec-blue hover:bg-corpoelec-blue/90 px-4 rounded-xl text-white transition-all flex items-center"
+        >
+          {downloading ? (
+            <Loader2 size={14} className="animate-spin" />
+          ) : (
+            <Download size={14} />
+          )}
+          <span>Exportar PDF</span>
+        </button>
+      </div>
       
       {/* HEADER: STATUS & KEY INFO */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -160,11 +197,11 @@ export default function ProtectionInspectionDetails({ inspectionId }) {
             No hay detalles de equipos registrados en este lote.
           </div>
         ) : (
-          <div className="border border-border-main rounded-2xl overflow-hidden shadow-sm bg-bg-surface">
+          <div className="glass-panel overflow-hidden border border-border-main/50 rounded-[2rem] shadow-sm">
              <div className="overflow-x-auto no-scrollbar max-h-[50vh] overflow-y-auto">
                <table className="w-full text-left border-collapse">
-                  <thead className="sticky top-0 z-20 bg-bg-surface border-b border-border-main shadow-sm">
-                    <tr className="bg-bg-main/20 text-[9px] uppercase font-black text-txt-muted tracking-widest">
+                  <thead className="sticky top-0 z-20 bg-bg-surface border-b border-border-main/50 shadow-sm">
+                    <tr className="bg-bg-main/5 text-[10px] font-black uppercase text-txt-muted tracking-[0.2em] border-b border-border-main">
                       <th className="px-4 py-3 text-center w-12">Nro</th>
                       <th className="px-5 py-3">Descripción del Material</th>
                       <th className="px-4 py-3 text-center w-24">Medida</th>
@@ -175,7 +212,7 @@ export default function ProtectionInspectionDetails({ inspectionId }) {
                       <th className="px-5 py-3">Observaciones Técnicas</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border-main/50">
+                  <tbody className="divide-y divide-border-main/20">
                     {detailsList.map((detail) => {
                       // Decode serialized observations: B:10|M:2|NE:3|Obs:Comment
                       let buenos = detail.operative !== undefined ? detail.operative : 0;

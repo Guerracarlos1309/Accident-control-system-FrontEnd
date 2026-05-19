@@ -81,18 +81,18 @@ export default function VehicleManager() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500 text-txt-main">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-100 tracking-tight text-txt-main">
+          <h2 className="text-2xl font-black tracking-tighter text-txt-main">
             Inspección de Vehículos
           </h2>
-          <p className="text-slate-400 mt-1 text-sm md:text-base">
+          <p className="text-txt-muted mt-1 text-sm md:text-base">
             Control y registro de auditorías preventivas del parque automotor.
           </p>
         </div>
         <button
-          className="btn-primary w-full sm:w-auto shadow-lg shadow-blue-600/20"
+          className="btn-primary w-full sm:w-auto shadow-lg shadow-corpoelec-blue/20"
           onClick={() => setIsModalOpen(true)}
         >
           <Plus size={20} />
@@ -100,20 +100,20 @@ export default function VehicleManager() {
         </button>
       </div>
 
-      <div className="glass-panel overflow-hidden border border-slate-800/50 rounded-3xl">
+      <div className="glass-panel overflow-hidden border border-border-main/50 rounded-[2rem]">
         {loading && inspections.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 space-y-4">
-            <Loader2 size={40} className="text-blue-500 animate-spin" />
-            <p className="text-slate-500 font-medium">
+          <div className="flex flex-col items-center justify-center py-20 space-y-4 text-txt-muted">
+            <Loader2 size={40} className="text-corpoelec-blue animate-spin" />
+            <p className="text-[10px] font-black uppercase tracking-[0.2em]">
               Buscando registros técnicos...
             </p>
           </div>
         ) : inspections.length === 0 ? (
-          <div className="text-center py-20 text-slate-500">
-            <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-800">
-              <ClipboardCheck size={32} className="text-slate-700" />
+          <div className="text-center py-20 text-txt-muted">
+            <div className="w-16 h-16 bg-bg-main/20 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-border-main">
+              <ClipboardCheck size={32} className="text-txt-muted" />
             </div>
-            <p className="font-medium">
+            <p className="font-bold uppercase tracking-widest text-xs">
               No hay inspecciones de vehículos registradas actualmente.
             </p>
           </div>
@@ -121,61 +121,61 @@ export default function VehicleManager() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-900/50 text-[10px] font-black uppercase text-slate-500 tracking-widest border-b border-slate-800">
-                  <th className="px-6 py-4">Fecha e Informe</th>
-                  <th className="px-6 py-4">Unidad / Placa</th>
-                  <th className="px-6 py-4">Inspector</th>
-                  <th className="px-6 py-4">Ubicación</th>
-                  <th className="px-6 py-4 text-center">Estado</th>
-                  <th className="px-6 py-4 text-right">Acciones</th>
+                <tr className="bg-bg-main/5 text-[10px] font-black uppercase text-txt-muted tracking-[0.2em] border-b border-border-main">
+                  <th className="px-8 py-5">Fecha e Informe</th>
+                  <th className="px-8 py-5">Unidad / Placa</th>
+                  <th className="px-8 py-5">Inspector</th>
+                  <th className="px-8 py-5">Ubicación</th>
+                  <th className="px-8 py-5 text-center">Estado</th>
+                  <th className="px-8 py-5 text-right">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/40">
+              <tbody className="divide-y divide-border-main/20">
                 {inspections.map((insp) => (
                   <tr
                     key={insp.id}
-                    className="hover:bg-slate-800/10 transition-colors group cursor-pointer"
+                    className="hover:bg-bg-main/5 transition-colors group cursor-pointer"
                     onClick={() => handleViewDetails(insp.id)}
                   >
-                    <td className="px-6 py-4">
+                    <td className="px-8 py-5">
                       <div className="flex flex-col">
-                        <span className="text-sm font-bold text-white flex items-center gap-2">
-                          <Calendar size={14} className="text-blue-500" />
+                        <span className="text-sm font-bold text-txt-main flex items-center gap-2">
+                          <Calendar size={14} className="text-corpoelec-blue" />
                           {new Date(insp.date).toLocaleDateString()}
                         </span>
-                        <span className="text-[10px] text-slate-500 font-mono mt-0.5 uppercase tracking-tighter">
+                        <span className="text-[10px] text-txt-muted font-mono mt-0.5 uppercase tracking-tighter">
                           ID: #{insp.id.toString().padStart(6, "0")}
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm">
+                    <td className="px-8 py-5 text-sm">
                       <div className="flex flex-col">
-                        <span className="font-black text-blue-400 tracking-wider">
+                        <span className="font-black text-corpoelec-blue tracking-wider">
                           {insp.vehicleInspection?.plateId || "S/P"}
                         </span>
-                        <span className="text-[10px] text-slate-500 uppercase font-bold">
+                        <span className="text-[10px] text-txt-muted uppercase font-bold">
                           Registro Vehicular
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-8 py-5">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-300 border border-slate-700">
+                        <div className="w-7 h-7 rounded-lg bg-bg-main/20 flex items-center justify-center text-[10px] font-bold text-txt-sub border border-border-main">
                           {insp.inspector?.firstName?.[0] || "U"}
                           {insp.inspector?.lastName?.[0] || ""}
                         </div>
-                        <span className="text-sm text-slate-300 font-medium">
+                        <span className="text-sm text-txt-sub font-semibold">
                           {insp.inspector?.firstName} {insp.inspector?.lastName}
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 text-slate-400 text-sm">
-                        <MapPin size={14} className="text-slate-600" />
+                    <td className="px-8 py-5">
+                      <div className="flex items-center gap-2 text-txt-sub text-sm">
+                        <MapPin size={14} className="text-txt-muted" />
                         {insp.facility?.name || "No asignada"}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-8 py-5">
                       <div className="flex justify-center">
                         <span
                           className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
@@ -183,16 +183,16 @@ export default function VehicleManager() {
                               ? "bg-emerald-500/5 text-emerald-500 border-emerald-500/20"
                               : insp.statusId === 2
                                 ? "bg-amber-500/5 text-amber-500 border-amber-500/20"
-                                : "bg-slate-500/5 text-slate-500 border-slate-500/20"
+                                : "bg-txt-muted/5 text-txt-muted border-border-main"
                           }`}
                         >
                           {insp.status?.name || "Pendiente"}
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-8 py-5 text-right">
                       <button
-                        className="p-2 text-slate-400 hover:text-blue-400 transition-all bg-slate-800/0 hover:bg-slate-800 rounded-lg group"
+                        className="p-2 text-txt-muted hover:text-corpoelec-blue transition-all bg-transparent hover:bg-bg-main/10 rounded-lg group"
                         disabled={isFetchingEdit === insp.id}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -209,7 +209,7 @@ export default function VehicleManager() {
                         )}
                       </button>
                       <button
-                        className="p-2 text-slate-400 hover:text-white transition-all bg-slate-800/0 hover:bg-slate-800 rounded-lg group"
+                        className="p-2 text-txt-muted hover:text-txt-main transition-all bg-transparent hover:bg-bg-main/10 rounded-lg group"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleViewDetails(insp.id);
@@ -244,6 +244,7 @@ export default function VehicleManager() {
           onCancel={handleCloseModal}
           onSuccess={fetchInspections}
           initialData={initialData}
+          inspectionsList={inspections}
         />
       </Modal>
 

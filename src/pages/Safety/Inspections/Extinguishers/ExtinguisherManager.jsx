@@ -100,7 +100,7 @@ export default function ExtinguisherManager() {
       </div>
 
       {/* TABLE/GRID SECTION */}
-      <div className="glass-panel overflow-hidden rounded-3xl border border-border-main">
+      <div className="glass-panel overflow-hidden border border-border-main/50 rounded-[2rem]">
         {loading && inspections.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 space-y-4 text-txt-muted">
             <Loader2 size={40} className="text-corpoelec-blue animate-spin" />
@@ -117,23 +117,23 @@ export default function ExtinguisherManager() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-bg-main/30 text-[10px] font-black uppercase text-txt-muted tracking-widest border-b border-border-main">
-                  <th className="px-6 py-4">Fecha e Informe</th>
-                  <th className="px-6 py-4">Código Extintor</th>
-                  <th className="px-6 py-4">Inspector</th>
-                  <th className="px-6 py-4">Sede / Centro</th>
-                  <th className="px-6 py-4 text-center">Estado Global</th>
-                  <th className="px-6 py-4 text-right">Acciones</th>
+                <tr className="bg-bg-main/5 text-[10px] font-black uppercase text-txt-muted tracking-[0.2em] border-b border-border-main">
+                  <th className="px-8 py-5">Fecha e Informe</th>
+                  <th className="px-8 py-5">Código Extintor</th>
+                  <th className="px-8 py-5">Inspector</th>
+                  <th className="px-8 py-5">Sede / Centro</th>
+                  <th className="px-8 py-5 text-center">Estado Global</th>
+                  <th className="px-8 py-5 text-right">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border-main/50 bg-bg-surface/10">
+              <tbody className="divide-y divide-border-main/20">
                 {inspections.map((insp) => (
                   <tr 
                     key={insp.id} 
                     className="hover:bg-bg-main/5 transition-colors group cursor-pointer"
                     onClick={() => handleViewDetails(insp.id)}
                   >
-                    <td className="px-6 py-4">
+                    <td className="px-8 py-5">
                       <div className="flex flex-col">
                         <span className="text-sm font-bold text-txt-main flex items-center gap-2">
                           <Calendar size={14} className="text-corpoelec-blue" />
@@ -144,7 +144,7 @@ export default function ExtinguisherManager() {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm">
+                    <td className="px-8 py-5 text-sm">
                       <div className="flex flex-col">
                         <span className="font-black text-corpoelec-blue tracking-wider">
                           {insp.extinguisherInspection?.extinguisherCode || "S/C"}
@@ -154,7 +154,7 @@ export default function ExtinguisherManager() {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-8 py-5">
                       <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-lg bg-bg-main/20 flex items-center justify-center text-[10px] font-bold text-txt-sub border border-border-main">
                           {insp.inspector?.firstName?.[0] || "U"}
@@ -165,13 +165,13 @@ export default function ExtinguisherManager() {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-8 py-5">
                       <div className="flex items-center gap-2 text-txt-sub text-sm">
                         <MapPin size={14} className="text-txt-muted" />
                         {insp.facility?.name || "Sede no registrada"}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-8 py-5">
                       <div className="flex justify-center">
                         <span 
                           className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
@@ -186,7 +186,7 @@ export default function ExtinguisherManager() {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-8 py-5 text-right">
                       <button
                         className="p-2 text-txt-muted hover:text-corpoelec-blue transition-all bg-transparent hover:bg-bg-main/10 rounded-lg group"
                         disabled={isFetchingEdit === insp.id}
