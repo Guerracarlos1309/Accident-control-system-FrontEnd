@@ -99,6 +99,28 @@ export default function FacilityForm({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // 1. Name length validation
+    const nameVal = formData.name.trim();
+    if (!nameVal) {
+      showNotification("El nombre de la sede es obligatorio", "error");
+      return;
+    }
+    if (nameVal.length < 3) {
+      showNotification("El nombre de la sede debe tener al menos 3 caracteres", "error");
+      return;
+    }
+
+    // 2. Coordinates format validation (if provided)
+    if (formData.coordinates) {
+      const coordVal = formData.coordinates.trim();
+      const coordRegex = /^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/;
+      if (!coordRegex.test(coordVal)) {
+        showNotification("Las coordenadas deben tener un formato 'LATITUD, LONGITUD' válido (Ej: 11.6667, -70.2167)", "error");
+        return;
+      }
+    }
+
     if (!location.parish)
       return showNotification(
         "La ubicación geográfica es obligatoria",

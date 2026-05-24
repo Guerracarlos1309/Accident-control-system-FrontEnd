@@ -116,6 +116,30 @@ export default function VehicleRegistryForm({ onCancel, initialData = null, onSu
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // 1. Plate/Serial format validation
+    const plateVal = formData.plate.trim();
+    if (!plateVal) {
+      showNotification("La placa o serial es obligatoria", "error");
+      return;
+    }
+    if (!/^[A-Za-z0-9-]+$/.test(plateVal)) {
+      showNotification("La placa solo puede contener letras, números y guiones (sin espacios)", "error");
+      return;
+    }
+    if (plateVal.length < 5 || plateVal.length > 10) {
+      showNotification("La placa debe tener entre 5 y 10 caracteres", "error");
+      return;
+    }
+
+    // 2. Year of fabrication validation
+    const yearVal = parseInt(formData.year, 10);
+    const currentYear = new Date().getFullYear();
+    if (isNaN(yearVal) || yearVal < 1900 || yearVal > currentYear + 1) {
+      showNotification(`El año de fabricación debe estar entre 1900 y ${currentYear + 1}`, "error");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {

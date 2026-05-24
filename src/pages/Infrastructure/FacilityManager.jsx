@@ -22,8 +22,10 @@ import FacilityForm from "./FacilityForm";
 import FacilityView from "./FacilityView";
 import { helpFetch } from "../../helpers/helpFetch";
 import { useNotification } from "../../context/NotificationContext";
+import { useAuth } from "../../context/AuthContext";
 
 export default function FacilityManager() {
+  const { user } = useAuth();
   const [facilities, setFacilities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -31,7 +33,7 @@ export default function FacilityManager() {
   const [editingFacility, setEditingFacility] = useState(null);
   const [viewingFacility, setViewingFacility] = useState(null);
   const [itemToDelete, setItemToDelete] = useState(null);
-  const [viewMode, setViewMode] = useState("grid"); // "grid" or "table"
+  const [viewMode, setViewMode] = useState("table"); // "grid" or "table"
 
   const api = helpFetch();
   const { showNotification } = useNotification();
@@ -127,15 +129,17 @@ export default function FacilityManager() {
             </button>
           </div>
 
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="btn-primary shadow-lg shadow-corpoelec-blue/20 flex-1 md:flex-none"
-          >
-            <Plus size={18} />
-            <span className="uppercase text-[10px] tracking-widest">
-              Nueva Sede
-            </span>
-          </button>
+          {user?.role !== 'Analista' && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="btn-primary shadow-lg shadow-corpoelec-blue/20 flex-1 md:flex-none"
+            >
+              <Plus size={18} />
+              <span className="uppercase text-[10px] tracking-widest">
+                Nueva Sede
+              </span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -257,23 +261,28 @@ export default function FacilityManager() {
                   <div className="mt-7 flex gap-2">
                     <button
                       onClick={() => handleView(facility)}
-                      className="w-11 h-11 rounded-xl bg-bg-main border border-border-main text-txt-muted hover:text-corpoelec-blue hover:bg-corpoelec-blue/5 hover:border-corpoelec-blue/20 transition-all flex items-center justify-center active:scale-95"
-                      title="Ver Ficha Técnica"
+                      className={`h-11 rounded-xl bg-bg-main border border-border-main text-txt-muted hover:text-corpoelec-blue hover:bg-corpoelec-blue/5 hover:border-corpoelec-blue/20 transition-all flex items-center justify-center active:scale-95 gap-2 ${user?.role === 'Analista' ? 'w-full text-[9px] font-black uppercase tracking-widest' : 'w-11'}`}
+                      title="Ver Ficha"
                     >
                       <Eye size={18} />
+                      {user?.role === 'Analista' && "Ver Ficha Técnica"}
                     </button>
-                    <button
-                      onClick={() => handleEdit(facility)}
-                      className="flex-1 h-11 rounded-xl bg-bg-main border border-border-main text-[9px] font-black uppercase tracking-widest text-txt-muted hover:text-corpoelec-blue hover:border-corpoelec-blue/30 transition-all flex items-center justify-center gap-2 active:scale-95"
-                    >
-                      <Edit2 size={14} /> Editar
-                    </button>
-                    <button
-                      onClick={() => setItemToDelete(facility)}
-                      className="w-11 h-11 rounded-xl bg-bg-main border border-border-main text-txt-muted hover:text-corpoelec-red hover:bg-corpoelec-red/5 hover:border-corpoelec-red/20 transition-all flex items-center justify-center active:scale-95"
-                    >
-                      <Trash2 size={18} />
-                    </button>
+                    {user?.role !== 'Analista' && (
+                      <>
+                        <button
+                          onClick={() => handleEdit(facility)}
+                          className="flex-1 h-11 rounded-xl bg-bg-main border border-border-main text-[9px] font-black uppercase tracking-widest text-txt-muted hover:text-corpoelec-blue hover:border-corpoelec-blue/30 transition-all flex items-center justify-center gap-2 active:scale-95"
+                        >
+                          <Edit2 size={14} /> Editar
+                        </button>
+                        <button
+                          onClick={() => setItemToDelete(facility)}
+                          className="w-11 h-11 rounded-xl bg-bg-main border border-border-main text-txt-muted hover:text-corpoelec-red hover:bg-corpoelec-red/5 hover:border-corpoelec-red/20 transition-all flex items-center justify-center active:scale-95"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -365,20 +374,24 @@ export default function FacilityManager() {
                           >
                             <Eye size={16} />
                           </button>
-                          <button
-                            onClick={() => handleEdit(facility)}
-                            className="p-2 rounded-lg text-txt-muted hover:text-corpoelec-blue hover:bg-corpoelec-blue/10 transition-all"
-                            title="Editar"
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          <button
-                            onClick={() => setItemToDelete(facility)}
-                            className="p-2 rounded-lg text-txt-muted hover:text-corpoelec-red hover:bg-corpoelec-red/10 transition-all"
-                            title="Eliminar"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          {user?.role !== 'Analista' && (
+                            <>
+                              <button
+                                onClick={() => handleEdit(facility)}
+                                className="p-2 rounded-lg text-txt-muted hover:text-corpoelec-blue hover:bg-corpoelec-blue/10 transition-all"
+                                title="Editar"
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                              <button
+                                onClick={() => setItemToDelete(facility)}
+                                className="p-2 rounded-lg text-txt-muted hover:text-corpoelec-red hover:bg-corpoelec-red/10 transition-all"
+                                title="Eliminar"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>

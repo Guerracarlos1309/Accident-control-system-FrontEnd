@@ -11,15 +11,42 @@ import {
 } from "lucide-react";
 import logoCorpoelec from "../assets/logoCorpoelecSinFondo.png";
 import { useTheme } from "../context/ThemeContext";
+import { useAuth } from "../context/AuthContext";
 
 import { useState, useEffect } from "react";
 import { NAVIGATION_CONFIG } from "../config/navigation";
 
 export default function MainLayout() {
   const { theme, toggleTheme } = useTheme();
+  const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [openMenus, setOpenMenus] = useState({});
+
+  const filteredNavConfig = NAVIGATION_CONFIG.filter((module) => {
+    if (module.allowedRoles && !module.allowedRoles.includes(user?.role)) {
+      return false;
+    }
+    return true;
+  }).map((module) => {
+    if (module.items) {
+      return {
+        ...module,
+        items: module.items.filter((item) => {
+          if (item.allowedRoles && !item.allowedRoles.includes(user?.role)) {
+            return false;
+          }
+          return true;
+        }),
+      };
+    }
+    return module;
+  }).filter((module) => {
+    if (!module.isRoot && (!module.items || module.items.length === 0)) {
+      return false;
+    }
+    return true;
+  });
   const [profileOpen, setProfileOpen] = useState(false);
   const location = useLocation();
 
@@ -40,7 +67,7 @@ export default function MainLayout() {
   useEffect(() => {
     if (!sidebarOpen) return;
 
-    const currentModule = NAVIGATION_CONFIG.find((m) =>
+    const currentModule = filteredNavConfig.find((m) =>
       m.items?.some((item) => location.pathname.startsWith(item.path)),
     );
 
@@ -115,7 +142,7 @@ export default function MainLayout() {
         </div>
 
         <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto custom-scrollbar">
-          {NAVIGATION_CONFIG.map((module) => (
+          {filteredNavConfig.map((module) => (
             <div
               key={module.id}
               className={
@@ -229,7 +256,7 @@ export default function MainLayout() {
               onClick={() => setProfileOpen(!profileOpen)}
               className="w-10 h-10 rounded-xl bg-corpoelec-blue flex items-center justify-center font-bold text-sm text-white shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all focus:outline-none ring-offset-2 ring-offset-bg-primary hover:ring-2 ring-corpoelec-blue"
             >
-              U
+              {(user?.name || user?.username || "U")[0].toUpperCase()}
             </button>
 
             {profileOpen && (
@@ -241,11 +268,14 @@ export default function MainLayout() {
                 <div className="absolute right-0 top-12 w-64 bg-bg-surface border border-border-main rounded-2xl shadow-lg py-2 z-50">
                   <div className="px-4 py-3 border-b border-border-main mb-2">
                     <p className="text-sm font-black text-txt-main">
-                      Usuario Administrador
+                      {user?.name || user?.username || "Usuario"}
                     </p>
                     <p className="text-[10px] text-txt-muted truncate mt-0.5 font-mono">
-                      admin.asho@corpoelec.com
+                      {user?.email || user?.username || "usuario.asho@corpoelec.com"}
                     </p>
+                    <span className="inline-block mt-1 text-[8px] font-black uppercase tracking-wider bg-corpoelec-blue/10 text-corpoelec-blue px-2 py-0.5 rounded border border-corpoelec-blue/20">
+                      Rol: {user?.role || "Sin Rol"}
+                    </span>
                   </div>
                   <NavLink
                     to="/profile"

@@ -15,6 +15,7 @@ import VehicleForm from "./VehicleForm";
 import VehicleInspectionDetails from "./VehicleInspectionDetails";
 import { helpFetch } from "../../../../helpers/helpFetch";
 import { useNotification } from "../../../../context/NotificationContext";
+import { useAuth } from "../../../../context/AuthContext";
 
 export default function VehicleManager() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -26,6 +27,7 @@ export default function VehicleManager() {
   const [isFetchingEdit, setIsFetchingEdit] = useState(false); // For edit button loading state
   const api = helpFetch();
   const { showNotification } = useNotification();
+  const { user } = useAuth();
 
   const fetchInspections = async () => {
     setLoading(true);
@@ -91,13 +93,15 @@ export default function VehicleManager() {
             Control y registro de auditorías preventivas del parque automotor.
           </p>
         </div>
-        <button
-          className="btn-primary w-full sm:w-auto shadow-lg shadow-corpoelec-blue/20"
-          onClick={() => setIsModalOpen(true)}
-        >
-          <Plus size={20} />
-          <span>Nueva Inspección</span>
-        </button>
+        {user?.role !== 'Analista' && (
+          <button
+            className="btn-primary w-full sm:w-auto shadow-lg shadow-corpoelec-blue/20"
+            onClick={() => setIsModalOpen(true)}
+          >
+            <Plus size={20} />
+            <span>Nueva Inspección</span>
+          </button>
+        )}
       </div>
 
       <div className="glass-panel overflow-hidden border border-border-main/50 rounded-[2rem]">
@@ -191,23 +195,25 @@ export default function VehicleManager() {
                       </div>
                     </td>
                     <td className="px-8 py-5 text-right">
-                      <button
-                        className="p-2 text-txt-muted hover:text-corpoelec-blue transition-all bg-transparent hover:bg-bg-main/10 rounded-lg group"
-                        disabled={isFetchingEdit === insp.id}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEdit(insp.id);
-                        }}
-                      >
-                        {isFetchingEdit === insp.id ? (
-                          <Loader2 size={18} className="animate-spin" />
-                        ) : (
-                          <Pencil
-                            size={18}
-                            className="transition-transform group-hover:scale-110"
-                          />
-                        )}
-                      </button>
+                      {user?.role !== 'Analista' && (
+                        <button
+                          className="p-2 text-txt-muted hover:text-corpoelec-blue transition-all bg-transparent hover:bg-bg-main/10 rounded-lg group"
+                          disabled={isFetchingEdit === insp.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(insp.id);
+                          }}
+                        >
+                          {isFetchingEdit === insp.id ? (
+                            <Loader2 size={18} className="animate-spin" />
+                          ) : (
+                            <Pencil
+                              size={18}
+                              className="transition-transform group-hover:scale-110"
+                            />
+                          )}
+                        </button>
+                      )}
                       <button
                         className="p-2 text-txt-muted hover:text-txt-main transition-all bg-transparent hover:bg-bg-main/10 rounded-lg group"
                         onClick={(e) => {

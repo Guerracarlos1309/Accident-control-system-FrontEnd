@@ -28,8 +28,12 @@ export const NotificationProvider = ({ children }) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   }, []);
 
+  const clearNotifications = useCallback(() => {
+    setNotifications([]);
+  }, []);
+
   return (
-    <NotificationContext.Provider value={{ showNotification }}>
+    <NotificationContext.Provider value={{ showNotification, clearNotifications }}>
       {children}
       <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[999999] flex flex-col gap-2 pointer-events-none w-full max-w-sm">
         {notifications.map((n) => (

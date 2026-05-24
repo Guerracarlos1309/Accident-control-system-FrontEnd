@@ -14,8 +14,10 @@ import VehicleRegistryForm from "./VehicleRegistryForm";
 import VehicleDetails from "./VehicleDetails";
 import { helpFetch } from "../../../helpers/helpFetch";
 import { useNotification } from "../../../context/NotificationContext";
+import { useAuth } from "../../../context/AuthContext";
 
 export default function VehicleInventory() {
+  const { user } = useAuth();
   const api = helpFetch();
   const { showNotification } = useNotification();
   const [vehicles, setVehicles] = useState([]);
@@ -89,16 +91,18 @@ export default function VehicleInventory() {
           >
             <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
           </button>
-          <button
-            onClick={() => {
-              setSelectedVehicle(null);
-              setIsModalOpen(true);
-            }}
-            className="btn-primary flex-1 md:flex-none"
-          >
-            <Plus size={18} />
-            <span>Nuevo Vehículo</span>
-          </button>
+          {user?.role !== 'Analista' && (
+            <button
+              onClick={() => {
+                setSelectedVehicle(null);
+                setIsModalOpen(true);
+              }}
+              className="btn-primary flex-1 md:flex-none"
+            >
+              <Plus size={18} />
+              <span>Nuevo Vehículo</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -184,7 +188,7 @@ export default function VehicleInventory() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className={`flex items-center justify-end gap-2 ${user?.role === 'Analista' ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'}`}>
                         <button
                           onClick={() => {
                             setSelectedVehicle(vehicle);
@@ -194,26 +198,30 @@ export default function VehicleInventory() {
                         >
                           Ver Detalles
                         </button>
-                        <button
-                          onClick={() => {
-                            setSelectedVehicle(vehicle);
-                            setIsModalOpen(true);
-                          }}
-                          className="p-1.5 text-txt-muted hover:text-corpoelec-blue hover:bg-bg-main/10 rounded-lg transition-all"
-                          title="Editar vehículo"
-                        >
-                          <Settings size={16} />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedVehicle(vehicle);
-                            setIsConfirmOpen(true);
-                          }}
-                          className="p-1.5 text-txt-muted hover:text-corpoelec-red hover:bg-corpoelec-red/10 rounded-lg transition-all"
-                          title="Eliminar vehículo"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        {user?.role !== 'Analista' && (
+                          <>
+                            <button
+                              onClick={() => {
+                                setSelectedVehicle(vehicle);
+                                setIsModalOpen(true);
+                              }}
+                              className="p-1.5 text-txt-muted hover:text-corpoelec-blue hover:bg-bg-main/10 rounded-lg transition-all"
+                              title="Editar vehículo"
+                            >
+                              <Settings size={16} />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedVehicle(vehicle);
+                                setIsConfirmOpen(true);
+                              }}
+                              className="p-1.5 text-txt-muted hover:text-corpoelec-red hover:bg-corpoelec-red/10 rounded-lg transition-all"
+                              title="Eliminar vehículo"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>

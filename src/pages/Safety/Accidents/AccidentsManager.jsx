@@ -5,6 +5,7 @@ import AccidentForm from "./AccidentForm";
 import AccidentDetails from "./AccidentDetails";
 import { helpFetch } from "../../../helpers/helpFetch";
 import { useNotification } from "../../../context/NotificationContext";
+import { useAuth } from "../../../context/AuthContext";
 
 export default function AccidentsManager() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -12,11 +13,12 @@ export default function AccidentsManager() {
   const [selectedAccident, setSelectedAccident] = useState(null);
   const [accidents, setAccidents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState("grid"); // 'grid' o 'table'
+  const [viewMode, setViewMode] = useState("table"); // 'grid' o 'table'
   const [filterStatus, setFilterStatus] = useState(1); // 1: Activos, 0: Archivados
   
   const api = helpFetch();
   const { showNotification } = useNotification();
+  const { user } = useAuth();
 
   const fetchAccidents = async () => {
     setLoading(true);
@@ -132,10 +134,12 @@ export default function AccidentsManager() {
                <List size={18} />
              </button>
           </div>
-          <button className="btn-primary flex-1 sm:flex-none" onClick={() => { setSelectedAccident(null); setIsModalOpen(true); }}>
-            <Plus size={20} />
-            <span>Registrar</span>
-          </button>
+          {user?.role !== 'Analista' && (
+            <button className="btn-primary flex-1 sm:flex-none" onClick={() => { setSelectedAccident(null); setIsModalOpen(true); }}>
+              <Plus size={20} />
+              <span>Registrar</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -171,12 +175,14 @@ export default function AccidentsManager() {
                         </div>
                     </div>
                     <div className="flex gap-1">
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handleEdit(acc); }}
-                        className="p-2 text-txt-muted hover:text-corpoelec-blue hover:bg-corpoelec-blue/10 rounded-xl transition-all"
-                      >
-                        <FileText size={18} />
-                      </button>
+                      {user?.role !== 'Analista' && (
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleEdit(acc); }}
+                          className="p-2 text-txt-muted hover:text-corpoelec-blue hover:bg-corpoelec-blue/10 rounded-xl transition-all"
+                        >
+                          <FileText size={18} />
+                        </button>
+                      )}
                       <button 
                         onClick={(e) => { e.stopPropagation(); handleViewDetails(acc); }}
                         className="p-2 text-txt-muted hover:text-corpoelec-blue hover:bg-corpoelec-blue/10 rounded-xl transition-all"
@@ -220,12 +226,14 @@ export default function AccidentsManager() {
                               {acc.processStatus?.name || "Pendiente"}
                            </div>
                         </div>
-                        <button 
-                          onClick={() => handleToggleStatus(acc)}
-                          className="text-[9px] font-black text-corpoelec-blue uppercase tracking-widest hover:underline"
-                        >
-                          {acc.status === 1 ? 'Archivar' : 'Re-activar'}
-                        </button>
+                        {user?.role !== 'Analista' && (
+                          <button 
+                            onClick={() => handleToggleStatus(acc)}
+                            className="text-[9px] font-black text-corpoelec-blue uppercase tracking-widest hover:underline"
+                          >
+                            {acc.status === 1 ? 'Archivar' : 'Re-activar'}
+                          </button>
+                        )}
                     </div>
                   </div>
                 </div>
@@ -270,12 +278,14 @@ export default function AccidentsManager() {
                       </td>
                       <td className="p-5 text-xs font-black text-corpoelec-blue tracking-widest">{acc.period?.annuality}</td>
                       <td className="p-5 text-center flex items-center justify-center gap-2">
-                        <button 
-                          onClick={() => handleEdit(acc)}
-                          className="p-2 text-txt-muted hover:text-corpoelec-blue transition-all"
-                        >
-                          <FileText size={18} />
-                        </button>
+                        {user?.role !== 'Analista' && (
+                          <button 
+                            onClick={() => handleEdit(acc)}
+                            className="p-2 text-txt-muted hover:text-corpoelec-blue transition-all"
+                          >
+                            <FileText size={18} />
+                          </button>
+                        )}
                         <button 
                           onClick={() => handleViewDetails(acc)}
                           className="p-2 text-txt-muted hover:text-corpoelec-blue transition-all"

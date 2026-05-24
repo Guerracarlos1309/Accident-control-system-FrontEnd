@@ -16,6 +16,7 @@ import ProtectionForm from "./ProtectionForm";
 import ProtectionInspectionDetails from "./ProtectionInspectionDetails";
 import { helpFetch } from "../../../../helpers/helpFetch";
 import { useNotification } from "../../../../context/NotificationContext";
+import { useAuth } from "../../../../context/AuthContext";
 
 export default function ProtectionManager() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -27,6 +28,7 @@ export default function ProtectionManager() {
   const [isFetchingEdit, setIsFetchingEdit] = useState(false);
   const api = helpFetch();
   const { showNotification } = useNotification();
+  const { user } = useAuth();
 
   const fetchInspections = async () => {
     setLoading(true);
@@ -92,13 +94,15 @@ export default function ProtectionManager() {
             Control de inventario, operatividad y novedades de los equipos de protección personal y colectiva.
           </p>
         </div>
-        <button 
-          className="btn-primary w-full sm:w-auto shadow-lg shadow-corpoelec-blue/20 cursor-pointer"
-          onClick={() => setIsModalOpen(true)}
-        >
-          <Plus size={20} />
-          <span>Registrar Inspección de Lote</span>
-        </button>
+        {user?.role !== 'Analista' && (
+          <button 
+            className="btn-primary w-full sm:w-auto shadow-lg shadow-corpoelec-blue/20 cursor-pointer"
+            onClick={() => setIsModalOpen(true)}
+          >
+            <Plus size={20} />
+            <span>Registrar Inspección de Lote</span>
+          </button>
+        )}
       </div>
 
       {/* TABLE/GRID SECTION */}
@@ -189,20 +193,22 @@ export default function ProtectionManager() {
                       </div>
                     </td>
                     <td className="px-8 py-5 text-right">
-                      <button
-                        className="p-2 text-txt-muted hover:text-corpoelec-blue transition-all bg-transparent hover:bg-bg-main/10 rounded-lg group cursor-pointer"
-                        disabled={isFetchingEdit === insp.id}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEdit(insp.id);
-                        }}
-                      >
-                        {isFetchingEdit === insp.id ? (
-                          <Loader2 size={18} className="animate-spin" />
-                        ) : (
-                          <Pencil size={18} className="transition-transform group-hover:scale-110" />
-                        )}
-                      </button>
+                      {user?.role !== 'Analista' && (
+                        <button
+                          className="p-2 text-txt-muted hover:text-corpoelec-blue transition-all bg-transparent hover:bg-bg-main/10 rounded-lg group cursor-pointer"
+                          disabled={isFetchingEdit === insp.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(insp.id);
+                          }}
+                        >
+                          {isFetchingEdit === insp.id ? (
+                            <Loader2 size={18} className="animate-spin" />
+                          ) : (
+                            <Pencil size={18} className="transition-transform group-hover:scale-110" />
+                          )}
+                        </button>
+                      )}
                       <button
                         className="p-2 text-txt-muted hover:text-txt-main transition-all bg-transparent hover:bg-bg-main/10 rounded-lg group cursor-pointer"
                         onClick={(e) => {

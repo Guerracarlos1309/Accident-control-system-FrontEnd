@@ -15,6 +15,7 @@ import {
 import Modal from "./Modal";
 import { helpFetch } from "../helpers/helpFetch";
 import { useNotification } from "../context/NotificationContext";
+import { useAuth } from "../context/AuthContext";
 
 /**
  * MasterEntityManager - Unified component for managing any entity (Employees, Catalogs, Vehicles, etc.)
@@ -56,6 +57,7 @@ export default function MasterEntityManager({
   const [currentView, setCurrentView] = useState(viewType);
   const api = helpFetch();
   const { showNotification } = useNotification();
+  const { user } = useAuth();
 
   const fetchData = async () => {
     if (!apiPath) return;
@@ -213,7 +215,7 @@ export default function MasterEntityManager({
               `Gestión centralizada de ${entityName.toLowerCase()}s.`}
           </p>
         </div>
-        {!allowReactivate && (
+        {!allowReactivate && user?.role !== 'Analista' && (
           <button onClick={() => handleOpenModal()} className="btn-primary">
             <Plus size={18} />
             <span>Nuevo {entityName}</span>
@@ -316,7 +318,7 @@ export default function MasterEntityManager({
                       })}
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-1 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
-                          {allowReactivate && (
+                          {allowReactivate && user?.role !== 'Analista' && (
                             <button
                               onClick={() => handleReactivate(item)}
                               className="p-2 text-txt-muted hover:text-green-500 hover:bg-green-500/10 rounded-xl transition-all"
@@ -334,24 +336,28 @@ export default function MasterEntityManager({
                               <Eye size={16} />
                             </button>
                           )}
-                          <button
-                            onClick={() => handleOpenModal(item)}
-                            className="p-2 text-txt-muted hover:text-corpoelec-blue hover:bg-corpoelec-blue/10 rounded-xl transition-all"
-                            title="Editar"
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleOpenDelete(item)}
-                            className="p-2 text-txt-muted hover:text-corpoelec-red hover:bg-corpoelec-red/10 rounded-xl transition-all"
-                            title={
-                              deleteMode === "hard"
-                                ? "Eliminar Permanentemente"
-                                : "Desactivar"
-                            }
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          {user?.role !== 'Analista' && (
+                            <>
+                              <button
+                                onClick={() => handleOpenModal(item)}
+                                className="p-2 text-txt-muted hover:text-corpoelec-blue hover:bg-corpoelec-blue/10 rounded-xl transition-all"
+                                title="Editar"
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                              <button
+                                onClick={() => handleOpenDelete(item)}
+                                className="p-2 text-txt-muted hover:text-corpoelec-red hover:bg-corpoelec-red/10 rounded-xl transition-all"
+                                title={
+                                  deleteMode === "hard"
+                                    ? "Eliminar Permanentemente"
+                                    : "Desactivar"
+                                }
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -379,7 +385,7 @@ export default function MasterEntityManager({
                 className="glass-panel p-6 rounded-3xl border border-border-main/50 transition-colors group relative"
               >
                 <div className="absolute top-4 right-4 flex gap-1">
-                  {allowReactivate && (
+                  {allowReactivate && user?.role !== 'Analista' && (
                     <button
                       onClick={() => handleReactivate(item)}
                       className="p-2 bg-bg-surface rounded-xl text-green-500 border border-border-main/50 hover:bg-green-500/10"
@@ -397,24 +403,28 @@ export default function MasterEntityManager({
                       <Eye size={14} />
                     </button>
                   )}
-                  <button
-                    onClick={() => handleOpenModal(item)}
-                    className="p-2 bg-bg-surface rounded-xl text-corpoelec-blue border border-border-main/50 hover:bg-corpoelec-blue/10"
-                    title="Editar"
-                  >
-                    <Edit2 size={14} />
-                  </button>
-                  <button
-                    onClick={() => handleOpenDelete(item)}
-                    className="p-2 bg-bg-surface rounded-xl text-corpoelec-red border border-border-main/50 hover:bg-corpoelec-red/10"
-                    title={
-                      deleteMode === "hard"
-                        ? "Eliminar Permanentemente"
-                        : "Desactivar"
-                    }
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  {user?.role !== 'Analista' && (
+                    <>
+                      <button
+                        onClick={() => handleOpenModal(item)}
+                        className="p-2 bg-bg-surface rounded-xl text-corpoelec-blue border border-border-main/50 hover:bg-corpoelec-blue/10"
+                        title="Editar"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleOpenDelete(item)}
+                        className="p-2 bg-bg-surface rounded-xl text-corpoelec-red border border-border-main/50 hover:bg-corpoelec-red/10"
+                        title={
+                          deleteMode === "hard"
+                            ? "Eliminar Permanentemente"
+                            : "Desactivar"
+                        }
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </>
+                  )}
                 </div>
                 <div className="space-y-4">
                   {fields.slice(0, 3).map((f) => {

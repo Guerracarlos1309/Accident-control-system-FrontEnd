@@ -300,27 +300,63 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.accidentDate) newErrors.accidentDate = "Fecha";
-    if (!formData.accidentTime) newErrors.accidentTime = "Hora";
+    
+    if (!formData.accidentDate) {
+      newErrors.accidentDate = "Fecha obligatoria";
+    } else {
+      const accDate = new Date(formData.accidentDate);
+      const today = new Date();
+      if (accDate > today) {
+        newErrors.accidentDate = "La fecha del accidente no puede ser futura";
+      }
+    }
+    
+    if (!formData.accidentTime) newErrors.accidentTime = "Hora obligatoria";
+    
     if (locationType === "facility" && !formData.facilityId)
-      newErrors.facilityId = "Sede";
-    if (!formData.managementId) newErrors.managementId = "Gerencia Involucrada";
+      newErrors.facilityId = "Sede obligatoria";
+      
+    if (!formData.managementId) newErrors.managementId = "Gerencia Involucrada obligatoria";
+    
     if (
       locationType === "custom" &&
       (!incidentLocation.stateId || !formData.customAddressDetails)
     ) {
-      newErrors.location = "Ubicación externa y dirección detallada";
+      newErrors.location = "Ubicación externa y dirección detallada obligatorias";
     }
-    if (!formData.description) newErrors.description = "Descripción";
-    if (!formData.activity) newErrors.activity = "Actividad del trabajador";
+    
+    if (!formData.description) newErrors.description = "Descripción obligatoria";
+    if (!formData.activity) newErrors.activity = "Actividad del trabajador obligatoria";
     if (!formData.accidentTypeId)
-      newErrors.accidentTypeId = "Tipo de accidente";
-    if (!formData.damageAgentId) newErrors.damageAgentId = "Agente de daño";
-    if (!formData.contactTypeId) newErrors.contactTypeId = "Tipo de contacto";
-    if (!formData.periodId) newErrors.periodId = "Periodo/Año";
+      newErrors.accidentTypeId = "Tipo de accidente obligatorio";
+    if (!formData.damageAgentId) newErrors.damageAgentId = "Agente de daño obligatorio";
+    if (!formData.contactTypeId) newErrors.contactTypeId = "Tipo de contacto obligatorio";
+    if (!formData.periodId) newErrors.periodId = "Periodo/Año obligatorio";
+
+    // Validate witnesses if any are registered
+    if (witnesses && witnesses.length > 0) {
+      const witnessErrors = [];
+      witnesses.forEach((w, idx) => {
+        if (!w.name.trim()) {
+          witnessErrors.push(`Nombre vacío en Testigo #${idx + 1}`);
+        }
+        if (w.idCard && !/^\d{5,8}$/.test(w.idCard.trim())) {
+          witnessErrors.push(`Cédula incorrecta en Testigo #${idx + 1} (debe tener entre 5 y 8 dígitos)`);
+        }
+        if (w.phone) {
+          const cleanPhone = w.phone.replace(/\D/g, "");
+          if (cleanPhone.length > 0 && (cleanPhone.length < 10 || cleanPhone.length > 15)) {
+            witnessErrors.push(`Teléfono incorrecto en Testigo #${idx + 1}`);
+          }
+        }
+      });
+      if (witnessErrors.length > 0) {
+        newErrors.witnesses = witnessErrors.join(". ");
+      }
+    }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return { isValid: Object.keys(newErrors).length === 0, errors: newErrors };
   };
 
   const handleChange = (e) => {
@@ -387,12 +423,100 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
     setWitnesses(newWitnesses);
   };
 
+  const generateDescriptionAI = () => {
+    if (!formData.accidentDate || !formData.accidentTime) {
+      showNotification("Por favor, ingrese al menos la fecha y hora del suceso para autogenerar el reporte.", "warning");
+      return;
+    }
+
+    // 1. Gather all form information
+    const employeeNames = formData.affectedPersonnel && formData.affectedPersonnel.length > 0
+      ? formData.affectedPersonnel.map(p => `${p.firstName} ${p.lastName}`).join(", ")
+      : "el personal de guardia";
+
+    const facilityObj = catalogs.facilities.find(f => String(f.id) === String(formData.facilityId));
+    const facilityName = locationType === "facility" && facilityObj 
+      ? facilityObj.name 
+      : (formData.customAddressDetails || "la ubicación externa especificada");
+
+    const managementObj = catalogs.managements.find(m => String(m.id) === String(formData.managementId));
+    const managementName = managementObj ? managementObj.name : "";
+
+    const typeObj = catalogs.accidentTypes.find(t => String(t.id) === String(formData.accidentTypeId));
+    const typeName = typeObj ? typeObj.name.replace(/└─\s*/, "") : "accidente de trabajo";
+
+    const agentObj = catalogs.damageAgents.find(a => String(a.id) === String(formData.damageAgentId));
+    const agentName = agentObj ? agentObj.name.replace(/└─\s*/, "") : null;
+
+    const contactObj = catalogs.contactTypes.find(c => String(c.id) === String(formData.contactTypeId));
+    const contactName = contactObj ? contactObj.name.replace(/└─\s*/, "") : null;
+
+    // 2. Format Date
+    let formattedDate = formData.accidentDate;
+    try {
+      const dateParts = formData.accidentDate.split("-");
+      if (dateParts.length === 3) {
+        formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+      }
+    } catch(e) {}
+
+    // 3. Draft professional report
+    let text = `El día ${formattedDate} aproximadamente a las ${formData.accidentTime}, se registró un incidente de tipo técnico-operativo en las instalaciones de ${facilityName}`;
+    if (managementName) {
+      text += `, afectando el área adscrita a la gerencia de ${managementName}`;
+    }
+    text += `. En el suceso se vio involucrado el siguiente personal: ${employeeNames}`;
+
+    if (formData.activity) {
+      text += `, quien(es) al momento del percance realizaba(n) la actividad de: "${formData.activity.trim()}"`;
+    } else {
+      text += `, en el cumplimiento de sus labores asignadas de servicio`;
+    }
+
+    text += `. El evento fortuito se clasifica formalmente bajo la categoría de "${typeName}"`;
+
+    if (agentName || contactName) {
+      text += `, originado por `;
+      if (contactName) text += `un contacto directo de tipo "${contactName.toLowerCase()}"`;
+      if (agentName) text += `${contactName ? " con " : ""}"${agentName.toLowerCase()}"`;
+    }
+    
+    text += `. Se procesa el presente informe oficial con el fin de iniciar las investigaciones de rigor, determinar causas raíz y establecer los planes de acción correctivos y preventivos necesarios en conjunto con la Unidad de Seguridad e Higiene Ocupacional (ASHO).`;
+
+    // 4. Implement typing effect (micro-animation)
+    let currentText = "";
+    let i = 0;
+    setFormData(prev => ({ ...prev, description: "Analizando datos y redactando..." }));
+    
+    const interval = setInterval(() => {
+      if (i < text.length) {
+        currentText += text.substring(0, i + 4);
+        setFormData(prev => ({ ...prev, description: text.substring(0, i + 4) }));
+        i += 4;
+      } else {
+        setFormData(prev => ({ ...prev, description: text }));
+        clearInterval(interval);
+        showNotification("¡Reporte técnico autogenerado correctamente!", "success");
+      }
+    }, 12);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (activeTab !== "docs") {
       return;
     }
-    if (!validateForm()) {
+    const { isValid, errors: validationErrors } = validateForm();
+    if (!isValid) {
+      if (validationErrors.witnesses) {
+        showNotification(validationErrors.witnesses, "error");
+        return;
+      }
+      if (validationErrors.accidentDate === "La fecha del accidente no puede ser futura") {
+        showNotification("La fecha del accidente no puede ser futura", "error");
+        return;
+      }
+
       const currentErrors = {};
       if (!formData.accidentDate) currentErrors.d = "Fecha";
       if (!formData.accidentTime) currentErrors.t = "Hora";
@@ -658,9 +782,18 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
               )}
 
               <div className="space-y-1">
-                <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
-                  Descripción del Suceso *
-                </label>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
+                    Descripción del Suceso *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={generateDescriptionAI}
+                    className="flex items-center gap-1.5 text-[9px] font-black text-corpoelec-blue uppercase tracking-widest hover:text-corpoelec-blue/80 bg-corpoelec-blue/5 border border-corpoelec-blue/10 px-3 py-1.5 rounded-xl transition-all active:scale-95 shadow-sm"
+                  >
+                    ✨ Autogenerar Reporte
+                  </button>
+                </div>
                 <textarea
                   name="description"
                   rows="4"

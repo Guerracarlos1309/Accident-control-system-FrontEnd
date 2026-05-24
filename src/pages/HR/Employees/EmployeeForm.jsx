@@ -198,7 +198,7 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Manual validation for required fields
+    // 1. Manual validation for required fields
     const requiredFields = [
       { key: "firstName", label: "Nombres" },
       { key: "lastName", label: "Apellidos" },
@@ -212,8 +212,69 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
     const missingFields = requiredFields.filter((f) => !formData[f.key]);
 
     if (missingFields.length > 0 || !idNumber) {
-      showNotification("Por favor, complete todos los campos", "error");
+      showNotification("Por favor, complete todos los campos obligatorios", "error");
       return;
+    }
+
+    // 2. Validate Cédula of Identity (must be between 5 and 8 digits)
+    if (!/^\d{5,8}$/.test(idNumber)) {
+      showNotification("La cédula de identidad debe contener entre 5 y 8 dígitos numéricos", "error");
+      return;
+    }
+
+    // 3. Validate Email format (if provided)
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      showNotification("Por favor, introduzca un correo electrónico válido (Ej: usuario@empresa.com)", "error");
+      return;
+    }
+
+    // 4. Validate Phone format (if provided)
+    if (formData.phone) {
+      const cleanPhone = formData.phone.replace(/\D/g, "");
+      if (cleanPhone.length < 10 || cleanPhone.length > 15) {
+        showNotification("El número de teléfono personal debe tener entre 10 y 15 dígitos", "error");
+        return;
+      }
+    }
+    
+    if (formData.officePhone) {
+      const cleanOfficePhone = formData.officePhone.replace(/\D/g, "");
+      if (cleanOfficePhone.length > 0 && (cleanOfficePhone.length < 3 || cleanOfficePhone.length > 15)) {
+        showNotification("El teléfono de oficina/extensión debe tener un formato válido", "error");
+        return;
+      }
+    }
+
+    // 5. Validate Birth Date (must not be in the future and employee must be >= 18 years old)
+    if (formData.birthDate) {
+      const birth = new Date(formData.birthDate);
+      const today = new Date();
+      if (birth > today) {
+        showNotification("La fecha de nacimiento no puede ser una fecha futura", "error");
+        return;
+      }
+      if (age < 18) {
+        showNotification("El empleado debe ser mayor de edad (mínimo 18 años)", "error");
+        return;
+      }
+    }
+
+    // 6. Validate Hire Date (must not be in the future and cannot be before the employee turned 18)
+    if (formData.hireDate) {
+      const hire = new Date(formData.hireDate);
+      const today = new Date();
+      if (hire > today) {
+        showNotification("La fecha de ingreso no puede ser una fecha futura", "error");
+        return;
+      }
+      if (formData.birthDate) {
+        const birth = new Date(formData.birthDate);
+        const minHireDate = new Date(birth.getFullYear() + 18, birth.getMonth(), birth.getDate());
+        if (hire < minHireDate) {
+          showNotification("La fecha de ingreso no puede ser anterior a la mayoría de edad del empleado (18 años)", "error");
+          return;
+        }
+      }
     }
 
     // Final sync check

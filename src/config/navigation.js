@@ -24,8 +24,8 @@ export const NAVIGATION_CONFIG = [
     icon: Users,
     items: [
       { path: "/hr/employees", label: "Directorio Personal" },
-      { path: "/hr/inactive", label: "Personal Inactivo" },
-      { path: "/hr/catalogs", label: "Cargos y Gerencias" },
+      { path: "/hr/inactive", label: "Personal Inactivo", allowedRoles: ["Administrador", "Inspector"] },
+      { path: "/hr/catalogs", label: "Cargos y Gerencias", allowedRoles: ["Administrador"] },
     ],
   },
   {
@@ -34,8 +34,8 @@ export const NAVIGATION_CONFIG = [
     icon: Building,
     items: [
       { path: "/infra/facilities", label: "Sedes y Plantas" },
-      { path: "/infra/inactive", label: "Sedes Inactivas" },
-      { path: "/infra/locations", label: "Ubicación Geog." },
+      { path: "/infra/inactive", label: "Sedes Inactivas", allowedRoles: ["Administrador", "Inspector"] },
+      { path: "/infra/locations", label: "Ubicación Geog.", allowedRoles: ["Administrador"] },
     ],
   },
   {
@@ -45,7 +45,7 @@ export const NAVIGATION_CONFIG = [
     items: [
       { path: "/accidents/register", label: "Control Accidentes" },
       { path: "/inspections/extinguishers", label: "Inspecc. Extintores" },
-      { path: "/accidents/catalogs", label: "Config. Accidentes" },
+      { path: "/accidents/catalogs", label: "Config. Accidentes", allowedRoles: ["Administrador"] },
     ],
   },
   {
@@ -55,7 +55,7 @@ export const NAVIGATION_CONFIG = [
     items: [
       { path: "/protection/inventory", label: "Inventario EPP" },
       { path: "/protection/inspections", label: "Inspecciones EPP" },
-      { path: "/protection/setup", label: "Categorías EPP" },
+      { path: "/protection/setup", label: "Categorías EPP", allowedRoles: ["Administrador"] },
     ],
   },
   {
@@ -65,7 +65,7 @@ export const NAVIGATION_CONFIG = [
     items: [
       { path: "/fleet/inventory", label: "Inventario Flota" },
       { path: "/inspections/vehicles", label: "Inspecc. Vehículos" },
-      { path: "/fleet/setup", label: "Modelos y Marcas" },
+      { path: "/fleet/setup", label: "Modelos y Marcas", allowedRoles: ["Administrador"] },
     ],
   },
   {
@@ -88,6 +88,7 @@ export const NAVIGATION_CONFIG = [
     label: "Administración",
     icon: Database,
     separator: true,
+    allowedRoles: ["Administrador"],
     items: [{ path: "/admin/users", label: "Usuarios y Sistema" }],
   },
 ];

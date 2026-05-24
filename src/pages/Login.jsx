@@ -18,7 +18,7 @@ export default function Login() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const result = await login(formData.username, formData.password);
+    const result = await login(formData.username.trim().toLowerCase(), formData.password);
 
     setIsSubmitting(false);
 

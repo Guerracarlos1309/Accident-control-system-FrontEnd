@@ -4,6 +4,23 @@ import { useNotification } from "./NotificationContext";
 
 const AuthContext = createContext();
 
+const normalizeUserRole = (userObj) => {
+  if (!userObj || !userObj.role) return userObj;
+  
+  const roleUpper = userObj.role.toUpperCase();
+  let normalizedRole = userObj.role;
+  
+  if (roleUpper === "ADMINISTRADOR") {
+    normalizedRole = "Administrador";
+  } else if (roleUpper === "INSPECTOR") {
+    normalizedRole = "Inspector";
+  } else if (roleUpper === "ANALISTA") {
+    normalizedRole = "Analista";
+  }
+  
+  return { ...userObj, role: normalizedRole };
+};
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -26,7 +43,7 @@ export const AuthProvider = ({ children }) => {
         try {
           const res = await api.get("/auth/me");
           if (!res.err) {
-            setUser(res);
+            setUser(normalizeUserRole(res));
           } else {
             sessionStorage.removeItem("token");
           }
@@ -42,12 +59,13 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      const res = await api.post("/auth/login", { body: { username, password } });
+      const normalizedUsername = username.trim().toLowerCase();
+      const res = await api.post("/auth/login", { body: { username: normalizedUsername, password } });
 
       // Si la respuesta es exitosa (contiene el token y success: true)
       if (res && res.success) {
         sessionStorage.setItem("token", res.token);
-        setUser(res.user);
+        setUser(normalizeUserRole(res.user));
         showNotification(`¡Bienvenido de nuevo, ${res.user.firstName || res.user.username}!`, "success");
         return { success: true };
       } 
@@ -74,7 +92,7 @@ export const AuthProvider = ({ children }) => {
       const res = await api.put("/users/me", { body: data });
 
       if (res && !res.err) {
-        setUser(res);
+        setUser(normalizeUserRole(res));
         showNotification("Perfil actualizado correctamente", "success");
         return { success: true };
       }
