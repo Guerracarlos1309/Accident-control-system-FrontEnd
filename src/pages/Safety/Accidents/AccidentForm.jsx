@@ -86,6 +86,7 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
     inspectionStatuses: [],
     managements: [],
     medicalCenters: [],
+    fileDocuments: [],
   });
 
   const [formData, setFormData] = useState({
@@ -124,6 +125,64 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
   });
 
   const [errors, setErrors] = useState({});
+
+  const [selectedParentAccidentType, setSelectedParentAccidentType] = useState("");
+  const [selectedParentDamageAgent, setSelectedParentDamageAgent] = useState("");
+  const [selectedParentContactType, setSelectedParentContactType] = useState("");
+
+  // Resolving parent IDs on editing
+  useEffect(() => {
+    if (initialData) {
+      if (catalogs.accidentTypes.length > 0) {
+        const typeId = initialData.accidentTypeId;
+        if (typeId) {
+          const parent = catalogs.accidentTypes.find(t => t.id === Number(typeId));
+          if (parent) {
+            setSelectedParentAccidentType(typeId);
+          } else {
+            for (const p of catalogs.accidentTypes) {
+              if (p.children && p.children.some(c => c.id === Number(typeId))) {
+                setSelectedParentAccidentType(p.id);
+                break;
+              }
+            }
+          }
+        }
+      }
+      if (catalogs.damageAgents.length > 0) {
+        const agentId = initialData.damageAgentId;
+        if (agentId) {
+          const parent = catalogs.damageAgents.find(a => a.id === Number(agentId));
+          if (parent) {
+            setSelectedParentDamageAgent(agentId);
+          } else {
+            for (const p of catalogs.damageAgents) {
+              if (p.children && p.children.some(c => c.id === Number(agentId))) {
+                setSelectedParentDamageAgent(p.id);
+                break;
+              }
+            }
+          }
+        }
+      }
+      if (catalogs.contactTypes.length > 0) {
+        const contactId = initialData.contactTypeId;
+        if (contactId) {
+          const parent = catalogs.contactTypes.find(c => c.id === Number(contactId));
+          if (parent) {
+            setSelectedParentContactType(contactId);
+          } else {
+            for (const p of catalogs.contactTypes) {
+              if (p.children && p.children.some(c => c.id === Number(contactId))) {
+                setSelectedParentContactType(p.id);
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+  }, [initialData, catalogs.accidentTypes, catalogs.damageAgents, catalogs.contactTypes]);
 
   // Sincronizar automáticamente la gerencia responsable con el primer trabajador afectado vinculado
   useEffect(() => {
@@ -258,9 +317,9 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
             : Array.isArray(facilities)
               ? facilities
               : [],
-          accidentTypes: accidentTypes.err ? [] : flatten(accidentTypes),
-          damageAgents: damageAgents.err ? [] : flatten(damageAgents),
-          contactTypes: contactTypes.err ? [] : flatten(contactTypes),
+          accidentTypes: accidentTypes.err ? [] : (Array.isArray(accidentTypes) ? accidentTypes : []),
+          damageAgents: damageAgents.err ? [] : (Array.isArray(damageAgents) ? damageAgents : []),
+          contactTypes: contactTypes.err ? [] : (Array.isArray(contactTypes) ? contactTypes : []),
           periods: periods.err ? [] : Array.isArray(periods) ? periods : [],
           fileDocuments: fileDocuments.err
             ? []
@@ -830,77 +889,235 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
               />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-1">
-                <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
-                  Tipo de Accidente *
-                </label>
-                <select
-                  name="accidentTypeId"
-                  required
-                  value={formData.accidentTypeId}
-                  onChange={handleChange}
-                  className={`input-field h-12 ${errors.accidentTypeId ? "border-corpoelec-red" : ""}`}
-                >
-                  <option value="">Seleccione...</option>
-                  {catalogs.accidentTypes.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.accidentTypeId && (
-                  <p className="text-[9px] text-corpoelec-red font-black uppercase mt-1">
-                    {errors.accidentTypeId}
-                  </p>
-                )}
+              {/* Tipo de Accidente */}
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
+                    Categoría de Accidente (Padre) *
+                  </label>
+                  <select
+                    required
+                    value={selectedParentAccidentType}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSelectedParentAccidentType(val);
+                      const parent = catalogs.accidentTypes.find(t => t.id === Number(val));
+                      if (parent && (!parent.children || parent.children.length === 0)) {
+                        setFormData(prev => ({ ...prev, accidentTypeId: val }));
+                      } else {
+                        setFormData(prev => ({ ...prev, accidentTypeId: "" }));
+                      }
+                      if (errors.accidentTypeId) setErrors(prev => ({ ...prev, accidentTypeId: null }));
+                    }}
+                    className={`input-field h-12 ${errors.accidentTypeId ? "border-corpoelec-red" : ""}`}
+                  >
+                    <option value="">Seleccione categoría...</option>
+                    {catalogs.accidentTypes.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
+                    Detalle / Tipo de Accidente Específico (Hijo) *
+                  </label>
+                  {(() => {
+                    const parent = catalogs.accidentTypes.find(t => t.id === Number(selectedParentAccidentType));
+                    const hasChildren = parent && parent.children && parent.children.length > 0;
+                    
+                    return (
+                      <select
+                        required={hasChildren}
+                        disabled={!selectedParentAccidentType || !hasChildren}
+                        value={formData.accidentTypeId}
+                        onChange={(e) => {
+                          setFormData(prev => ({ ...prev, accidentTypeId: e.target.value }));
+                          if (errors.accidentTypeId) setErrors(prev => ({ ...prev, accidentTypeId: null }));
+                        }}
+                        className={`input-field h-12 ${errors.accidentTypeId ? "border-corpoelec-red" : ""} ${(!selectedParentAccidentType || !hasChildren) ? "opacity-60 bg-bg-main/5 cursor-not-allowed" : ""}`}
+                      >
+                        {!selectedParentAccidentType && (
+                          <option value="">Seleccione categoría primero...</option>
+                        )}
+                        {selectedParentAccidentType && !hasChildren && (
+                          <option value="">No requiere subcategoría</option>
+                        )}
+                        {selectedParentAccidentType && hasChildren && (
+                          <>
+                            <option value="">Seleccione tipo...</option>
+                            {parent.children.map((c) => (
+                              <option key={c.id} value={c.id}>
+                                {c.name}
+                              </option>
+                            ))}
+                          </>
+                        )}
+                      </select>
+                    );
+                  })()}
+                  {errors.accidentTypeId && (
+                    <p className="text-[9px] text-corpoelec-red font-black uppercase mt-1">
+                      {errors.accidentTypeId}
+                    </p>
+                  )}
+                </div>
               </div>
-              <div className="space-y-1">
-                <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
-                  Agente de Daño *
-                </label>
-                <select
-                  name="damageAgentId"
-                  required
-                  value={formData.damageAgentId}
-                  onChange={handleChange}
-                  className={`input-field h-12 ${errors.damageAgentId ? "border-corpoelec-red" : ""}`}
-                >
-                  <option value="">Seleccione...</option>
-                  {catalogs.damageAgents.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.damageAgentId && (
-                  <p className="text-[9px] text-corpoelec-red font-black uppercase mt-1">
-                    {errors.damageAgentId}
-                  </p>
-                )}
+
+              {/* Agente de Daño */}
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
+                    Categoría del Agente de Daño (Padre) *
+                  </label>
+                  <select
+                    required
+                    value={selectedParentDamageAgent}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSelectedParentDamageAgent(val);
+                      const parent = catalogs.damageAgents.find(a => a.id === Number(val));
+                      if (parent && (!parent.children || parent.children.length === 0)) {
+                        setFormData(prev => ({ ...prev, damageAgentId: val }));
+                      } else {
+                        setFormData(prev => ({ ...prev, damageAgentId: "" }));
+                      }
+                      if (errors.damageAgentId) setErrors(prev => ({ ...prev, damageAgentId: null }));
+                    }}
+                    className={`input-field h-12 ${errors.damageAgentId ? "border-corpoelec-red" : ""}`}
+                  >
+                    <option value="">Seleccione categoría...</option>
+                    {catalogs.damageAgents.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
+                    Agente Específico (Hijo) *
+                  </label>
+                  {(() => {
+                    const parent = catalogs.damageAgents.find(a => a.id === Number(selectedParentDamageAgent));
+                    const hasChildren = parent && parent.children && parent.children.length > 0;
+                    
+                    return (
+                      <select
+                        required={hasChildren}
+                        disabled={!selectedParentDamageAgent || !hasChildren}
+                        value={formData.damageAgentId}
+                        onChange={(e) => {
+                          setFormData(prev => ({ ...prev, damageAgentId: e.target.value }));
+                          if (errors.damageAgentId) setErrors(prev => ({ ...prev, damageAgentId: null }));
+                        }}
+                        className={`input-field h-12 ${errors.damageAgentId ? "border-corpoelec-red" : ""} ${(!selectedParentDamageAgent || !hasChildren) ? "opacity-60 bg-bg-main/5 cursor-not-allowed" : ""}`}
+                      >
+                        {!selectedParentDamageAgent && (
+                          <option value="">Seleccione categoría primero...</option>
+                        )}
+                        {selectedParentDamageAgent && !hasChildren && (
+                          <option value="">No requiere subcategoría</option>
+                        )}
+                        {selectedParentDamageAgent && hasChildren && (
+                          <>
+                            <option value="">Seleccione agente...</option>
+                            {parent.children.map((c) => (
+                              <option key={c.id} value={c.id}>
+                                {c.name}
+                              </option>
+                            ))}
+                          </>
+                        )}
+                      </select>
+                    );
+                  })()}
+                  {errors.damageAgentId && (
+                    <p className="text-[9px] text-corpoelec-red font-black uppercase mt-1">
+                      {errors.damageAgentId}
+                    </p>
+                  )}
+                </div>
               </div>
-              <div className="space-y-1">
-                <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
-                  Tipo de Contacto *
-                </label>
-                <select
-                  name="contactTypeId"
-                  required
-                  value={formData.contactTypeId}
-                  onChange={handleChange}
-                  className={`input-field h-12 ${errors.contactTypeId ? "border-corpoelec-red" : ""}`}
-                >
-                  <option value="">Seleccione...</option>
-                  {catalogs.contactTypes.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.contactTypeId && (
-                  <p className="text-[9px] text-corpoelec-red font-black uppercase mt-1">
-                    {errors.contactTypeId}
-                  </p>
-                )}
+
+              {/* Tipo de Contacto */}
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
+                    Categoría del Tipo de Contacto (Padre) *
+                  </label>
+                  <select
+                    required
+                    value={selectedParentContactType}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSelectedParentContactType(val);
+                      const parent = catalogs.contactTypes.find(c => c.id === Number(val));
+                      if (parent && (!parent.children || parent.children.length === 0)) {
+                        setFormData(prev => ({ ...prev, contactTypeId: val }));
+                      } else {
+                        setFormData(prev => ({ ...prev, contactTypeId: "" }));
+                      }
+                      if (errors.contactTypeId) setErrors(prev => ({ ...prev, contactTypeId: null }));
+                    }}
+                    className={`input-field h-12 ${errors.contactTypeId ? "border-corpoelec-red" : ""}`}
+                  >
+                    <option value="">Seleccione categoría...</option>
+                    {catalogs.contactTypes.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
+                    Contacto Específico (Hijo) *
+                  </label>
+                  {(() => {
+                    const parent = catalogs.contactTypes.find(c => c.id === Number(selectedParentContactType));
+                    const hasChildren = parent && parent.children && parent.children.length > 0;
+                    
+                    return (
+                      <select
+                        required={hasChildren}
+                        disabled={!selectedParentContactType || !hasChildren}
+                        value={formData.contactTypeId}
+                        onChange={(e) => {
+                          setFormData(prev => ({ ...prev, contactTypeId: e.target.value }));
+                          if (errors.contactTypeId) setErrors(prev => ({ ...prev, contactTypeId: null }));
+                        }}
+                        className={`input-field h-12 ${errors.contactTypeId ? "border-corpoelec-red" : ""} ${(!selectedParentContactType || !hasChildren) ? "opacity-60 bg-bg-main/5 cursor-not-allowed" : ""}`}
+                      >
+                        {!selectedParentContactType && (
+                          <option value="">Seleccione categoría primero...</option>
+                        )}
+                        {selectedParentContactType && !hasChildren && (
+                          <option value="">No requiere subcategoría</option>
+                        )}
+                        {selectedParentContactType && hasChildren && (
+                          <>
+                            <option value="">Seleccione tipo contacto...</option>
+                            {parent.children.map((c) => (
+                              <option key={c.id} value={c.id}>
+                                {c.name}
+                              </option>
+                            ))}
+                          </>
+                        )}
+                      </select>
+                    );
+                  })()}
+                  {errors.contactTypeId && (
+                    <p className="text-[9px] text-corpoelec-red font-black uppercase mt-1">
+                      {errors.contactTypeId}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
