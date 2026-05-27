@@ -404,8 +404,11 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
         }
         if (w.phone) {
           const cleanPhone = w.phone.replace(/\D/g, "");
-          if (cleanPhone.length > 0 && (cleanPhone.length < 10 || cleanPhone.length > 15)) {
-            witnessErrors.push(`Teléfono incorrecto en Testigo #${idx + 1}`);
+          if (cleanPhone.length > 0) {
+            const isValidVenezuelan = /^0(412|414|424|416|426|2\d{2})\d{7}$/.test(cleanPhone) || /^58(412|414|424|416|426|2\d{2})\d{7}$/.test(cleanPhone);
+            if (!isValidVenezuelan) {
+              witnessErrors.push(`Teléfono incorrecto en Testigo #${idx + 1} (debe ser un número venezolano válido, ej: 04141234567 o 02121234567)`);
+            }
           }
         }
       });

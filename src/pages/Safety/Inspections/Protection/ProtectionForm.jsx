@@ -176,9 +176,72 @@ export default function ProtectionForm({ onCancel, onSuccess, initialData, inspe
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
+    // ─── 1. VALIDATE DATE ───
+    if (!formData.date) {
+      showNotification("La fecha de inspección es obligatoria", "error");
+      return;
+    }
+    const auditDate = new Date(formData.date);
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    if (auditDate > today) {
+      showNotification("La fecha de inspección no puede ser una fecha futura", "error");
+      return;
+    }
+
+    // ─── 2. VALIDATE FACILITY ───
+    if (!formData.facilityId) {
+      showNotification("Debe seleccionar un Centro de Trabajo / Sede", "error");
+      return;
+    }
+
+    // ─── 3. VALIDATE INSPECTOR ───
+    if (!formData.inspectorId) {
+      showNotification("Debe seleccionar un Inspector Responsable", "error");
+      return;
+    }
+
+    // ─── 4. VALIDATE STATUS ───
+    if (!formData.statusId) {
+      showNotification("Debe seleccionar el Diagnóstico del Lote", "error");
+      return;
+    }
+
+    // ─── 5. VALIDATE EQUIPMENT LIST EXISTS ───
     if (equipmentToInspect.length === 0) {
       showNotification("No hay equipos registrados en stock para inspeccionar", "warning");
+      return;
+    }
+
+    // ─── 6. VALIDATE AT LEAST ONE EQUIPMENT HAS DATA ───
+    const hasAnyData = equipmentToInspect.some(
+      eq => (eq.buenos || 0) > 0 || (eq.malos || 0) > 0 || (eq.noExisten || 0) > 0
+    );
+    if (!hasAnyData) {
+      showNotification("Debe registrar cantidades (Buenos, No Sirven o No Existen) en al menos un equipo", "error");
+      return;
+    }
+
+    // ─── 7. VALIDATE NO NEGATIVE QUANTITIES ───
+    const hasNegative = equipmentToInspect.some(
+      eq => (eq.buenos || 0) < 0 || (eq.malos || 0) < 0 || (eq.noExisten || 0) < 0
+    );
+    if (hasNegative) {
+      showNotification("Las cantidades no pueden ser valores negativos", "error");
+      return;
+    }
+
+    // ─── 8. VALIDATE OBSERVATION LENGTH ───
+    if (formData.observations && formData.observations.length > 500) {
+      showNotification("Las observaciones generales no pueden exceder los 500 caracteres", "error");
+      return;
+    }
+
+    // ─── 9. VALIDATE INDIVIDUAL EQUIPMENT OBSERVATIONS LENGTH ───
+    const longComment = equipmentToInspect.find(eq => eq.commentText && eq.commentText.length > 100);
+    if (longComment) {
+      showNotification(`La observación del equipo "${longComment.name}" excede los 100 caracteres permitidos`, "error");
       return;
     }
 

@@ -144,8 +144,10 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
     const { name, value } = e.target;
 
     // Numeric validation for personalNumber
-    if (name === "personalNumber" && value !== "" && !/^\d+$/.test(value)) {
-      return;
+    if (name === "personalNumber") {
+      if (value !== "" && (!/^\d+$/.test(value) || value.length > 7)) {
+        return;
+      }
     }
 
     setFormData({ ...formData, [name]: value });
@@ -216,6 +218,12 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
       return;
     }
 
+    // 1.5. Validate N° de Personal (must be between 5 and 7 digits)
+    if (!/^\d{5,7}$/.test(formData.personalNumber)) {
+      showNotification("El número de personal debe contener entre 5 y 7 dígitos numéricos", "error");
+      return;
+    }
+
     // 2. Validate Cédula of Identity (must be between 5 and 8 digits)
     if (!/^\d{5,8}$/.test(idNumber)) {
       showNotification("La cédula de identidad debe contener entre 5 y 8 dígitos numéricos", "error");
@@ -231,16 +239,18 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
     // 4. Validate Phone format (if provided)
     if (formData.phone) {
       const cleanPhone = formData.phone.replace(/\D/g, "");
-      if (cleanPhone.length < 10 || cleanPhone.length > 15) {
-        showNotification("El número de teléfono personal debe tener entre 10 y 15 dígitos", "error");
+      const isValidVenezuelan = /^0(412|414|424|416|426|2\d{2})\d{7}$/.test(cleanPhone) || /^58(412|414|424|416|426|2\d{2})\d{7}$/.test(cleanPhone);
+      if (!isValidVenezuelan) {
+        showNotification("El número de teléfono debe ser un número de teléfono venezolano válido (ej: 04141234567 o 02121234567)", "error");
         return;
       }
     }
     
     if (formData.officePhone) {
       const cleanOfficePhone = formData.officePhone.replace(/\D/g, "");
-      if (cleanOfficePhone.length > 0 && (cleanOfficePhone.length < 3 || cleanOfficePhone.length > 15)) {
-        showNotification("El teléfono de oficina/extensión debe tener un formato válido", "error");
+      const isValidVenezuelan = /^0(412|414|424|416|426|2\d{2})\d{7}$/.test(cleanOfficePhone) || /^58(412|414|424|416|426|2\d{2})\d{7}$/.test(cleanOfficePhone);
+      if (!isValidVenezuelan) {
+        showNotification("El teléfono de oficina debe ser un número de teléfono venezolano válido (ej: 04141234567 o 02121234567)", "error");
         return;
       }
     }
@@ -431,7 +441,7 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
               )}
               {!data && (
                 <p className="text-[9px] text-txt-muted font-bold tracking-tight mt-1 ml-1 self-end uppercase">
-                  Solo dígitos permitidos
+                  De 5 a 7 dígitos (Solo dígitos)
                 </p>
               )}
             </div>
@@ -731,6 +741,18 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
 
         {/* FOOTER PEGAJOSO (SÓLIDO) */}
         <div className="sticky bottom-0 bg-bg-surface pt-6 pb-2 border-t border-border-main flex justify-end gap-3 translate-y-2">
+          {activeTab !== "identity" && (
+            <button
+              type="button"
+              onClick={() => {
+                if (activeTab === "labor") setActiveTab("contact");
+                else if (activeTab === "contact") setActiveTab("identity");
+              }}
+              className="px-6 py-3 text-xs font-black uppercase tracking-widest text-txt-muted hover:text-txt-main transition-colors"
+            >
+              Anterior
+            </button>
+          )}
           <button
             type="button"
             onClick={onCancel}
@@ -738,9 +760,22 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
           >
             Cancelar
           </button>
-          <button type="submit" className="btn-primary">
-            Finalizar Registro
-          </button>
+          {activeTab === "labor" ? (
+            <button type="submit" className="btn-primary">
+              Finalizar Registro
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                if (activeTab === "identity") setActiveTab("contact");
+                else if (activeTab === "contact") setActiveTab("labor");
+              }}
+              className="btn-primary"
+            >
+              Siguiente
+            </button>
+          )}
         </div>
       </form>
     </div>

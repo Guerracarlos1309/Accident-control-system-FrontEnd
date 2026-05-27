@@ -49,6 +49,7 @@ export default function ExtinguisherForm({ onCancel, onSuccess, initialData, ins
   const [extForm, setExtForm] = useState({
     code: "",
     physicalArea: "",
+    physicalAreaOther: "",
     agentTypeId: "",
     impulseType: "directo", // directo | indirecto
     capacity: "10 Lb",
@@ -280,18 +281,47 @@ export default function ExtinguisherForm({ onCancel, onSuccess, initialData, ins
       }
     }
 
-    setExtForm(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setExtForm(prev => {
+      const updated = { ...prev, [name]: value };
+      if (name === "generalStatus" && value === "FUERA DE SERVICIO") {
+        updated.maintenancePart = "";
+      }
+      // Clear custom area text if user switches away from "OTRA"
+      if (name === "physicalArea" && value !== "OTRA") {
+        updated.physicalAreaOther = "";
+      }
+      return updated;
+    });
+  };
+
+  // Sub-form actions
+  const getFacilityInitials = (facilityName) => {
+    if (!facilityName) return "";
+    return facilityName
+      .split(/\s+/)
+      .filter(word => word.length > 0 && !["de", "la", "el", "los", "las", "y"].includes(word.toLowerCase()))
+      .map(word => word[0].toUpperCase())
+      .join("");
   };
 
   // Sub-form actions
   const handleOpenAddExt = () => {
+    if (!formData.facilityId) {
+      showNotification("Por favor, seleccione un Centro de Trabajo / Sede antes de vincular extintores", "warning");
+      return;
+    }
+
+    const selectedFacility = lookups.facilities.find(f => String(f.id) === String(formData.facilityId));
+    const initials = selectedFacility ? getFacilityInitials(selectedFacility.name) : "";
+    const defaultCode = initials 
+      ? `EXT-${initials}-${String(formData.extinguishers.length + 1).padStart(3, '0')}`
+      : `EXT-${String(formData.extinguishers.length + 1).padStart(3, '0')}`;
+
     let defaultAgentTypeId = lookups.agentTypes && lookups.agentTypes.length > 0 ? lookups.agentTypes[0].id : "";
     setExtForm({
-      code: `EXT-${String(formData.extinguishers.length + 1).padStart(3, '0')}`,
+      code: defaultCode,
       physicalArea: "",
+      physicalAreaOther: "",
       agentTypeId: defaultAgentTypeId,
       impulseType: "directo",
       capacity: "10 Lb",
@@ -338,12 +368,52 @@ export default function ExtinguisherForm({ onCancel, onSuccess, initialData, ins
       return;
     }
 
+    // 1. Validate recharge date is not future
+    const rechargeDate = new Date(extForm.lastRechargeDate);
+    const today = new Date();
+    if (rechargeDate > today) {
+      showNotification("La fecha de última recarga no puede ser una fecha futura", "error");
+      return;
+    }
+
+    // 2. Validate expiration date is after recharge date
+    if (extForm.expirationDate) {
+      const expDate = new Date(extForm.expirationDate);
+      if (expDate <= rechargeDate) {
+        showNotification("La fecha de vencimiento debe ser posterior a la de última recarga", "error");
+        return;
+      }
+    }
+
+    // 3. Code must contain Selected Facility Initials
+    const selectedFacility = lookups.facilities.find(f => String(f.id) === String(formData.facilityId));
+    if (selectedFacility) {
+      const initials = getFacilityInitials(selectedFacility.name);
+      if (initials) {
+        const upperCode = extForm.code.trim().toUpperCase();
+        if (!upperCode.includes(initials)) {
+          showNotification(`El código del extintor debe incluir las iniciales de la sede (${initials})`, "error");
+          return;
+        }
+      }
+    }
+
+    // 4. Validate maintenance status and part
+    let finalExtForm = { ...extForm };
+    if (extForm.generalStatus === "MANTENIMIENTO" && !extForm.maintenancePart) {
+      showNotification("Debe especificar la parte que requiere mantenimiento", "error");
+      return;
+    }
+    if (extForm.generalStatus === "FUERA DE SERVICIO") {
+      finalExtForm.maintenancePart = "";
+    }
+
     setFormData(prev => {
       const newList = [...prev.extinguishers];
       if (editingExtIndex !== null) {
-        newList[editingExtIndex] = extForm;
+        newList[editingExtIndex] = finalExtForm;
       } else {
-        newList.push(extForm);
+        newList.push(finalExtForm);
       }
       return {
         ...prev,
@@ -372,6 +442,15 @@ export default function ExtinguisherForm({ onCancel, onSuccess, initialData, ins
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    if (formData.date) {
+      const auditDate = new Date(formData.date);
+      const today = new Date();
+      if (auditDate > today) {
+        showNotification("La fecha de auditoría no puede ser una fecha futura", "error");
+        return;
+      }
+    }
+    
     if (formData.extinguishers.length === 0) {
       showNotification("Debe agregar al menos un extintor a la lista de inspección", "error");
       return;
@@ -383,16 +462,27 @@ export default function ExtinguisherForm({ onCancel, onSuccess, initialData, ins
     let finalInspectionNumber = formData.inspectionNumber;
     if (!initialData?.id) {
       const year = formData.date ? new Date(formData.date).getFullYear() : new Date().getFullYear();
-      const firstExtCode = formData.extinguishers[0].code.trim().toUpperCase();
-      let nextSeq = 1;
-      
-      if (firstExtCode) {
-        const matchingInsps = (inspectionsList || []).filter(
-          i => i.extinguisherInspection?.extinguisherCode?.trim().toUpperCase() === firstExtCode
-        );
-        nextSeq = matchingInsps.length + 1;
-      }
-      finalInspectionNumber = `EXT-${year}-${firstExtCode}-${nextSeq}`;
+      const selectedFacility = lookups.facilities.find(f => String(f.id) === String(formData.facilityId));
+      const facilityInitials = selectedFacility ? getFacilityInitials(selectedFacility.name) : "";
+
+      // Determine the highest existing sequence for this year/facility
+      const seqNumbers = (inspectionsList || [])
+        .map(i => i.inspectionNumber)
+        .filter(num => typeof num === "string" && num.startsWith(`EXT-${year}-${facilityInitials}-`))
+        .map(num => {
+          // Expected pattern: EXT-YYYY-XX-SSS-... where SSS is the sequence with leading zeros
+          const parts = num.split("-");
+          // parts[3] is the sequence (e.g., "001")
+          const seqPart = parts[3] || "0";
+          return parseInt(seqPart, 10);
+        });
+      const maxSeq = seqNumbers.length ? Math.max(...seqNumbers) : 0;
+      const nextSeq = maxSeq + 1;
+
+      // Total number of extinguishers in this audit
+      const extCount = formData.extinguishers.length;
+
+      finalInspectionNumber = `EXT-${year}-${facilityInitials}-${String(nextSeq).padStart(3, '0')}-${extCount}`.slice(0, 20);
     }
 
     const payload = {
@@ -484,8 +574,8 @@ export default function ExtinguisherForm({ onCancel, onSuccess, initialData, ins
       
       {/* SUB-FORMULARIO INLINE (MODAL OVERLAY) PARA AGREGAR/EDITAR UN EXTINTOR */}
       {showSubForm && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-bg-surface w-full max-w-3xl rounded-[2.5rem] border border-border-main shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-300">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60">
+          <div className="bg-bg-surface w-full max-w-3xl rounded-[2.5rem] border border-border-main shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
             <div className="p-6 border-b border-border-main bg-bg-main/5 flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <Settings className="text-corpoelec-blue" size={18} />
@@ -517,10 +607,45 @@ export default function ExtinguisherForm({ onCancel, onSuccess, initialData, ins
                   </div>
                   <div className="space-y-1">
                     <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">Área Ubicación *</label>
-                    <input 
-                      type="text" name="physicalArea" required value={extForm.physicalArea} onChange={handleExtFormChange} 
-                      className="input-field h-11 border border-border-main" placeholder="Ej: Pasillo Admin" 
-                    />
+                    <select
+                      name="physicalArea"
+                      required
+                      value={extForm.physicalArea}
+                      onChange={handleExtFormChange}
+                      className="input-field h-11 border border-border-main"
+                    >
+                      <option value="">Seleccione área...</option>
+                      <option value="Recepción / Lobby">Recepción / Lobby</option>
+                      <option value="Oficina Administrativa">Oficina Administrativa</option>
+                      <option value="Sala de Reuniones">Sala de Reuniones</option>
+                      <option value="Pasillo Principal">Pasillo Principal</option>
+                      <option value="Pasillo Secundario">Pasillo Secundario</option>
+                      <option value="Almacén / Depósito">Almacén / Depósito</option>
+                      <option value="Cuarto Eléctrico">Cuarto Eléctrico</option>
+                      <option value="Sala de Servidores">Sala de Servidores</option>
+                      <option value="Taller / Área Técnica">Taller / Área Técnica</option>
+                      <option value="Comedor / Cocina">Comedor / Cocina</option>
+                      <option value="Estacionamiento">Estacionamiento</option>
+                      <option value="Planta Baja">Planta Baja</option>
+                      <option value="Primer Piso">Primer Piso</option>
+                      <option value="Segundo Piso">Segundo Piso</option>
+                      <option value="Azotea / Techo">Azotea / Techo</option>
+                      <option value="Área Industrial">Área Industrial</option>
+                      <option value="Subestación Eléctrica">Subestación Eléctrica</option>
+                      <option value="OTRA">Otra (especificar)</option>
+                    </select>
+                    {extForm.physicalArea === "OTRA" && (
+                      <input
+                        type="text"
+                        name="physicalAreaOther"
+                        required
+                        value={extForm.physicalAreaOther}
+                        onChange={handleExtFormChange}
+                        className="input-field h-11 border border-border-main mt-2"
+                        placeholder="Describa el área..."
+                        maxLength={50}
+                      />
+                    )}
                   </div>
                   <div className="space-y-1">
                     <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">Agente Extinguidor *</label>
@@ -535,10 +660,23 @@ export default function ExtinguisherForm({ onCancel, onSuccess, initialData, ins
                   </div>
                   <div className="space-y-1">
                     <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">Capacidad *</label>
-                    <input 
-                      type="text" name="capacity" required value={extForm.capacity} onChange={handleExtFormChange} 
-                      className="input-field h-11 border border-border-main" placeholder="Ej: 10 Lb / 5 Kg" 
-                    />
+                    <select 
+                      name="capacity" 
+                      required 
+                      value={extForm.capacity} 
+                      onChange={handleExtFormChange} 
+                      className="input-field h-11 border border-border-main"
+                    >
+                      <option value="5 Lb">5 Lb</option>
+                      <option value="10 Lb">10 Lb</option>
+                      <option value="20 Lb">20 Lb</option>
+                      <option value="150 Lb">150 Lb</option>
+                      <option value="2.5 Kg">2.5 Kg</option>
+                      <option value="5 Kg">5 Kg</option>
+                      <option value="6 Kg">6 Kg</option>
+                      <option value="9 Kg">9 Kg</option>
+                      <option value="12 Kg">12 Kg</option>
+                    </select>
                   </div>
                 </div>
 
@@ -611,8 +749,11 @@ export default function ExtinguisherForm({ onCancel, onSuccess, initialData, ins
                   <div className="space-y-1">
                     <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">Parte que requiere mantenimiento</label>
                     <select 
-                      name="maintenancePart" value={extForm.maintenancePart} onChange={handleExtFormChange} 
-                      className="input-field h-11 border border-border-main"
+                      name="maintenancePart" 
+                      value={extForm.maintenancePart} 
+                      onChange={handleExtFormChange} 
+                      disabled={extForm.generalStatus === "FUERA DE SERVICIO"}
+                      className={`input-field h-11 border border-border-main ${extForm.generalStatus === "FUERA DE SERVICIO" ? "bg-bg-main/10 cursor-not-allowed opacity-60" : ""}`}
                     >
                       <option value="">Ninguna - Todo Correcto</option>
                       <option value="manguera">Manguera de Descarga</option>

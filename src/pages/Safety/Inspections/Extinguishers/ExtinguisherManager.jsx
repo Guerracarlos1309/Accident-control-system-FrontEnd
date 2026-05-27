@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
-import { 
-  Plus, 
-  Loader2, 
-  Calendar, 
-  User, 
-  MapPin, 
-  Shield, 
-  Eye, 
+import {
+  Plus,
+  Loader2,
+  Calendar,
+  User,
+  MapPin,
+  Shield,
+  Eye,
   Pencil,
-  Info
+  Info,
 } from "lucide-react";
 import Modal from "../../../../components/Modal";
 import ExtinguisherForm from "./ExtinguisherForm";
@@ -35,11 +35,14 @@ export default function ExtinguisherManager() {
       const res = await api.get("/inspections");
       if (res && !res.err) {
         const extinguisherInspections = res.filter(
-          (i) => i.type === "Extintor" || i.extinguisherInspection
+          (i) => i.type === "Extintor" || i.extinguisherInspection,
         );
         setInspections(extinguisherInspections);
       } else {
-        showNotification("Error al cargar historial de inspecciones de extintores", "error");
+        showNotification(
+          "Error al cargar historial de inspecciones de extintores",
+          "error",
+        );
       }
     } catch (error) {
       showNotification("Error de conexión al servidor", "error");
@@ -65,7 +68,10 @@ export default function ExtinguisherManager() {
         setInitialData(res);
         setIsModalOpen(true);
       } else {
-        showNotification("No se pudo cargar la información para editar", "error");
+        showNotification(
+          "No se pudo cargar la información para editar",
+          "error",
+        );
       }
     } catch (error) {
       showNotification("Error de conexión al intentar editar", "error");
@@ -81,7 +87,6 @@ export default function ExtinguisherManager() {
 
   return (
     <div className="space-y-6 text-txt-main">
-      
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -89,11 +94,12 @@ export default function ExtinguisherManager() {
             Inspección de Extintores
           </h2>
           <p className="text-txt-muted mt-1 text-sm md:text-base">
-            Mantenimiento y estado preventivo de la red de equipos de extinción de incendios.
+            Mantenimiento y estado preventivo de la red de equipos de extinción
+            de incendios.
           </p>
         </div>
-        {user?.role !== 'Analista' && (
-          <button 
+        {user?.role !== "Analista" && (
+          <button
             className="btn-primary w-full sm:w-auto shadow-lg shadow-corpoelec-blue/20"
             onClick={() => setIsModalOpen(true)}
           >
@@ -108,14 +114,18 @@ export default function ExtinguisherManager() {
         {loading && inspections.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 space-y-4 text-txt-muted">
             <Loader2 size={40} className="text-corpoelec-blue animate-spin" />
-            <p className="text-[10px] font-black uppercase tracking-[0.2em]">Buscando auditorías registradas...</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em]">
+              Buscando auditorías registradas...
+            </p>
           </div>
         ) : inspections.length === 0 ? (
           <div className="text-center py-20 text-txt-muted">
             <div className="w-16 h-16 bg-bg-main/20 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-border-main">
               <Shield size={32} className="text-txt-muted" />
             </div>
-            <p className="font-bold uppercase tracking-widest text-xs">No hay auditorías de extintores registradas.</p>
+            <p className="font-bold uppercase tracking-widest text-xs">
+              No hay auditorías de extintores registradas.
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -123,7 +133,7 @@ export default function ExtinguisherManager() {
               <thead>
                 <tr className="bg-bg-main/5 text-[10px] font-black uppercase text-txt-muted tracking-[0.2em] border-b border-border-main">
                   <th className="px-8 py-5">Fecha e Informe</th>
-                  <th className="px-8 py-5">Código Extintor</th>
+                  <th className="px-8 py-5">Código Inspección</th>
                   <th className="px-8 py-5">Inspector</th>
                   <th className="px-8 py-5">Sede / Centro</th>
                   <th className="px-8 py-5 text-center">Estado Global</th>
@@ -132,8 +142,8 @@ export default function ExtinguisherManager() {
               </thead>
               <tbody className="divide-y divide-border-main/20">
                 {inspections.map((insp) => (
-                  <tr 
-                    key={insp.id} 
+                  <tr
+                    key={insp.id}
                     className="hover:bg-bg-main/5 transition-colors group cursor-pointer"
                     onClick={() => handleViewDetails(insp.id)}
                   >
@@ -151,10 +161,10 @@ export default function ExtinguisherManager() {
                     <td className="px-8 py-5 text-sm">
                       <div className="flex flex-col">
                         <span className="font-black text-corpoelec-blue tracking-wider">
-                          {insp.extinguisherInspection?.extinguisherCode || "S/C"}
+                          {insp.inspectionNumber || "S/C"}
                         </span>
                         <span className="text-[10px] text-txt-muted uppercase font-bold">
-                          Ficha Equipo
+                          Código Inspección
                         </span>
                       </div>
                     </td>
@@ -177,7 +187,7 @@ export default function ExtinguisherManager() {
                     </td>
                     <td className="px-8 py-5">
                       <div className="flex justify-center">
-                        <span 
+                        <span
                           className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
                             insp.statusId === 1
                               ? "bg-emerald-500/5 text-emerald-500 border-emerald-500/20"
@@ -191,7 +201,7 @@ export default function ExtinguisherManager() {
                       </div>
                     </td>
                     <td className="px-8 py-5 text-right">
-                      {user?.role !== 'Analista' && (
+                      {user?.role !== "Analista" && (
                         <button
                           className="p-2 text-txt-muted hover:text-corpoelec-blue transition-all bg-transparent hover:bg-bg-main/10 rounded-lg group"
                           disabled={isFetchingEdit === insp.id}
@@ -203,7 +213,10 @@ export default function ExtinguisherManager() {
                           {isFetchingEdit === insp.id ? (
                             <Loader2 size={18} className="animate-spin" />
                           ) : (
-                            <Pencil size={18} className="transition-transform group-hover:scale-110" />
+                            <Pencil
+                              size={18}
+                              className="transition-transform group-hover:scale-110"
+                            />
                           )}
                         </button>
                       )}
@@ -214,7 +227,10 @@ export default function ExtinguisherManager() {
                           handleViewDetails(insp.id);
                         }}
                       >
-                        <Eye size={18} className="transition-transform group-hover:scale-110" />
+                        <Eye
+                          size={18}
+                          className="transition-transform group-hover:scale-110"
+                        />
                       </button>
                     </td>
                   </tr>
@@ -229,13 +245,18 @@ export default function ExtinguisherManager() {
       <Modal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        title={initialData ? "Editar Inspección de Extintor" : "Registrar Inspección de Extintor"}
+        title={
+          initialData
+            ? "Editar Inspección de Extintor"
+            : "Registrar Inspección de Extintor"
+        }
         maxWidth="max-w-4xl"
       >
-        <ExtinguisherForm 
+        <ExtinguisherForm
           onCancel={handleCloseModal}
           onSuccess={fetchInspections}
           initialData={initialData}
+          inspectionsList={inspections}
         />
       </Modal>
 
@@ -253,7 +274,6 @@ export default function ExtinguisherManager() {
           <ExtinguisherInspectionDetails inspectionId={selectedInspectionId} />
         )}
       </Modal>
-
     </div>
   );
 }

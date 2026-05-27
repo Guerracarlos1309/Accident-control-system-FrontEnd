@@ -363,7 +363,7 @@ export default function ExtinguisherInspectionDetails({ inspectionId }) {
                     <div className="grid grid-cols-2 gap-4 text-xs">
                       <div>
                         <span className="text-[9px] font-bold text-txt-muted uppercase block leading-none mb-1">Área Ubicado</span>
-                        <span className="font-bold text-txt-main">{parsed.physicalArea}</span>
+                        <span className="font-bold text-txt-main">{parsed.physicalArea === "OTRA" ? parsed.physicalAreaOther : parsed.physicalArea}</span>
                       </div>
                       <div>
                         <span className="text-[9px] font-bold text-txt-muted uppercase block leading-none mb-1">Agente Impulsor</span>

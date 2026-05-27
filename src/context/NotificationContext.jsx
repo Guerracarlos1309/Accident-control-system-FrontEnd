@@ -35,16 +35,20 @@ export const NotificationProvider = ({ children }) => {
   return (
     <NotificationContext.Provider value={{ showNotification, clearNotifications }}>
       {children}
-      <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[999999] flex flex-col gap-2 pointer-events-none w-full max-w-sm">
-        {notifications.map((n) => (
-          <Notification
-            key={n.id}
-            message={n.message}
-            type={n.type}
-            onClose={() => removeNotification(n.id)}
-          />
-        ))}
-      </div>
+      {notifications.length > 0 && (
+        <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="flex flex-col gap-3 w-full max-w-sm pointer-events-auto">
+            {notifications.map((n) => (
+              <Notification
+                key={n.id}
+                message={n.message}
+                type={n.type}
+                onClose={() => removeNotification(n.id)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </NotificationContext.Provider>
   );
-};
+}
