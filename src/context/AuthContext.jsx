@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
-  const login = async (username, password) => {
+  const login = async (username, password, showUiNotification = true) => {
     try {
       const normalizedUsername = username.trim().toLowerCase();
       const res = await api.post("/auth/login", { body: { username: normalizedUsername, password } });
@@ -72,11 +72,15 @@ export const AuthProvider = ({ children }) => {
       
       // Si hay un error capturado por helpFetch (err: true) o mensaje de error
       const errorMsg = res.statusText || res.message || "Error al iniciar sesión";
-      showNotification(errorMsg, "error");
+      if (showUiNotification) {
+        showNotification(errorMsg, "error");
+      }
       return { success: false, message: errorMsg };
       
     } catch (error) {
-      showNotification("Error de conexión con el servidor", "error");
+      if (showUiNotification) {
+        showNotification("Error de conexión con el servidor", "error");
+      }
       return { success: false, message: "Error de conexión" };
     }
   };

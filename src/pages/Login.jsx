@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Lock, User, Loader2 } from "lucide-react";
+import { Lock, User, Loader2, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import logoCorpoelec from "../assets/logoCorpoelecSinFondo.png";
@@ -9,6 +9,7 @@ export default function Login() {
   const { login } = useAuth();
   const [formData, setFormData] = useState({ username: "", password: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -17,13 +18,16 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError(null);
 
-    const result = await login(formData.username.trim().toLowerCase(), formData.password);
+    const result = await login(formData.username.trim().toLowerCase(), formData.password, false);
 
     setIsSubmitting(false);
 
     if (result.success) {
       navigate("/dashboard");
+    } else {
+      setError(result.message || "Usuario o contraseña incorrectos.");
     }
   };
 
@@ -54,6 +58,12 @@ export default function Login() {
 
           {/* Minimalist Login Form */}
           <div className="space-y-8">
+            {error && (
+              <div className="flex items-center gap-3 p-4 bg-red-50/90 border border-red-200/60 text-red-700 rounded-2xl text-xs font-bold shadow-xs animate-in fade-in slide-in-from-top-1 duration-200">
+                <AlertCircle size={18} className="text-red-500 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
             <form onSubmit={handleLogin} className="space-y-6">
               <div className="space-y-2">
                 <label

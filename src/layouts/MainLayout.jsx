@@ -108,7 +108,7 @@ export default function MainLayout() {
   );
 
   return (
-    <div className="min-h-screen flex bg-bg-main text-txt-main selection:bg-corpoelec-blue/30">
+    <div className="h-screen w-screen flex bg-bg-main text-txt-main selection:bg-corpoelec-blue/30 overflow-hidden">
       {/* Mobile Overlay */}
       {isMobile && sidebarOpen && (
         <div
@@ -120,7 +120,7 @@ export default function MainLayout() {
       {/* Sidebar */}
       <aside
         className={`
-        fixed md:static inset-y-0 left-0 z-50
+        fixed md:static inset-y-0 left-0 z-50 h-screen
         bg-sidebar border-r border-white/10 transition-all duration-300 flex flex-col
         ${sidebarOpen ? "w-64 translate-x-0" : "-translate-x-full md:translate-x-0 md:w-20"}
       `}
@@ -297,7 +297,7 @@ export default function MainLayout() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-auto p-4 md:p-8 relative custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 relative custom-scrollbar min-h-0 pb-16">
           <div className="relative z-10 max-w-7xl mx-auto">
             <Outlet />
           </div>
