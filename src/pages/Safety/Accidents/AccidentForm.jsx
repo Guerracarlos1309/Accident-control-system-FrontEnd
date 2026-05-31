@@ -49,7 +49,15 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
         return {
           ...sanitizedData,
           affectedPersonnel:
-            initialData.involvedEmployees?.map((inv) => inv.employee).filter(Boolean) || [],
+            initialData.involvedEmployees?.map((inv) => {
+              if (!inv.employee) return null;
+              return {
+                ...inv.employee,
+                injuryTypeId: inv.injuryTypeId || "",
+                magnitudeId: inv.magnitudeId || "",
+                restDays: inv.restDays || 0,
+              };
+            }).filter(Boolean) || [],
           documentsCheck:
             initialData.documentsCheck?.map(
               (doc) => doc.documentId || doc.document_id,
@@ -87,6 +95,8 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
     managements: [],
     medicalCenters: [],
     fileDocuments: [],
+    injuryTypes: [],
+    magnitudes: [],
   });
 
   const [formData, setFormData] = useState({
@@ -98,6 +108,7 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
     facilityId: "",
     accidentTypeId: "",
     periodId: "",
+    magnitudeId: "",
     processStatusId: 2,
     damageAgentId: "",
     contactTypeId: "",
@@ -285,6 +296,8 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
           inspectionStatus,
           managements,
           medicalCenters,
+          injuryTypes,
+          magnitudes,
         ] = await Promise.all([
           api.get("/facilities"),
           api.get("/lookups/accident-types"),
@@ -296,6 +309,8 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
           api.get("/lookups/inspection-status"),
           api.get("/lookups/managements"),
           api.get("/lookups/medical-centers"),
+          api.get("/lookups/injury-types"),
+          api.get("/lookups/magnitudes"),
         ]);
 
         const flatten = (arr) => {
@@ -346,6 +361,8 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
             : Array.isArray(medicalCenters)
               ? medicalCenters
               : [],
+          injuryTypes: injuryTypes.err ? [] : (Array.isArray(injuryTypes) ? injuryTypes : []),
+          magnitudes: magnitudes.err ? [] : (Array.isArray(magnitudes) ? magnitudes : []),
         });
       } catch (error) {
         showNotification("Error al cargar catálogos técnicos", "error");
@@ -388,6 +405,7 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
     if (!formData.activity) newErrors.activity = "Actividad del trabajador obligatoria";
     if (!formData.accidentTypeId)
       newErrors.accidentTypeId = "Tipo de accidente obligatorio";
+    if (!formData.magnitudeId) newErrors.magnitudeId = "Magnitud obligatoria";
     if (!formData.damageAgentId) newErrors.damageAgentId = "Agente de daño obligatorio";
     if (!formData.contactTypeId) newErrors.contactTypeId = "Tipo de contacto obligatorio";
     if (!formData.periodId) newErrors.periodId = "Periodo/Año obligatorio";
@@ -593,6 +611,7 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
       if (!formData.description) currentErrors.desc = "Descripción";
       if (!formData.activity) currentErrors.act = "Actividad";
       if (!formData.accidentTypeId) currentErrors.at = "Tipo Accidente";
+      if (!formData.magnitudeId) currentErrors.mag = "Magnitud";
       if (!formData.damageAgentId) currentErrors.da = "Agente Daño";
       if (!formData.contactTypeId) currentErrors.ct = "Tipo Contacto";
       
@@ -615,11 +634,15 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
 
     const finalData = {
       ...formData,
+      magnitudeId: formData.magnitudeId ? parseInt(formData.magnitudeId) : null,
       locationType,
       incidentLocation: locationType === "custom" ? incidentLocation : null,
       parishId: locationType === "custom" ? incidentLocation.parish : null,
       involvedEmployees: formData.affectedPersonnel.map((p) => ({
         employeeId: p.personalNumber,
+        injuryTypeId: p.injuryTypeId ? parseInt(p.injuryTypeId) : null,
+        magnitudeId: p.magnitudeId ? parseInt(p.magnitudeId) : null,
+        restDays: p.restDays ? parseInt(p.restDays) : null,
       })),
       witnesses,
       documentsCheck: formData.documentsCheck.map((docId) => ({
@@ -753,6 +776,25 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                     {catalogs.inspectionStatuses.map((s) => (
                       <option key={s.id} value={s.id}>
                         {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1 flex items-center gap-2">
+                    <Shield size={14} /> Magnitud del Incidente *
+                  </label>
+                  <select
+                    name="magnitudeId"
+                    required
+                    value={formData.magnitudeId}
+                    onChange={handleChange}
+                    className="input-field h-12"
+                  >
+                    <option value="">Seleccione magnitud...</option>
+                    {catalogs.magnitudes.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name || m.description}
                       </option>
                     ))}
                   </select>
@@ -1315,7 +1357,12 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                             ...formData,
                             affectedPersonnel: [
                               ...formData.affectedPersonnel,
-                              emp,
+                              {
+                                ...emp,
+                                injuryTypeId: "",
+                                magnitudeId: "",
+                                restDays: 0,
+                              },
                             ],
                           });
                           setEmployeeSearch("");
@@ -1405,56 +1452,135 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-6">
                 {formData.affectedPersonnel.map((person) => (
                   <div
                     key={person.personalNumber}
-                    className="flex items-center justify-between p-4 bg-bg-surface border border-border-main rounded-3xl shadow-sm hover:shadow-md hover:border-corpoelec-blue/20 transition-all animate-in slide-in-from-bottom-2 duration-300"
+                    className="p-6 bg-bg-surface border border-border-main rounded-[2rem] shadow-sm hover:shadow-md hover:border-corpoelec-blue/20 transition-all animate-in slide-in-from-bottom-2 duration-300 space-y-4"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 bg-corpoelec-blue/5 text-corpoelec-blue border border-corpoelec-blue/10 rounded-2xl flex items-center justify-center font-black text-xs shadow-inner">
-                        {person?.firstName?.[0] || "?"}
-                        {person?.lastName?.[0] || ""}
-                      </div>
-                      <div>
-                        <p className="text-xs font-black text-txt-main uppercase tracking-tight">
-                          {person?.firstName || "N/A"} {person?.lastName || ""}
-                        </p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[9px] font-black text-txt-muted uppercase tracking-tighter bg-bg-main px-2 py-0.5 rounded-md border border-border-main">
-                            CI: {person?.idCard || "---"}
-                          </span>
-                          <span className="text-[9px] font-black text-corpoelec-blue uppercase tracking-tighter bg-corpoelec-blue/5 px-2 py-0.5 rounded-md border border-corpoelec-blue/10">
-                            Nro: {person.personalNumber}
-                          </span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 bg-corpoelec-blue/5 text-corpoelec-blue border border-corpoelec-blue/10 rounded-2xl flex items-center justify-center font-black text-xs shadow-inner">
+                          {person?.firstName?.[0] || "?"}
+                          {person?.lastName?.[0] || ""}
+                        </div>
+                        <div>
+                          <p className="text-xs font-black text-txt-main uppercase tracking-tight">
+                            {person?.firstName || "N/A"} {person?.lastName || ""}
+                          </p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[9px] font-black text-txt-muted uppercase tracking-tighter bg-bg-main px-2 py-0.5 rounded-md border border-border-main">
+                              CI: {person?.idCard || "---"}
+                            </span>
+                            <span className="text-[9px] font-black text-corpoelec-blue uppercase tracking-tighter bg-corpoelec-blue/5 px-2 py-0.5 rounded-md border border-corpoelec-blue/10">
+                              Nro: {person.personalNumber}
+                            </span>
+                          </div>
                         </div>
                       </div>
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setShowEmployeeCard(person)}
+                          className="p-3 text-txt-muted hover:text-corpoelec-blue hover:bg-corpoelec-blue/10 rounded-2xl transition-all"
+                          title="Ver ficha de personal"
+                        >
+                          <Eye size={18} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setFormData({
+                              ...formData,
+                              affectedPersonnel:
+                                formData.affectedPersonnel.filter(
+                                  (p) =>
+                                    p.personalNumber !== person.personalNumber,
+                                  ),
+                            })
+                          }
+                          className="p-3 text-txt-muted hover:text-corpoelec-red hover:bg-corpoelec-red/10 rounded-2xl transition-all active:scale-90"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setShowEmployeeCard(person)}
-                        className="p-3 text-txt-muted hover:text-corpoelec-blue hover:bg-corpoelec-blue/10 rounded-2xl transition-all"
-                        title="Ver ficha de personal"
-                      >
-                        <Eye size={18} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setFormData({
-                            ...formData,
-                            affectedPersonnel:
-                              formData.affectedPersonnel.filter(
-                                (p) =>
-                                  p.personalNumber !== person.personalNumber,
-                              ),
-                          })
-                        }
-                        className="p-3 text-txt-muted hover:text-corpoelec-red hover:bg-corpoelec-red/10 rounded-2xl transition-all active:scale-90"
-                      >
-                        <Trash2 size={18} />
-                      </button>
+
+                    {/* Controles de Lesión, Magnitud y Reposo */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-border-main/50">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black text-txt-muted uppercase tracking-widest block ml-1">
+                          Tipo de Lesión
+                        </label>
+                        <select
+                          value={person.injuryTypeId || ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setFormData(prev => ({
+                              ...prev,
+                              affectedPersonnel: prev.affectedPersonnel.map(p => 
+                                p.personalNumber === person.personalNumber ? { ...p, injuryTypeId: val } : p
+                              )
+                            }));
+                          }}
+                          className="input-field h-10 text-xs"
+                        >
+                          <option value="">Seleccione lesión...</option>
+                          {catalogs.injuryTypes.map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black text-txt-muted uppercase tracking-widest block ml-1">
+                          Magnitud (Gravedad)
+                        </label>
+                        <select
+                          value={person.magnitudeId || ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setFormData(prev => ({
+                              ...prev,
+                              affectedPersonnel: prev.affectedPersonnel.map(p => 
+                                p.personalNumber === person.personalNumber ? { ...p, magnitudeId: val } : p
+                              )
+                            }));
+                          }}
+                          className="input-field h-10 text-xs"
+                        >
+                          <option value="">Seleccione magnitud...</option>
+                          {catalogs.magnitudes.map((m) => (
+                            <option key={m.id} value={m.id}>
+                              {m.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black text-txt-muted uppercase tracking-widest block ml-1">
+                          Días de Reposo
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={person.restDays === undefined ? "" : person.restDays}
+                          onChange={(e) => {
+                            const val = e.target.value === "" ? 0 : parseInt(e.target.value);
+                            setFormData(prev => ({
+                              ...prev,
+                              affectedPersonnel: prev.affectedPersonnel.map(p => 
+                                p.personalNumber === person.personalNumber ? { ...p, restDays: val } : p
+                              )
+                            }));
+                          }}
+                          className="input-field h-10 text-xs"
+                          placeholder="Días"
+                        />
+                      </div>
                     </div>
                   </div>
                 ))}

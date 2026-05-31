@@ -166,6 +166,10 @@ export default function AccidentDetails({ accident }) {
               />
               <DataRow label="Tipo de Accidente" value={accident.type?.name} />
               <DataRow
+                label="Magnitud"
+                value={accident.magnitude?.name || accident.magnitude?.description}
+              />
+              <DataRow
                 label="Año / Periodo"
                 value={accident.period?.annuality}
               />
@@ -226,6 +230,29 @@ export default function AccidentDetails({ accident }) {
                         <p className="text-[9px] font-black text-txt-muted uppercase">
                           CI: {inv.employee?.idCard || inv.employee?.id_card}
                         </p>
+                        {(inv.injuryType || inv.magnitude || inv.restDays > 0) && (
+                          <div className="flex flex-wrap gap-1.5 mt-2">
+                            {inv.injuryType && (
+                              <span className="text-[8px] font-black text-corpoelec-blue uppercase tracking-widest bg-corpoelec-blue/5 border border-corpoelec-blue/10 px-2 py-0.5 rounded-md">
+                                {inv.injuryType.name}
+                              </span>
+                            )}
+                            {inv.magnitude && (
+                              <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border ${
+                                inv.magnitude.name.toLowerCase().includes('fatal') || inv.magnitude.name.toLowerCase().includes('grave')
+                                  ? 'bg-corpoelec-red/10 text-corpoelec-red border-corpoelec-red/20'
+                                  : 'bg-green-500/10 text-green-500 border-green-500/20'
+                              }`}>
+                                {inv.magnitude.name}
+                              </span>
+                            )}
+                            {inv.restDays > 0 && (
+                              <span className="text-[8px] font-black text-amber-600 uppercase tracking-widest bg-amber-500/5 border border-amber-500/10 px-2 py-0.5 rounded-md">
+                                {inv.restDays} {inv.restDays === 1 ? 'Día' : 'Días'} Reposo
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                     <button
