@@ -47,7 +47,7 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
 
   const [idPrefix, setIdPrefix] = useState("V");
   const [idNumber, setIdNumber] = useState("");
-  
+
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const fileInputRef = useRef(null);
@@ -80,7 +80,7 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
             jobTitleId: data.jobTitleId?.toString() || "",
             occupationId: data.occupationId?.toString() || "",
           });
-          
+
           if (data.imageUrl) {
             setImagePreview(`http://localhost:3000${data.imageUrl}`);
           }
@@ -150,6 +150,13 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
       }
     }
 
+    // Letters only validation for firstName and lastName (allows letters, spaces, and Spanish accents/characters)
+    if (name === "firstName" || name === "lastName") {
+      if (value !== "" && !/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]*$/.test(value)) {
+        return;
+      }
+    }
+
     setFormData({ ...formData, [name]: value });
   };
 
@@ -214,43 +221,82 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
     const missingFields = requiredFields.filter((f) => !formData[f.key]);
 
     if (missingFields.length > 0 || !idNumber) {
-      showNotification("Por favor, complete todos los campos obligatorios", "error");
+      showNotification(
+        "Por favor, complete todos los campos obligatorios",
+        "error",
+      );
+      return;
+    }
+
+    // 1.2. Validate Names and Last Names (must contain only letters and spaces)
+    if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(formData.firstName)) {
+      showNotification(
+        "El nombre solo puede contener letras y espacios",
+        "error",
+      );
+      return;
+    }
+
+    if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(formData.lastName)) {
+      showNotification(
+        "El apellido solo puede contener letras y espacios",
+        "error",
+      );
       return;
     }
 
     // 1.5. Validate N° de Personal (must be between 5 and 7 digits)
     if (!/^\d{5,7}$/.test(formData.personalNumber)) {
-      showNotification("El número de personal debe contener entre 5 y 7 dígitos numéricos", "error");
+      showNotification(
+        "El número de personal debe contener entre 5 y 7 dígitos numéricos",
+        "error",
+      );
       return;
     }
 
     // 2. Validate Cédula of Identity (must be between 5 and 8 digits)
     if (!/^\d{5,8}$/.test(idNumber)) {
-      showNotification("La cédula de identidad debe contener entre 5 y 8 dígitos numéricos", "error");
+      showNotification(
+        "La cédula de identidad debe contener entre 5 y 8 dígitos numéricos",
+        "error",
+      );
       return;
     }
 
     // 3. Validate Email format (if provided)
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      showNotification("Por favor, introduzca un correo electrónico válido (Ej: usuario@empresa.com)", "error");
+      showNotification(
+        "Por favor, introduzca un correo electrónico válido (Ej: usuario@empresa.com)",
+        "error",
+      );
       return;
     }
 
     // 4. Validate Phone format (if provided)
     if (formData.phone) {
       const cleanPhone = formData.phone.replace(/\D/g, "");
-      const isValidVenezuelan = /^0(412|414|424|416|426|2\d{2})\d{7}$/.test(cleanPhone) || /^58(412|414|424|416|426|2\d{2})\d{7}$/.test(cleanPhone);
+      const isValidVenezuelan =
+        /^0(412|414|424|416|426|2\d{2})\d{7}$/.test(cleanPhone) ||
+        /^58(412|414|424|416|426|2\d{2})\d{7}$/.test(cleanPhone);
       if (!isValidVenezuelan) {
-        showNotification("El número de teléfono debe ser un número de teléfono venezolano válido (ej: 04141234567 o 02121234567)", "error");
+        showNotification(
+          "El número de teléfono debe ser un número de teléfono venezolano válido (ej: 04141234567 o 02121234567)",
+          "error",
+        );
         return;
       }
     }
-    
+
     if (formData.officePhone) {
       const cleanOfficePhone = formData.officePhone.replace(/\D/g, "");
-      const isValidVenezuelan = /^0(412|414|424|416|426|2\d{2})\d{7}$/.test(cleanOfficePhone) || /^58(412|414|424|416|426|2\d{2})\d{7}$/.test(cleanOfficePhone);
+      const isValidVenezuelan =
+        /^0(412|414|424|416|426|2\d{2})\d{7}$/.test(cleanOfficePhone) ||
+        /^58(412|414|424|416|426|2\d{2})\d{7}$/.test(cleanOfficePhone);
       if (!isValidVenezuelan) {
-        showNotification("El teléfono de oficina debe ser un número de teléfono venezolano válido (ej: 04141234567 o 02121234567)", "error");
+        showNotification(
+          "El teléfono de oficina debe ser un número de teléfono venezolano válido (ej: 04141234567 o 02121234567)",
+          "error",
+        );
         return;
       }
     }
@@ -260,11 +306,17 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
       const birth = new Date(formData.birthDate);
       const today = new Date();
       if (birth > today) {
-        showNotification("La fecha de nacimiento no puede ser una fecha futura", "error");
+        showNotification(
+          "La fecha de nacimiento no puede ser una fecha futura",
+          "error",
+        );
         return;
       }
       if (age < 18) {
-        showNotification("El empleado debe ser mayor de edad (mínimo 18 años)", "error");
+        showNotification(
+          "El empleado debe ser mayor de edad (mínimo 18 años)",
+          "error",
+        );
         return;
       }
     }
@@ -274,14 +326,24 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
       const hire = new Date(formData.hireDate);
       const today = new Date();
       if (hire > today) {
-        showNotification("La fecha de ingreso no puede ser una fecha futura", "error");
+        showNotification(
+          "La fecha de ingreso no puede ser una fecha futura",
+          "error",
+        );
         return;
       }
       if (formData.birthDate) {
         const birth = new Date(formData.birthDate);
-        const minHireDate = new Date(birth.getFullYear() + 18, birth.getMonth(), birth.getDate());
+        const minHireDate = new Date(
+          birth.getFullYear() + 18,
+          birth.getMonth(),
+          birth.getDate(),
+        );
         if (hire < minHireDate) {
-          showNotification("La fecha de ingreso no puede ser anterior a la mayoría de edad del empleado (18 años)", "error");
+          showNotification(
+            "La fecha de ingreso no puede ser anterior a la mayoría de edad del empleado (18 años)",
+            "error",
+          );
           return;
         }
       }
@@ -292,18 +354,18 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
       ...formData,
       idCard: `${idPrefix}-${idNumber}`,
     };
-    
+
     const formDataToSend = new FormData();
     Object.keys(finalData).forEach((key) => {
       if (finalData[key] !== null && finalData[key] !== undefined) {
         formDataToSend.append(key, finalData[key]);
       }
     });
-    
+
     if (imageFile) {
       formDataToSend.append("image", imageFile);
     }
-    
+
     onSubmit(formDataToSend);
   };
 
@@ -337,33 +399,37 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Image Upload */}
             <div className="col-span-1 md:col-span-2 flex flex-col items-center justify-center p-6 mb-2">
-              <div 
+              <div
                 className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-bg-surface shadow-xl shadow-corpoelec-blue/10 bg-bg-main/5 group cursor-pointer flex items-center justify-center"
                 onClick={() => fileInputRef.current?.click()}
               >
                 {imagePreview ? (
-                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <User size={48} className="text-txt-muted/30" />
                 )}
-                
+
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <Camera className="text-white" size={24} />
                 </div>
               </div>
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleImageChange} 
-                accept="image/*" 
-                className="hidden" 
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleImageChange}
+                accept="image/*"
+                className="hidden"
               />
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => fileInputRef.current?.click()}
                 className="mt-4 text-[10px] font-black uppercase tracking-widest text-corpoelec-blue hover:text-corpoelec-blue/80 transition-colors"
               >
-                {imagePreview ? 'Cambiar Fotografía' : 'Añadir Fotografía'}
+                {imagePreview ? "Cambiar Fotografía" : "Añadir Fotografía"}
               </button>
             </div>
 
@@ -392,6 +458,11 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                 onChange={handleChange}
                 className="input-field h-12"
               />
+              <div>
+                <p className="text-[9px] text-txt-muted font-bold tracking-tight mt-1 ml-1 self-end uppercase">
+                  Debe contener solo letras
+                </p>
+              </div>
             </div>
 
             {/* Cédula Estilizada */}
@@ -416,6 +487,12 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                   className="flex-1 px-4 bg-transparent outline-none text-sm font-semibold text-txt-main placeholder:text-txt-muted/30"
                   placeholder="Número de cédula"
                 />
+              </div>
+
+              <div>
+                <p className="text-[9px] text-txt-muted font-bold tracking-tight mt-1 ml-1 self-end uppercase">
+                  De 5 a 8 dígitos (Solo dígitos)
+                </p>
               </div>
             </div>
 
