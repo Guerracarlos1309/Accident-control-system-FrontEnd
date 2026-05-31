@@ -49,15 +49,17 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
         return {
           ...sanitizedData,
           affectedPersonnel:
-            initialData.involvedEmployees?.map((inv) => {
-              if (!inv.employee) return null;
-              return {
-                ...inv.employee,
-                injuryTypeId: inv.injuryTypeId || "",
-                magnitudeId: inv.magnitudeId || "",
-                restDays: inv.restDays || 0,
-              };
-            }).filter(Boolean) || [],
+            initialData.involvedEmployees
+              ?.map((inv) => {
+                if (!inv.employee) return null;
+                return {
+                  ...inv.employee,
+                  injuryTypeId: inv.injuryTypeId || "",
+                  magnitudeId: inv.magnitudeId || "",
+                  restDays: inv.restDays || 0,
+                };
+              })
+              .filter(Boolean) || [],
           documentsCheck:
             initialData.documentsCheck?.map(
               (doc) => doc.documentId || doc.document_id,
@@ -137,9 +139,12 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
 
   const [errors, setErrors] = useState({});
 
-  const [selectedParentAccidentType, setSelectedParentAccidentType] = useState("");
-  const [selectedParentDamageAgent, setSelectedParentDamageAgent] = useState("");
-  const [selectedParentContactType, setSelectedParentContactType] = useState("");
+  const [selectedParentAccidentType, setSelectedParentAccidentType] =
+    useState("");
+  const [selectedParentDamageAgent, setSelectedParentDamageAgent] =
+    useState("");
+  const [selectedParentContactType, setSelectedParentContactType] =
+    useState("");
 
   // Resolving parent IDs on editing
   useEffect(() => {
@@ -147,12 +152,17 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
       if (catalogs.accidentTypes.length > 0) {
         const typeId = initialData.accidentTypeId;
         if (typeId) {
-          const parent = catalogs.accidentTypes.find(t => t.id === Number(typeId));
+          const parent = catalogs.accidentTypes.find(
+            (t) => t.id === Number(typeId),
+          );
           if (parent) {
             setSelectedParentAccidentType(typeId);
           } else {
             for (const p of catalogs.accidentTypes) {
-              if (p.children && p.children.some(c => c.id === Number(typeId))) {
+              if (
+                p.children &&
+                p.children.some((c) => c.id === Number(typeId))
+              ) {
                 setSelectedParentAccidentType(p.id);
                 break;
               }
@@ -163,12 +173,17 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
       if (catalogs.damageAgents.length > 0) {
         const agentId = initialData.damageAgentId;
         if (agentId) {
-          const parent = catalogs.damageAgents.find(a => a.id === Number(agentId));
+          const parent = catalogs.damageAgents.find(
+            (a) => a.id === Number(agentId),
+          );
           if (parent) {
             setSelectedParentDamageAgent(agentId);
           } else {
             for (const p of catalogs.damageAgents) {
-              if (p.children && p.children.some(c => c.id === Number(agentId))) {
+              if (
+                p.children &&
+                p.children.some((c) => c.id === Number(agentId))
+              ) {
                 setSelectedParentDamageAgent(p.id);
                 break;
               }
@@ -179,12 +194,17 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
       if (catalogs.contactTypes.length > 0) {
         const contactId = initialData.contactTypeId;
         if (contactId) {
-          const parent = catalogs.contactTypes.find(c => c.id === Number(contactId));
+          const parent = catalogs.contactTypes.find(
+            (c) => c.id === Number(contactId),
+          );
           if (parent) {
             setSelectedParentContactType(contactId);
           } else {
             for (const p of catalogs.contactTypes) {
-              if (p.children && p.children.some(c => c.id === Number(contactId))) {
+              if (
+                p.children &&
+                p.children.some((c) => c.id === Number(contactId))
+              ) {
                 setSelectedParentContactType(p.id);
                 break;
               }
@@ -193,13 +213,19 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
         }
       }
     }
-  }, [initialData, catalogs.accidentTypes, catalogs.damageAgents, catalogs.contactTypes]);
+  }, [
+    initialData,
+    catalogs.accidentTypes,
+    catalogs.damageAgents,
+    catalogs.contactTypes,
+  ]);
 
   // Sincronizar automáticamente la gerencia responsable con el primer trabajador afectado vinculado
   useEffect(() => {
     if (formData.affectedPersonnel && formData.affectedPersonnel.length > 0) {
       const firstEmp = formData.affectedPersonnel[0];
-      const targetManagementId = firstEmp.managementId || firstEmp.management?.id || "";
+      const targetManagementId =
+        firstEmp.managementId || firstEmp.management?.id || "";
       if (targetManagementId) {
         setFormData((prev) => {
           if (prev.managementId === targetManagementId) return prev;
@@ -222,17 +248,22 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
 
   // Auto-seleccionar el período/año basándose en la fecha del accidente
   useEffect(() => {
-    if (formData.accidentDate && catalogs.periods && catalogs.periods.length > 0) {
+    if (
+      formData.accidentDate &&
+      catalogs.periods &&
+      catalogs.periods.length > 0
+    ) {
       const dateParts = formData.accidentDate.split("-");
       if (dateParts.length > 0) {
         const year = parseInt(dateParts[0], 10);
         if (!isNaN(year)) {
           const matchingPeriod = catalogs.periods.find(
-            (p) => parseInt(p.annuality) === year
+            (p) => parseInt(p.annuality) === year,
           );
           if (matchingPeriod) {
             setFormData((prev) => {
-              if (Number(prev.periodId) === Number(matchingPeriod.id)) return prev;
+              if (Number(prev.periodId) === Number(matchingPeriod.id))
+                return prev;
               return {
                 ...prev,
                 periodId: matchingPeriod.id,
@@ -257,8 +288,6 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
     }
   }, [formData.accidentDate, catalogs.periods, errors.periodId]);
 
-
-
   const filteredEmployees =
     employeeSearch.length > 1 && catalogs?.employees
       ? catalogs.employees
@@ -279,8 +308,6 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
               ),
           )
       : [];
-
-
 
   useEffect(() => {
     const fetchCatalogs = async () => {
@@ -332,9 +359,21 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
             : Array.isArray(facilities)
               ? facilities
               : [],
-          accidentTypes: accidentTypes.err ? [] : (Array.isArray(accidentTypes) ? accidentTypes : []),
-          damageAgents: damageAgents.err ? [] : (Array.isArray(damageAgents) ? damageAgents : []),
-          contactTypes: contactTypes.err ? [] : (Array.isArray(contactTypes) ? contactTypes : []),
+          accidentTypes: accidentTypes.err
+            ? []
+            : Array.isArray(accidentTypes)
+              ? accidentTypes
+              : [],
+          damageAgents: damageAgents.err
+            ? []
+            : Array.isArray(damageAgents)
+              ? damageAgents
+              : [],
+          contactTypes: contactTypes.err
+            ? []
+            : Array.isArray(contactTypes)
+              ? contactTypes
+              : [],
           periods: periods.err ? [] : Array.isArray(periods) ? periods : [],
           fileDocuments: fileDocuments.err
             ? []
@@ -361,8 +400,16 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
             : Array.isArray(medicalCenters)
               ? medicalCenters
               : [],
-          injuryTypes: injuryTypes.err ? [] : (Array.isArray(injuryTypes) ? injuryTypes : []),
-          magnitudes: magnitudes.err ? [] : (Array.isArray(magnitudes) ? magnitudes : []),
+          injuryTypes: injuryTypes.err
+            ? []
+            : Array.isArray(injuryTypes)
+              ? injuryTypes
+              : [],
+          magnitudes: magnitudes.err
+            ? []
+            : Array.isArray(magnitudes)
+              ? magnitudes
+              : [],
         });
       } catch (error) {
         showNotification("Error al cargar catálogos técnicos", "error");
@@ -376,7 +423,7 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.accidentDate) {
       newErrors.accidentDate = "Fecha obligatoria";
     } else {
@@ -386,28 +433,34 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
         newErrors.accidentDate = "La fecha del accidente no puede ser futura";
       }
     }
-    
+
     if (!formData.accidentTime) newErrors.accidentTime = "Hora obligatoria";
-    
+
     if (locationType === "facility" && !formData.facilityId)
       newErrors.facilityId = "Sede obligatoria";
-      
-    if (!formData.managementId) newErrors.managementId = "Gerencia Involucrada obligatoria";
-    
+
+    if (!formData.managementId)
+      newErrors.managementId = "Gerencia Involucrada obligatoria";
+
     if (
       locationType === "custom" &&
       (!incidentLocation.stateId || !formData.customAddressDetails)
     ) {
-      newErrors.location = "Ubicación externa y dirección detallada obligatorias";
+      newErrors.location =
+        "Ubicación externa y dirección detallada obligatorias";
     }
-    
-    if (!formData.description) newErrors.description = "Descripción obligatoria";
-    if (!formData.activity) newErrors.activity = "Actividad del trabajador obligatoria";
+
+    if (!formData.description)
+      newErrors.description = "Descripción obligatoria";
+    if (!formData.activity)
+      newErrors.activity = "Actividad del trabajador obligatoria";
     if (!formData.accidentTypeId)
       newErrors.accidentTypeId = "Tipo de accidente obligatorio";
     if (!formData.magnitudeId) newErrors.magnitudeId = "Magnitud obligatoria";
-    if (!formData.damageAgentId) newErrors.damageAgentId = "Agente de daño obligatorio";
-    if (!formData.contactTypeId) newErrors.contactTypeId = "Tipo de contacto obligatorio";
+    if (!formData.damageAgentId)
+      newErrors.damageAgentId = "Agente de daño obligatorio";
+    if (!formData.contactTypeId)
+      newErrors.contactTypeId = "Tipo de contacto obligatorio";
     if (!formData.periodId) newErrors.periodId = "Periodo/Año obligatorio";
 
     // Validate witnesses if any are registered
@@ -418,14 +471,20 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
           witnessErrors.push(`Nombre vacío en Testigo #${idx + 1}`);
         }
         if (w.idCard && !/^\d{5,8}$/.test(w.idCard.trim())) {
-          witnessErrors.push(`Cédula incorrecta en Testigo #${idx + 1} (debe tener entre 5 y 8 dígitos)`);
+          witnessErrors.push(
+            `Cédula incorrecta en Testigo #${idx + 1} (debe tener entre 5 y 8 dígitos)`,
+          );
         }
         if (w.phone) {
           const cleanPhone = w.phone.replace(/\D/g, "");
           if (cleanPhone.length > 0) {
-            const isValidVenezuelan = /^0(412|414|424|416|426|2\d{2})\d{7}$/.test(cleanPhone) || /^58(412|414|424|416|426|2\d{2})\d{7}$/.test(cleanPhone);
+            const isValidVenezuelan =
+              /^0(412|414|424|416|426|2\d{2})\d{7}$/.test(cleanPhone) ||
+              /^58(412|414|424|416|426|2\d{2})\d{7}$/.test(cleanPhone);
             if (!isValidVenezuelan) {
-              witnessErrors.push(`Teléfono incorrecto en Testigo #${idx + 1} (debe ser un número venezolano válido, ej: 04141234567 o 02121234567)`);
+              witnessErrors.push(
+                `Teléfono incorrecto en Testigo #${idx + 1} (debe ser un número venezolano válido, ej: 04141234567 o 02121234567)`,
+              );
             }
           }
         }
@@ -441,30 +500,32 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
     if (name === "medicalCenterId") {
-      const center = catalogs.medicalCenters.find(c => c.id === parseInt(value));
+      const center = catalogs.medicalCenters.find(
+        (c) => c.id === parseInt(value),
+      );
       if (center) {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
           medicalCenterId: value,
           medicalCenterName: center.name,
-          medicalCenterAddress: center.address || ""
+          medicalCenterAddress: center.address || "",
         }));
         if (center.parish) {
           setMedicalLocation({
             stateId: center.parish.city?.stateId || "",
             cityId: center.parish.cityId || "",
-            parish: center.parishId || ""
+            parish: center.parishId || "",
           });
         }
       } else {
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData((prev) => ({ ...prev, [name]: value }));
       }
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
-    
+
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: null }));
   };
 
@@ -505,31 +566,52 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
 
   const generateDescriptionAI = () => {
     if (!formData.accidentDate || !formData.accidentTime) {
-      showNotification("Por favor, ingrese al menos la fecha y hora del suceso para autogenerar el reporte.", "warning");
+      showNotification(
+        "Por favor, ingrese al menos la fecha y hora del suceso para autogenerar el reporte.",
+        "warning",
+      );
       return;
     }
 
     // 1. Gather all form information
-    const employeeNames = formData.affectedPersonnel && formData.affectedPersonnel.length > 0
-      ? formData.affectedPersonnel.map(p => `${p.firstName} ${p.lastName}`).join(", ")
-      : "el personal de guardia";
+    const employeeNames =
+      formData.affectedPersonnel && formData.affectedPersonnel.length > 0
+        ? formData.affectedPersonnel
+            .map((p) => `${p.firstName} ${p.lastName}`)
+            .join(", ")
+        : "el personal de guardia";
 
-    const facilityObj = catalogs.facilities.find(f => String(f.id) === String(formData.facilityId));
-    const facilityName = locationType === "facility" && facilityObj 
-      ? facilityObj.name 
-      : (formData.customAddressDetails || "la ubicación externa especificada");
+    const facilityObj = catalogs.facilities.find(
+      (f) => String(f.id) === String(formData.facilityId),
+    );
+    const facilityName =
+      locationType === "facility" && facilityObj
+        ? facilityObj.name
+        : formData.customAddressDetails || "la ubicación externa especificada";
 
-    const managementObj = catalogs.managements.find(m => String(m.id) === String(formData.managementId));
+    const managementObj = catalogs.managements.find(
+      (m) => String(m.id) === String(formData.managementId),
+    );
     const managementName = managementObj ? managementObj.name : "";
 
-    const typeObj = catalogs.accidentTypes.find(t => String(t.id) === String(formData.accidentTypeId));
-    const typeName = typeObj ? typeObj.name.replace(/└─\s*/, "") : "accidente de trabajo";
+    const typeObj = catalogs.accidentTypes.find(
+      (t) => String(t.id) === String(formData.accidentTypeId),
+    );
+    const typeName = typeObj
+      ? typeObj.name.replace(/└─\s*/, "")
+      : "accidente de trabajo";
 
-    const agentObj = catalogs.damageAgents.find(a => String(a.id) === String(formData.damageAgentId));
+    const agentObj = catalogs.damageAgents.find(
+      (a) => String(a.id) === String(formData.damageAgentId),
+    );
     const agentName = agentObj ? agentObj.name.replace(/└─\s*/, "") : null;
 
-    const contactObj = catalogs.contactTypes.find(c => String(c.id) === String(formData.contactTypeId));
-    const contactName = contactObj ? contactObj.name.replace(/└─\s*/, "") : null;
+    const contactObj = catalogs.contactTypes.find(
+      (c) => String(c.id) === String(formData.contactTypeId),
+    );
+    const contactName = contactObj
+      ? contactObj.name.replace(/└─\s*/, "")
+      : null;
 
     // 2. Format Date
     let formattedDate = formData.accidentDate;
@@ -538,7 +620,7 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
       if (dateParts.length === 3) {
         formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
       }
-    } catch(e) {}
+    } catch (e) {}
 
     // 3. Draft professional report
     let text = `El día ${formattedDate} aproximadamente a las ${formData.accidentTime}, se registró un incidente de tipo técnico-operativo en las instalaciones de ${facilityName}`;
@@ -557,26 +639,37 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
 
     if (agentName || contactName) {
       text += `, originado por `;
-      if (contactName) text += `un contacto directo de tipo "${contactName.toLowerCase()}"`;
-      if (agentName) text += `${contactName ? " con " : ""}"${agentName.toLowerCase()}"`;
+      if (contactName)
+        text += `un contacto directo de tipo "${contactName.toLowerCase()}"`;
+      if (agentName)
+        text += `${contactName ? " con " : ""}"${agentName.toLowerCase()}"`;
     }
-    
+
     text += `. Se procesa el presente informe oficial con el fin de iniciar las investigaciones de rigor, determinar causas raíz y establecer los planes de acción correctivos y preventivos necesarios en conjunto con la Unidad de Seguridad e Higiene Ocupacional (ASHO).`;
 
     // 4. Implement typing effect (micro-animation)
     let currentText = "";
     let i = 0;
-    setFormData(prev => ({ ...prev, description: "Analizando datos y redactando..." }));
-    
+    setFormData((prev) => ({
+      ...prev,
+      description: "Analizando datos y redactando...",
+    }));
+
     const interval = setInterval(() => {
       if (i < text.length) {
         currentText += text.substring(0, i + 4);
-        setFormData(prev => ({ ...prev, description: text.substring(0, i + 4) }));
+        setFormData((prev) => ({
+          ...prev,
+          description: text.substring(0, i + 4),
+        }));
         i += 4;
       } else {
-        setFormData(prev => ({ ...prev, description: text }));
+        setFormData((prev) => ({ ...prev, description: text }));
         clearInterval(interval);
-        showNotification("¡Reporte técnico autogenerado correctamente!", "success");
+        showNotification(
+          "¡Reporte técnico autogenerado correctamente!",
+          "success",
+        );
       }
     }, 12);
   };
@@ -592,7 +685,10 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
         showNotification(validationErrors.witnesses, "error");
         return;
       }
-      if (validationErrors.accidentDate === "La fecha del accidente no puede ser futura") {
+      if (
+        validationErrors.accidentDate ===
+        "La fecha del accidente no puede ser futura"
+      ) {
         showNotification("La fecha del accidente no puede ser futura", "error");
         return;
       }
@@ -614,11 +710,14 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
       if (!formData.magnitudeId) currentErrors.mag = "Magnitud";
       if (!formData.damageAgentId) currentErrors.da = "Agente Daño";
       if (!formData.contactTypeId) currentErrors.ct = "Tipo Contacto";
-      
+
       if (!formData.periodId) {
         if (formData.accidentDate) {
           const year = formData.accidentDate.split("-")[0];
-          showNotification(`El año ${year} no está registrado en los períodos del sistema. Por favor, registre este período primero.`, "error");
+          showNotification(
+            `El año ${year} no está registrado en los períodos del sistema. Por favor, registre este período primero.`,
+            "error",
+          );
           return;
         } else {
           currentErrors.p = "Periodo (requiere fecha)";
@@ -627,7 +726,10 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
 
       const missingNames = Object.values(currentErrors).join(", ");
       if (missingNames) {
-        showNotification(`Faltan campos obligatorios: ${missingNames}`, "error");
+        showNotification(
+          `Faltan campos obligatorios: ${missingNames}`,
+          "error",
+        );
       }
       return;
     }
@@ -671,10 +773,15 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
     }
   };
 
-  const accidentYear = formData.accidentDate ? formData.accidentDate.split("-")[0] : null;
-  const isPeriodFound = accidentYear && catalogs.periods
-    ? catalogs.periods.some(p => String(p.annuality) === String(accidentYear))
-    : false;
+  const accidentYear = formData.accidentDate
+    ? formData.accidentDate.split("-")[0]
+    : null;
+  const isPeriodFound =
+    accidentYear && catalogs.periods
+      ? catalogs.periods.some(
+          (p) => String(p.annuality) === String(accidentYear),
+        )
+      : false;
 
   const TabButton = ({ id, label, icon: Icon }) => (
     <button
@@ -730,19 +837,23 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                       {errors.accidentDate}
                     </p>
                   )}
-                  {accidentYear && (
-                    isPeriodFound ? (
+                  {accidentYear &&
+                    (isPeriodFound ? (
                       <p className="text-[10px] text-green-600 dark:text-green-400 font-bold mt-1.5 flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 px-3 py-1.5 rounded-xl w-fit animate-in fade-in duration-300">
                         <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                        <span>Período fiscal {accidentYear} asignado automáticamente</span>
+                        <span>
+                          Período fiscal {accidentYear} asignado automáticamente
+                        </span>
                       </p>
                     ) : (
                       <p className="text-[10px] text-corpoelec-red font-bold mt-1.5 flex items-center gap-1.5 bg-corpoelec-red/10 border border-corpoelec-red/20 px-3 py-1.5 rounded-xl w-fit animate-in fade-in duration-300">
                         <span className="inline-block w-1.5 h-1.5 rounded-full bg-corpoelec-red animate-pulse"></span>
-                        <span>Error: El año {accidentYear} no está registrado en los períodos del sistema.</span>
+                        <span>
+                          Error: El año {accidentYear} no está registrado en los
+                          períodos del sistema.
+                        </span>
                       </p>
-                    )
-                  )}
+                    ))}
                 </div>
                 <div className="space-y-1">
                   <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1 flex items-center gap-2">
@@ -938,7 +1049,7 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
               <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
                   <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
-                    Categoría de Accidente (Padre) *
+                    Categoría de Accidente *
                   </label>
                   <select
                     required
@@ -946,13 +1057,28 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                     onChange={(e) => {
                       const val = e.target.value;
                       setSelectedParentAccidentType(val);
-                      const parent = catalogs.accidentTypes.find(t => t.id === Number(val));
-                      if (parent && (!parent.children || parent.children.length === 0)) {
-                        setFormData(prev => ({ ...prev, accidentTypeId: val }));
+                      const parent = catalogs.accidentTypes.find(
+                        (t) => t.id === Number(val),
+                      );
+                      if (
+                        parent &&
+                        (!parent.children || parent.children.length === 0)
+                      ) {
+                        setFormData((prev) => ({
+                          ...prev,
+                          accidentTypeId: val,
+                        }));
                       } else {
-                        setFormData(prev => ({ ...prev, accidentTypeId: "" }));
+                        setFormData((prev) => ({
+                          ...prev,
+                          accidentTypeId: "",
+                        }));
                       }
-                      if (errors.accidentTypeId) setErrors(prev => ({ ...prev, accidentTypeId: null }));
+                      if (errors.accidentTypeId)
+                        setErrors((prev) => ({
+                          ...prev,
+                          accidentTypeId: null,
+                        }));
                     }}
                     className={`input-field h-12 ${errors.accidentTypeId ? "border-corpoelec-red" : ""}`}
                   >
@@ -967,25 +1093,37 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
 
                 <div className="space-y-1">
                   <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
-                    Detalle / Tipo de Accidente Específico (Hijo) *
+                    Detalle / Tipo de Accidente Específico *
                   </label>
                   {(() => {
-                    const parent = catalogs.accidentTypes.find(t => t.id === Number(selectedParentAccidentType));
-                    const hasChildren = parent && parent.children && parent.children.length > 0;
-                    
+                    const parent = catalogs.accidentTypes.find(
+                      (t) => t.id === Number(selectedParentAccidentType),
+                    );
+                    const hasChildren =
+                      parent && parent.children && parent.children.length > 0;
+
                     return (
                       <select
                         required={hasChildren}
                         disabled={!selectedParentAccidentType || !hasChildren}
                         value={formData.accidentTypeId}
                         onChange={(e) => {
-                          setFormData(prev => ({ ...prev, accidentTypeId: e.target.value }));
-                          if (errors.accidentTypeId) setErrors(prev => ({ ...prev, accidentTypeId: null }));
+                          setFormData((prev) => ({
+                            ...prev,
+                            accidentTypeId: e.target.value,
+                          }));
+                          if (errors.accidentTypeId)
+                            setErrors((prev) => ({
+                              ...prev,
+                              accidentTypeId: null,
+                            }));
                         }}
-                        className={`input-field h-12 ${errors.accidentTypeId ? "border-corpoelec-red" : ""} ${(!selectedParentAccidentType || !hasChildren) ? "opacity-60 bg-bg-main/5 cursor-not-allowed" : ""}`}
+                        className={`input-field h-12 ${errors.accidentTypeId ? "border-corpoelec-red" : ""} ${!selectedParentAccidentType || !hasChildren ? "opacity-60 bg-bg-main/5 cursor-not-allowed" : ""}`}
                       >
                         {!selectedParentAccidentType && (
-                          <option value="">Seleccione categoría primero...</option>
+                          <option value="">
+                            Seleccione categoría primero...
+                          </option>
                         )}
                         {selectedParentAccidentType && !hasChildren && (
                           <option value="">No requiere subcategoría</option>
@@ -1015,7 +1153,7 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
               <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
                   <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
-                    Categoría del Agente de Daño (Padre) *
+                    Categoría del Agente de Daño *
                   </label>
                   <select
                     required
@@ -1023,13 +1161,22 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                     onChange={(e) => {
                       const val = e.target.value;
                       setSelectedParentDamageAgent(val);
-                      const parent = catalogs.damageAgents.find(a => a.id === Number(val));
-                      if (parent && (!parent.children || parent.children.length === 0)) {
-                        setFormData(prev => ({ ...prev, damageAgentId: val }));
+                      const parent = catalogs.damageAgents.find(
+                        (a) => a.id === Number(val),
+                      );
+                      if (
+                        parent &&
+                        (!parent.children || parent.children.length === 0)
+                      ) {
+                        setFormData((prev) => ({
+                          ...prev,
+                          damageAgentId: val,
+                        }));
                       } else {
-                        setFormData(prev => ({ ...prev, damageAgentId: "" }));
+                        setFormData((prev) => ({ ...prev, damageAgentId: "" }));
                       }
-                      if (errors.damageAgentId) setErrors(prev => ({ ...prev, damageAgentId: null }));
+                      if (errors.damageAgentId)
+                        setErrors((prev) => ({ ...prev, damageAgentId: null }));
                     }}
                     className={`input-field h-12 ${errors.damageAgentId ? "border-corpoelec-red" : ""}`}
                   >
@@ -1044,25 +1191,37 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
 
                 <div className="space-y-1">
                   <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
-                    Agente Específico (Hijo) *
+                    Agente Específico *
                   </label>
                   {(() => {
-                    const parent = catalogs.damageAgents.find(a => a.id === Number(selectedParentDamageAgent));
-                    const hasChildren = parent && parent.children && parent.children.length > 0;
-                    
+                    const parent = catalogs.damageAgents.find(
+                      (a) => a.id === Number(selectedParentDamageAgent),
+                    );
+                    const hasChildren =
+                      parent && parent.children && parent.children.length > 0;
+
                     return (
                       <select
                         required={hasChildren}
                         disabled={!selectedParentDamageAgent || !hasChildren}
                         value={formData.damageAgentId}
                         onChange={(e) => {
-                          setFormData(prev => ({ ...prev, damageAgentId: e.target.value }));
-                          if (errors.damageAgentId) setErrors(prev => ({ ...prev, damageAgentId: null }));
+                          setFormData((prev) => ({
+                            ...prev,
+                            damageAgentId: e.target.value,
+                          }));
+                          if (errors.damageAgentId)
+                            setErrors((prev) => ({
+                              ...prev,
+                              damageAgentId: null,
+                            }));
                         }}
-                        className={`input-field h-12 ${errors.damageAgentId ? "border-corpoelec-red" : ""} ${(!selectedParentDamageAgent || !hasChildren) ? "opacity-60 bg-bg-main/5 cursor-not-allowed" : ""}`}
+                        className={`input-field h-12 ${errors.damageAgentId ? "border-corpoelec-red" : ""} ${!selectedParentDamageAgent || !hasChildren ? "opacity-60 bg-bg-main/5 cursor-not-allowed" : ""}`}
                       >
                         {!selectedParentDamageAgent && (
-                          <option value="">Seleccione categoría primero...</option>
+                          <option value="">
+                            Seleccione categoría primero...
+                          </option>
                         )}
                         {selectedParentDamageAgent && !hasChildren && (
                           <option value="">No requiere subcategoría</option>
@@ -1092,7 +1251,7 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
               <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
                   <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
-                    Categoría del Tipo de Contacto (Padre) *
+                    Categoría del Tipo de Contacto *
                   </label>
                   <select
                     required
@@ -1100,13 +1259,22 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                     onChange={(e) => {
                       const val = e.target.value;
                       setSelectedParentContactType(val);
-                      const parent = catalogs.contactTypes.find(c => c.id === Number(val));
-                      if (parent && (!parent.children || parent.children.length === 0)) {
-                        setFormData(prev => ({ ...prev, contactTypeId: val }));
+                      const parent = catalogs.contactTypes.find(
+                        (c) => c.id === Number(val),
+                      );
+                      if (
+                        parent &&
+                        (!parent.children || parent.children.length === 0)
+                      ) {
+                        setFormData((prev) => ({
+                          ...prev,
+                          contactTypeId: val,
+                        }));
                       } else {
-                        setFormData(prev => ({ ...prev, contactTypeId: "" }));
+                        setFormData((prev) => ({ ...prev, contactTypeId: "" }));
                       }
-                      if (errors.contactTypeId) setErrors(prev => ({ ...prev, contactTypeId: null }));
+                      if (errors.contactTypeId)
+                        setErrors((prev) => ({ ...prev, contactTypeId: null }));
                     }}
                     className={`input-field h-12 ${errors.contactTypeId ? "border-corpoelec-red" : ""}`}
                   >
@@ -1121,32 +1289,46 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
 
                 <div className="space-y-1">
                   <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
-                    Contacto Específico (Hijo) *
+                    Contacto Específico *
                   </label>
                   {(() => {
-                    const parent = catalogs.contactTypes.find(c => c.id === Number(selectedParentContactType));
-                    const hasChildren = parent && parent.children && parent.children.length > 0;
-                    
+                    const parent = catalogs.contactTypes.find(
+                      (c) => c.id === Number(selectedParentContactType),
+                    );
+                    const hasChildren =
+                      parent && parent.children && parent.children.length > 0;
+
                     return (
                       <select
                         required={hasChildren}
                         disabled={!selectedParentContactType || !hasChildren}
                         value={formData.contactTypeId}
                         onChange={(e) => {
-                          setFormData(prev => ({ ...prev, contactTypeId: e.target.value }));
-                          if (errors.contactTypeId) setErrors(prev => ({ ...prev, contactTypeId: null }));
+                          setFormData((prev) => ({
+                            ...prev,
+                            contactTypeId: e.target.value,
+                          }));
+                          if (errors.contactTypeId)
+                            setErrors((prev) => ({
+                              ...prev,
+                              contactTypeId: null,
+                            }));
                         }}
-                        className={`input-field h-12 ${errors.contactTypeId ? "border-corpoelec-red" : ""} ${(!selectedParentContactType || !hasChildren) ? "opacity-60 bg-bg-main/5 cursor-not-allowed" : ""}`}
+                        className={`input-field h-12 ${errors.contactTypeId ? "border-corpoelec-red" : ""} ${!selectedParentContactType || !hasChildren ? "opacity-60 bg-bg-main/5 cursor-not-allowed" : ""}`}
                       >
                         {!selectedParentContactType && (
-                          <option value="">Seleccione categoría primero...</option>
+                          <option value="">
+                            Seleccione categoría primero...
+                          </option>
                         )}
                         {selectedParentContactType && !hasChildren && (
                           <option value="">No requiere subcategoría</option>
                         )}
                         {selectedParentContactType && hasChildren && (
                           <>
-                            <option value="">Seleccione tipo contacto...</option>
+                            <option value="">
+                              Seleccione tipo contacto...
+                            </option>
                             {parent.children.map((c) => (
                               <option key={c.id} value={c.id}>
                                 {c.name}
@@ -1466,7 +1648,8 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                         </div>
                         <div>
                           <p className="text-xs font-black text-txt-main uppercase tracking-tight">
-                            {person?.firstName || "N/A"} {person?.lastName || ""}
+                            {person?.firstName || "N/A"}{" "}
+                            {person?.lastName || ""}
                           </p>
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className="text-[9px] font-black text-txt-muted uppercase tracking-tighter bg-bg-main px-2 py-0.5 rounded-md border border-border-main">
@@ -1496,7 +1679,7 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                                 formData.affectedPersonnel.filter(
                                   (p) =>
                                     p.personalNumber !== person.personalNumber,
-                                  ),
+                                ),
                             })
                           }
                           className="p-3 text-txt-muted hover:text-corpoelec-red hover:bg-corpoelec-red/10 rounded-2xl transition-all active:scale-90"
@@ -1516,11 +1699,14 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                           value={person.injuryTypeId || ""}
                           onChange={(e) => {
                             const val = e.target.value;
-                            setFormData(prev => ({
+                            setFormData((prev) => ({
                               ...prev,
-                              affectedPersonnel: prev.affectedPersonnel.map(p => 
-                                p.personalNumber === person.personalNumber ? { ...p, injuryTypeId: val } : p
-                              )
+                              affectedPersonnel: prev.affectedPersonnel.map(
+                                (p) =>
+                                  p.personalNumber === person.personalNumber
+                                    ? { ...p, injuryTypeId: val }
+                                    : p,
+                              ),
                             }));
                           }}
                           className="input-field h-10 text-xs"
@@ -1542,11 +1728,14 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                           value={person.magnitudeId || ""}
                           onChange={(e) => {
                             const val = e.target.value;
-                            setFormData(prev => ({
+                            setFormData((prev) => ({
                               ...prev,
-                              affectedPersonnel: prev.affectedPersonnel.map(p => 
-                                p.personalNumber === person.personalNumber ? { ...p, magnitudeId: val } : p
-                              )
+                              affectedPersonnel: prev.affectedPersonnel.map(
+                                (p) =>
+                                  p.personalNumber === person.personalNumber
+                                    ? { ...p, magnitudeId: val }
+                                    : p,
+                              ),
                             }));
                           }}
                           className="input-field h-10 text-xs"
@@ -1567,14 +1756,22 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                         <input
                           type="number"
                           min="0"
-                          value={person.restDays === undefined ? "" : person.restDays}
+                          value={
+                            person.restDays === undefined ? "" : person.restDays
+                          }
                           onChange={(e) => {
-                            const val = e.target.value === "" ? 0 : parseInt(e.target.value);
-                            setFormData(prev => ({
+                            const val =
+                              e.target.value === ""
+                                ? 0
+                                : parseInt(e.target.value);
+                            setFormData((prev) => ({
                               ...prev,
-                              affectedPersonnel: prev.affectedPersonnel.map(p => 
-                                p.personalNumber === person.personalNumber ? { ...p, restDays: val } : p
-                              )
+                              affectedPersonnel: prev.affectedPersonnel.map(
+                                (p) =>
+                                  p.personalNumber === person.personalNumber
+                                    ? { ...p, restDays: val }
+                                    : p,
+                              ),
                             }));
                           }}
                           className="input-field h-10 text-xs"
