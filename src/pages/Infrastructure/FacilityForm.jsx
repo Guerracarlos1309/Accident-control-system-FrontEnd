@@ -107,16 +107,23 @@ export default function FacilityForm({
       return;
     }
     if (nameVal.length < 3) {
-      showNotification("El nombre de la sede debe tener al menos 3 caracteres", "error");
+      showNotification(
+        "El nombre de la sede debe tener al menos 3 caracteres",
+        "error",
+      );
       return;
     }
 
     // 2. Coordinates format validation (if provided)
     if (formData.coordinates) {
       const coordVal = formData.coordinates.trim();
-      const coordRegex = /^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/;
+      const coordRegex =
+        /^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/;
       if (!coordRegex.test(coordVal)) {
-        showNotification("Las coordenadas deben tener un formato 'LATITUD, LONGITUD' válido (Ej: 11.6667, -70.2167)", "error");
+        showNotification(
+          "Las coordenadas deben tener un formato 'LATITUD, LONGITUD' válido (Ej: 11.6667, -70.2167)",
+          "error",
+        );
         return;
       }
     }
@@ -195,7 +202,21 @@ export default function FacilityForm({
               onChange={handleChange}
               className="input-field h-12 font-bold"
               placeholder="EJ: PLANTA TERMOELÉCTRICA JOSEFA CAMEJO"
+              maxLength={50}
+              onKeyDown={(e) => {
+                if (
+                  !/[-0-9 a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/.test(e.key) &&
+                  e.key !== "Backspace"
+                ) {
+                  e.preventDefault();
+                }
+              }}
             />
+            <div>
+              <p className="text-[9px] text-txt-muted font-bold tracking-tight mt-1 ml-1 self-end uppercase">
+                Debe contener solo letras
+              </p>
+            </div>
           </div>
           <div className="space-y-2">
             <label className="text-[10px] font-black text-txt-muted uppercase tracking-widest ml-1">
@@ -277,6 +298,16 @@ export default function FacilityForm({
               onChange={handleChange}
               className="input-field h-12 font-mono"
               placeholder="EJ: 11.6667, -70.2167"
+              maxLength={50}
+              onKeyDown={(e) => {
+                if (
+                  !/[-0-9.]/.test(e.key) &&
+                  e.key !== "Backspace" &&
+                  e.key !== ","
+                ) {
+                  e.preventDefault();
+                }
+              }}
             />
           </div>
         </div>

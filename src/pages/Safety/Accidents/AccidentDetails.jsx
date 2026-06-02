@@ -174,12 +174,34 @@ export default function AccidentDetails({ accident }) {
                 value={accident.period?.annuality}
               />
               <DataRow
-                label="Agente de Daño"
-                value={accident.damageAgent?.name}
+                label="Tipo de Trabajo"
+                value={
+                  accident.workType === "ordinario"
+                    ? "Ordinario"
+                    : accident.workType === "eventual"
+                      ? "Eventual u ocasional"
+                      : accident.workType
+                }
               />
+              <DataRow label="Peligro (Agente/Condición)" value={accident.hazardCode} />
+              <DataRow label="Tipo de Exposición" value={accident.contactExposureCode} />
+              <DataRow label="Clase de Afectación" value={accident.affectationClassCode} />
+              <DataRow label="Sujeto de Afectación" value={accident.affectationSubjectCode} />
               <DataRow
-                label="Tipo de Contacto"
-                value={accident.contactType?.name}
+                label="Afectación Bienes/Procesos"
+                value={
+                  accident.assetsProcessAffectation === "0"
+                    ? "0 - Sin afectación"
+                    : accident.assetsProcessAffectation === "1"
+                      ? "1 - Leve"
+                      : accident.assetsProcessAffectation === "2"
+                        ? "2 - Moderada"
+                        : accident.assetsProcessAffectation === "3"
+                          ? "3 - Grave o muy grave"
+                          : accident.assetsProcessAffectation === "4"
+                            ? "4 - Irrecuperable"
+                            : accident.assetsProcessAffectation
+                }
               />
             </div>
           </section>

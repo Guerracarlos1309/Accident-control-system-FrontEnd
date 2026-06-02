@@ -444,7 +444,14 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                 value={formData.firstName}
                 onChange={handleChange}
                 className="input-field h-12"
+                maxLength={30}
               />
+
+              <div>
+                <p className="text-[9px] text-txt-muted font-bold tracking-tight mt-1 ml-1 self-end uppercase">
+                  Debe contener solo letras
+                </p>
+              </div>
             </div>
             <div className="space-y-1">
               <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">
@@ -457,6 +464,7 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                 value={formData.lastName}
                 onChange={handleChange}
                 className="input-field h-12"
+                maxLength={30}
               />
               <div>
                 <p className="text-[9px] text-txt-muted font-bold tracking-tight mt-1 ml-1 self-end uppercase">
@@ -486,6 +494,7 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                   onChange={handleIdNumberChange}
                   className="flex-1 px-4 bg-transparent outline-none text-sm font-semibold text-txt-main placeholder:text-txt-muted/30"
                   placeholder="Número de cédula"
+                  maxLength={8}
                 />
               </div>
 
@@ -510,6 +519,7 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                 onChange={handleChange}
                 className={`input-field h-12 text-sm font-semibold ${data ? "bg-bg-main/20 cursor-not-allowed opacity-70" : ""}`}
                 placeholder="Numero de personal"
+                maxLength={7}
               />
               {data && (
                 <p className="text-[9px] text-corpoelec-blue font-black uppercase mt-1 ml-1">
@@ -597,6 +607,7 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                 onChange={handleChange}
                 className="input-field h-12"
                 placeholder="usuario@ejemplo.com"
+                maxLength={30}
               />
             </div>
             <div className="space-y-1">
@@ -610,7 +621,18 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                 onChange={handleChange}
                 className="input-field h-12"
                 placeholder="04XX-XXXXXXX"
+                maxLength={15}
+                onKeyDown={(e) => {
+                  if (!/[0-9]/.test(e.key) && e.key !== "Backspace") {
+                    e.preventDefault();
+                  }
+                }}
               />
+              <div>
+                <p className="text-[9px] text-txt-muted font-bold tracking-tight mt-1 ml-1 self-end uppercase">
+                  Debe contener solo números
+                </p>
+              </div>
             </div>
 
             <div className="col-span-1 md:col-span-2 p-6 rounded-3xl border border-border-main/50 mt-2 bg-bg-main/5">
@@ -811,7 +833,18 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                 onChange={handleChange}
                 className="input-field h-12"
                 placeholder="Ext. XXX o Directo X-XXX-XXXX"
+                maxLength={15}
+                onKeyDown={(e) => {
+                  if (!/[0-9]/.test(e.key) && e.key !== "Backspace") {
+                    e.preventDefault();
+                  }
+                }}
               />
+              <div>
+                <p className="text-[9px] text-txt-muted font-bold tracking-tight mt-1 ml-1 self-end uppercase">
+                  Debe contener solo números
+                </p>
+              </div>
             </div>
           </div>
         )}
