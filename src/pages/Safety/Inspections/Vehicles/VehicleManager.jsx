@@ -9,6 +9,8 @@ import {
   ArrowUpRight,
   Eye,
   Pencil,
+  Search,
+  Filter,
 } from "lucide-react";
 import Modal from "../../../../components/Modal";
 import VehicleForm from "./VehicleForm";
@@ -24,6 +26,8 @@ export default function VehicleManager() {
   const [initialData, setInitialData] = useState(null); // Added for editing
   const [inspections, setInspections] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [isFetchingEdit, setIsFetchingEdit] = useState(false); // For edit button loading state
   const api = helpFetch();
   const { showNotification } = useNotification();
@@ -82,6 +86,26 @@ export default function VehicleManager() {
     setInitialData(null);
   };
 
+  // Lógica de filtrado combinada
+  const filteredInspections = inspections.filter((insp) => {
+    const matchesSearch =
+      insp.id.toString().includes(searchTerm) ||
+      (insp.vehicleInspection?.plateId &&
+        insp.vehicleInspection.plateId
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())) ||
+      `${insp.inspector?.firstName} ${insp.inspector?.lastName}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      (insp.facility?.name &&
+        insp.facility.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const matchesStatus =
+      statusFilter === "all" || String(insp.statusId) === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500 text-txt-main">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -93,7 +117,7 @@ export default function VehicleManager() {
             Control y registro de auditorías preventivas del parque automotor.
           </p>
         </div>
-        {user?.role !== 'Analista' && (
+        {user?.role !== "Analista" && (
           <button
             className="btn-primary w-full sm:w-auto shadow-lg shadow-corpoelec-blue/20"
             onClick={() => setIsModalOpen(true)}
@@ -104,21 +128,62 @@ export default function VehicleManager() {
         )}
       </div>
 
+      {/* BARRA DE FILTROS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-4 rounded-[2rem] border border-border-main/50 shadow-sm animate-in fade-in slide-in-from-top-2 duration-500">
+        <div className="md:col-span-2 relative group">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-txt-muted group-focus-within:text-corpoelec-blue transition-colors">
+            <Search size={18} />
+          </div>
+          <input
+            type="text"
+            placeholder="Buscar por ID, placa, inspector o sede..."
+            className="input-field !pl-12 h-12 w-full text-xs font-bold uppercase tracking-widest"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm("")}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-corpoelec-red uppercase hover:underline"
+            >
+              Limpiar
+            </button>
+          )}
+        </div>
+        <div className="relative group">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-txt-muted group-focus-within:text-corpoelec-blue transition-colors">
+            <Filter size={18} />
+          </div>
+          <select
+            className="input-field !pl-12 h-12 w-full text-xs font-bold uppercase tracking-widest cursor-pointer"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="all">Todos los Estados</option>
+            <option value="1">Pendientes</option>
+            <option value="2">En Proceso</option>
+            <option value="3">Completados</option>
+          </select>
+        </div>
+      </div>
+
       <div className="glass-panel overflow-hidden border border-border-main/50 rounded-[2rem]">
-        {loading && inspections.length === 0 ? (
+        {loading ? (
           <div className="flex flex-col items-center justify-center py-20 space-y-4 text-txt-muted">
             <Loader2 size={40} className="text-corpoelec-blue animate-spin" />
             <p className="text-[10px] font-black uppercase tracking-[0.2em]">
               Buscando registros técnicos...
             </p>
           </div>
-        ) : inspections.length === 0 ? (
+        ) : filteredInspections.length === 0 ? (
           <div className="text-center py-20 text-txt-muted">
             <div className="w-16 h-16 bg-bg-main/20 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-border-main">
               <ClipboardCheck size={32} className="text-txt-muted" />
             </div>
             <p className="font-bold uppercase tracking-widest text-xs">
-              No hay inspecciones de vehículos registradas actualmente.
+              {searchTerm || statusFilter !== "all"
+                ? "No se encontraron inspecciones para los filtros aplicados."
+                : "No hay inspecciones de vehículos registradas actualmente."}
             </p>
           </div>
         ) : (
@@ -135,7 +200,7 @@ export default function VehicleManager() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-main/20">
-                {inspections.map((insp) => (
+                {filteredInspections.map((insp) => (
                   <tr
                     key={insp.id}
                     className="hover:bg-bg-main/5 transition-colors group cursor-pointer"
@@ -183,11 +248,11 @@ export default function VehicleManager() {
                       <div className="flex justify-center">
                         <span
                           className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                            insp.statusId === 1
+                            insp.statusId === 3
                               ? "bg-emerald-500/5 text-emerald-500 border-emerald-500/20"
-                              : insp.statusId === 2
+                              : insp.statusId === 1
                                 ? "bg-amber-500/5 text-amber-500 border-amber-500/20"
-                                : "bg-txt-muted/5 text-txt-muted border-border-main"
+                                : "bg-corpoelec-blue/5 text-corpoelec-blue border-corpoelec-blue/20"
                           }`}
                         >
                           {insp.status?.name || "Pendiente"}
@@ -195,7 +260,7 @@ export default function VehicleManager() {
                       </div>
                     </td>
                     <td className="px-8 py-5 text-right">
-                      {user?.role !== 'Analista' && (
+                      {user?.role !== "Analista" && (
                         <button
                           className="p-2 text-txt-muted hover:text-corpoelec-blue transition-all bg-transparent hover:bg-bg-main/10 rounded-lg group"
                           disabled={isFetchingEdit === insp.id}

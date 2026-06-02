@@ -15,7 +15,7 @@ import {
   Eye,
   Briefcase,
   Download,
-  Loader2
+  Loader2,
 } from "lucide-react";
 import { helpFetch } from "../../../helpers/helpFetch";
 import { useNotification } from "../../../context/NotificationContext";
@@ -28,12 +28,16 @@ export default function AccidentDetails({ accident }) {
   const { showNotification } = useNotification();
 
   if (!accident) return null;
+  console.log("Visualizando Accidente:", accident);
 
   const handleDownloadPdf = async () => {
     setDownloading(true);
     try {
       showNotification("Generando PDF...", "info");
-      await api.download(`/reports/accidents/${accident.id}`, `accidente_${accident.inpsaselFileNumber || accident.id}.pdf`);
+      await api.download(
+        `/reports/accidents/${accident.id}`,
+        `accidente_${accident.inpsaselFileNumber || accident.id}.pdf`,
+      );
       showNotification("PDF descargado con éxito", "success");
     } catch (e) {
       showNotification("Error al generar PDF", "error");
@@ -73,6 +77,16 @@ export default function AccidentDetails({ accident }) {
             <Shield size={28} />
           </div>
           <div>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {(accident.accidentControlNumber ||
+                accident.accident_control_number) && (
+                <span className="px-3 py-1 bg-corpoelec-blue/5 text-corpoelec-blue border border-corpoelec-blue/10 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg shadow-sm animate-in fade-in slide-in-from-top-1 duration-500">
+                  Nro. Control:{" "}
+                  {accident.accidentControlNumber ||
+                    accident.accident_control_number}
+                </span>
+              )}
+            </div>
             <h2 className="text-lg font-black text-txt-main tracking-tight leading-tight">
               Investigación Técnica #{accident.id}
             </h2>
@@ -109,7 +123,7 @@ export default function AccidentDetails({ accident }) {
               {accident.processStatus?.name || "Pendiente"}
             </span>
           </div>
-          <button 
+          <button
             disabled={downloading}
             onClick={handleDownloadPdf}
             className="btn-primary h-10 text-[10px] font-black uppercase tracking-widest gap-2 bg-corpoelec-blue hover:bg-corpoelec-blue/90"
@@ -130,6 +144,13 @@ export default function AccidentDetails({ accident }) {
           <section>
             <SectionTitle icon={MapPin} title="Ubicación del Suceso" />
             <div className="glass-panel p-5 rounded-2xl space-y-1">
+              <DataRow
+                label="Nro. Control de Accidente"
+                value={
+                  accident.accidentControlNumber ||
+                  accident.accident_control_number
+                }
+              />
               <DataRow
                 label="Instalación"
                 value={
@@ -167,7 +188,9 @@ export default function AccidentDetails({ accident }) {
               <DataRow label="Tipo de Accidente" value={accident.type?.name} />
               <DataRow
                 label="Magnitud"
-                value={accident.magnitude?.name || accident.magnitude?.description}
+                value={
+                  accident.magnitude?.name || accident.magnitude?.description
+                }
               />
               <DataRow
                 label="Año / Periodo"
@@ -183,10 +206,22 @@ export default function AccidentDetails({ accident }) {
                       : accident.workType
                 }
               />
-              <DataRow label="Peligro (Agente/Condición)" value={accident.hazardCode} />
-              <DataRow label="Tipo de Exposición" value={accident.contactExposureCode} />
-              <DataRow label="Clase de Afectación" value={accident.affectationClassCode} />
-              <DataRow label="Sujeto de Afectación" value={accident.affectationSubjectCode} />
+              <DataRow
+                label="Peligro (Agente/Condición)"
+                value={accident.hazardCode}
+              />
+              <DataRow
+                label="Tipo de Exposición"
+                value={accident.contactExposureCode}
+              />
+              <DataRow
+                label="Clase de Afectación"
+                value={accident.affectationClassCode}
+              />
+              <DataRow
+                label="Sujeto de Afectación"
+                value={accident.affectationSubjectCode}
+              />
               <DataRow
                 label="Afectación Bienes/Procesos"
                 value={
@@ -225,24 +260,29 @@ export default function AccidentDetails({ accident }) {
                     <div className="flex items-center gap-3">
                       <div className="h-12 w-12 bg-corpoelec-red/10 text-corpoelec-red rounded-2xl overflow-hidden flex items-center justify-center font-black text-sm border border-border-main/50 relative">
                         {inv.employee?.imageUrl ? (
-                          <img 
-                            src={inv.employee.imageUrl.startsWith('http') 
-                              ? inv.employee.imageUrl 
-                              : `${window.location.protocol}//${window.location.hostname}:3000/uploads/${inv.employee.imageUrl.replace('uploads/', '')}`} 
+                          <img
+                            src={
+                              inv.employee.imageUrl.startsWith("http")
+                                ? inv.employee.imageUrl
+                                : `${window.location.protocol}//${window.location.hostname}:3000/uploads/${inv.employee.imageUrl.replace("uploads/", "")}`
+                            }
                             alt={inv.employee.firstName}
                             className="w-full h-full object-cover"
-                            style={{ display: 'block' }}
+                            style={{ display: "block" }}
                             onError={(e) => {
-                              e.target.style.display = 'none'; // Oculta la imagen rota
-                              e.target.nextSibling.style.display = 'flex'; // Muestra las iniciales
+                              e.target.style.display = "none"; // Oculta la imagen rota
+                              e.target.nextSibling.style.display = "flex"; // Muestra las iniciales
                             }}
                           />
                         ) : null}
-                        <span 
-                          style={{ display: inv.employee?.imageUrl ? 'none' : 'flex' }}
+                        <span
+                          style={{
+                            display: inv.employee?.imageUrl ? "none" : "flex",
+                          }}
                           className="w-full h-full items-center justify-center"
                         >
-                          {inv.employee?.firstName?.[0]}{inv.employee?.lastName?.[0]}
+                          {inv.employee?.firstName?.[0]}
+                          {inv.employee?.lastName?.[0]}
                         </span>
                       </div>
                       <div>
@@ -252,7 +292,9 @@ export default function AccidentDetails({ accident }) {
                         <p className="text-[9px] font-black text-txt-muted uppercase">
                           CI: {inv.employee?.idCard || inv.employee?.id_card}
                         </p>
-                        {(inv.injuryType || inv.magnitude || inv.restDays > 0) && (
+                        {(inv.injuryType ||
+                          inv.magnitude ||
+                          inv.restDays > 0) && (
                           <div className="flex flex-wrap gap-1.5 mt-2">
                             {inv.injuryType && (
                               <span className="text-[8px] font-black text-corpoelec-blue uppercase tracking-widest bg-corpoelec-blue/5 border border-corpoelec-blue/10 px-2 py-0.5 rounded-md">
@@ -260,17 +302,25 @@ export default function AccidentDetails({ accident }) {
                               </span>
                             )}
                             {inv.magnitude && (
-                              <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border ${
-                                inv.magnitude.name.toLowerCase().includes('fatal') || inv.magnitude.name.toLowerCase().includes('grave')
-                                  ? 'bg-corpoelec-red/10 text-corpoelec-red border-corpoelec-red/20'
-                                  : 'bg-green-500/10 text-green-500 border-green-500/20'
-                              }`}>
+                              <span
+                                className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border ${
+                                  inv.magnitude.name
+                                    .toLowerCase()
+                                    .includes("fatal") ||
+                                  inv.magnitude.name
+                                    .toLowerCase()
+                                    .includes("grave")
+                                    ? "bg-corpoelec-red/10 text-corpoelec-red border-corpoelec-red/20"
+                                    : "bg-green-500/10 text-green-500 border-green-500/20"
+                                }`}
+                              >
                                 {inv.magnitude.name}
                               </span>
                             )}
                             {inv.restDays > 0 && (
                               <span className="text-[8px] font-black text-amber-600 uppercase tracking-widest bg-amber-500/5 border border-amber-500/10 px-2 py-0.5 rounded-md">
-                                {inv.restDays} {inv.restDays === 1 ? 'Día' : 'Días'} Reposo
+                                {inv.restDays}{" "}
+                                {inv.restDays === 1 ? "Día" : "Días"} Reposo
                               </span>
                             )}
                           </div>
@@ -393,7 +443,20 @@ export default function AccidentDetails({ accident }) {
           <p className="text-sm text-txt-main leading-relaxed whitespace-pre-line">
             {accident.description}
           </p>
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            {/* Número de Control resaltado al lado de INPSASEL */}
+            {(accident.accidentControlNumber ||
+              accident.accident_control_number) && (
+              <div className="flex items-center gap-2 p-3 bg-corpoelec-blue/5 text-corpoelec-blue rounded-xl border border-corpoelec-blue/10 shadow-sm animate-in fade-in zoom-in duration-300">
+                <Shield size={14} className="text-corpoelec-blue" />
+                <span className="text-[10px] font-black text-corpoelec-blue uppercase tracking-widest">
+                  Nro. Control:{" "}
+                  {accident.accidentControlNumber ||
+                    accident.accident_control_number}
+                </span>
+              </div>
+            )}
+
             {accident.inpsaselFileNumber && (
               <div className="flex items-center gap-2 p-3 bg-corpoelec-blue/5 rounded-xl border border-corpoelec-blue/10 w-fit">
                 <AlertCircle size={14} className="text-corpoelec-blue" />
@@ -402,6 +465,7 @@ export default function AccidentDetails({ accident }) {
                 </span>
               </div>
             )}
+
             {accident.globalObservations && (
               <div className="flex items-center gap-2 p-3 bg-bg-main/20 rounded-xl border border-border-main/50 w-fit">
                 <Info size={14} className="text-txt-muted" />
@@ -411,6 +475,26 @@ export default function AccidentDetails({ accident }) {
               </div>
             )}
           </div>
+
+          {(accident.accidentControlNumber ||
+            accident.accident_control_number) && (
+            <div className="mt-8 flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-white border border-border-main rounded-[2rem] shadow-sm">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 bg-corpoelec-blue/10 rounded-2xl flex items-center justify-center text-corpoelec-blue">
+                  <FileText size={24} />
+                </div>
+                <div>
+                  <h3 className="text-[10px] font-black text-txt-muted uppercase tracking-[0.2em]">
+                    Número de Control de Accidente
+                  </h3>
+                  <p className="text-xl font-black text-corpoelec-blue tracking-widest">
+                    {accident.accidentControlNumber ||
+                      accident.accident_control_number}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

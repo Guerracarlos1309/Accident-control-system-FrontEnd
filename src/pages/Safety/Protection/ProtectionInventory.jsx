@@ -259,10 +259,6 @@ export default function ProtectionInventory() {
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
         {/* Search input */}
         <div className="relative w-full md:max-w-md">
-          <Search
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-txt-muted/50"
-            size={18}
-          />
           <input
             type="text"
             placeholder="Buscar por descripción, marca, serial o clasificación..."

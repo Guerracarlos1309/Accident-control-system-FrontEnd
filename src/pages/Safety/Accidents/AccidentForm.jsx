@@ -1064,6 +1064,8 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
   const { showNotification } = useNotification();
   useEffect(() => {
     if (initialData) {
+      console.log("Datos iniciales recibidos del servidor:", initialData);
+      setIsEditing(true);
       setFormData((prev) => {
         const sanitizedData = { ...prev };
         Object.keys(prev).forEach((key) => {
@@ -1076,6 +1078,27 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
 
         return {
           ...sanitizedData,
+          // Asegurar mapeo de campos específicos desde el backend (compatibilidad snake_case)
+          accidentControlNumber:
+            initialData.accidentControlNumber ||
+            initialData.accident_control_number ||
+            "",
+          accidentNature: (() => {
+            if (initialData.accidentNature || initialData.accident_nature) {
+              return initialData.accidentNature || initialData.accident_nature;
+            }
+            // Intentar extraer la naturaleza del código de control (última letra)
+            const controlNumber =
+              initialData.accidentControlNumber ||
+              initialData.accident_control_number;
+            if (controlNumber && controlNumber.includes("-")) {
+              const parts = controlNumber.split("-");
+              if (parts.length === 4) return parts[3];
+            }
+            return "";
+          })(),
+          regionPrefix:
+            initialData.regionPrefix || initialData.region_prefix || "32",
           affectedPersonnel:
             initialData.involvedEmployees
               ?.map((inv) => {
@@ -1157,11 +1180,16 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
     documentsCheck: [],
     workType: "",
     hazardCode: "",
+    regionPrefix: "32",
+    accidentControlNumber: "",
+    accidentNature: "",
     contactExposureCode: "",
     affectationClassCode: "",
     affectationSubjectCode: "",
     assetsProcessAffectation: "",
   });
+
+  const [isEditing, setIsEditing] = useState(false);
 
   const [witnesses, setWitnesses] = useState([]);
   const [incidentLocation, setIncidentLocation] = useState({
@@ -1437,6 +1465,80 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
       }
     }
   }, [formData.accidentDate, catalogs.periods, errors.periodId]);
+
+  // Lógica para generar el Número de Control de Accidente
+  useEffect(() => {
+    const generateControlNumber = async () => {
+      if (!formData.accidentDate || !formData.accidentNature) {
+        console.log("Esperando fecha y naturaleza para generar código...");
+        return;
+      }
+
+      // Si ya tenemos un número de control (cargado de initialData),
+      // verificamos si los componentes actuales coinciden para no sobrescribirlo
+      const currentParts = formData.accidentControlNumber
+        ? formData.accidentControlNumber.split("-")
+        : [];
+      const currentYear = formData.accidentDate.split("-")[0].slice(-2);
+
+      // IMPORTANTE: Si ya existe un código y sus partes (Región, Año, Naturaleza) coinciden,
+      // significa que ya está cargado correctamente. NO regeneramos para no perder el correlativo.
+      if (
+        currentParts.length === 4 &&
+        currentParts[0] === formData.regionPrefix &&
+        currentParts[1] === currentYear &&
+        currentParts[3] === formData.accidentNature
+      ) {
+        console.log(
+          "El código actual es válido, manteniendo correlativo:",
+          currentParts[2],
+        );
+        return;
+      }
+
+      // 1. Prefijo de Región (Editable)
+      const prefix = formData.regionPrefix || "32";
+
+      // 2. Últimos dos dígitos del año
+      const yearSuffix = formData.accidentDate.split("-")[0].slice(-2);
+
+      // 3. Código de Naturaleza
+      const natureCode = formData.accidentNature;
+
+      // 4. Correlativo
+      let correlative = "001";
+
+      // Si estamos editando, intentamos preservar el correlativo original si existe
+      if (
+        formData.accidentControlNumber &&
+        formData.accidentControlNumber.includes("-")
+      ) {
+        const parts = formData.accidentControlNumber.split("-");
+        if (parts.length >= 3) correlative = parts[2];
+      }
+
+      try {
+        // Ejemplo de cómo podrías obtener el correlativo real del backend:
+        // const response = await api.get(`/accidents/next-correlative?year=${formData.accidentDate.split('-')[0]}`);
+        // if (!response.err) correlative = String(response.count).padStart(3, '0');
+      } catch (e) {
+        console.error("Error fetching correlative", e);
+      }
+
+      const newControlNumber = `${prefix}-${yearSuffix}-${correlative}-${natureCode}`;
+      console.log("Generando nuevo número de control:", newControlNumber);
+
+      setFormData((prev) => {
+        if (prev.accidentControlNumber === newControlNumber) return prev;
+        return {
+          ...prev,
+          accidentControlNumber: newControlNumber,
+        };
+      });
+    };
+
+    generateControlNumber();
+  }, [formData.accidentDate, formData.accidentNature, formData.regionPrefix]);
 
   const filteredEmployees =
     employeeSearch.length > 1 && catalogs?.employees
@@ -1954,6 +2056,13 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
       incidentLocation: locationType === "custom" ? incidentLocation : null,
       parishId: locationType === "custom" ? incidentLocation.parish : null,
       assetsProcessAffectation: formData.assetsProcessAffectation || null,
+      accidentControlNumber: formData.accidentControlNumber,
+      accidentNature: formData.accidentNature,
+      regionPrefix: formData.regionPrefix,
+      // Mapeo explícito a snake_case para asegurar la persistencia en el backend
+      accident_control_number: formData.accidentControlNumber,
+      accident_nature: formData.accidentNature,
+      region_prefix: formData.regionPrefix,
       involvedEmployees: formData.affectedPersonnel.map((p) => ({
         employeeId: p.personalNumber,
         injuryTypeId: p.injuryTypeId ? parseInt(p.injuryTypeId) : null,
@@ -1969,6 +2078,8 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
         documentId: docId,
       })),
     };
+
+    console.log("Objeto final que se enviará al Backend:", finalData);
 
     if (onSubmit) {
       await onSubmit(finalData);
@@ -2018,6 +2129,36 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
 
   return (
     <div className="space-y-6">
+      {/* Cabecera con Número de Control - Visible en todas las pestañas */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-white border border-border-main rounded-[2rem] shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
+        <div className="flex items-center gap-4">
+          <div className="h-12 w-12 bg-corpoelec-blue/10 rounded-2xl flex items-center justify-center text-corpoelec-blue shadow-inner">
+            <Shield size={24} />
+          </div>
+          <div className="space-y-0.5">
+            <h3 className="text-[9px] font-black text-txt-muted uppercase tracking-[0.2em]">
+              Número de Control de Accidente
+            </h3>
+            {formData.accidentControlNumber ? (
+              <p className="text-lg font-black text-corpoelec-blue tracking-[0.3em] animate-in fade-in duration-300">
+                {formData.accidentControlNumber}
+              </p>
+            ) : (
+              <p className="text-[10px] font-bold text-txt-muted/40 uppercase italic tracking-widest">
+                Pendiente por generar...
+              </p>
+            )}
+          </div>
+        </div>
+        {isEditing && (
+          <div className="px-4 py-2 bg-corpoelec-blue/5 border border-corpoelec-blue/20 rounded-xl">
+            <span className="text-[9px] font-black text-corpoelec-blue uppercase tracking-widest">
+              Modo Edición
+            </span>
+          </div>
+        )}
+      </div>
+
       <div className="flex border-b border-border-main overflow-x-auto no-scrollbar">
         <TabButton id="general" label="General" icon={Info} />
         <TabButton id="details" label="Causa" icon={Shield} />
@@ -3356,6 +3497,62 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
 
         {activeTab === "docs" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-300">
+            <div className="p-6 rounded-[2.5rem] border border-corpoelec-blue/20 bg-corpoelec-blue/5 md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6 shadow-inner">
+              <div className="space-y-1">
+                <label className="text-[11px] font-black text-corpoelec-blue uppercase tracking-[0.2em] ml-1">
+                  Naturaleza del Accidente
+                </label>
+                <select
+                  name="accidentNature"
+                  value={formData.accidentNature}
+                  onChange={handleChange}
+                  required
+                  className="input-field h-12 font-bold text-xs"
+                >
+                  <option value="">Seleccione naturaleza...</option>
+                  <option value="P">Propio (P)</option>
+                  <option value="TR">Tercero relacionado (TR)</option>
+                  <option value="TNR">Tercero no relacionado (TNR)</option>
+                  <option value="NL">No laborales (NL)</option>
+                  <option value="A">Ambiental (A)</option>
+                </select>
+                <p className="text-[8px] font-bold text-txt-muted uppercase uppercase mt-1">
+                  Define la última sigla del código
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-black text-corpoelec-blue uppercase tracking-[0.2em] ml-1">
+                  Prefijo Región (Estado)
+                </label>
+                <input
+                  type="text"
+                  name="regionPrefix"
+                  maxLength={2}
+                  value={formData.regionPrefix}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "");
+                    setFormData((prev) => ({ ...prev, regionPrefix: val }));
+                  }}
+                  className="input-field h-12 text-center font-black text-lg"
+                  placeholder="32"
+                />
+                <p className="text-[8px] font-bold text-txt-muted uppercase mt-1 text-center">
+                  Táchira: 32 (Editable)
+                </p>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[11px] font-black text-corpoelec-blue uppercase tracking-[0.2em] ml-1">
+                  Número de Control
+                </label>
+                <div className="h-12 flex items-center justify-center px-4 bg-white border-2 border-corpoelec-blue rounded-xl shadow-md">
+                  <span className="text-[15px] text-xl font-black text-corpoelec-blue tracking-[0.3em]">
+                    {formData.accidentControlNumber || "GENERANDO"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-1 md:col-span-2">
               <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
                 Nro. Expediente INPSASEL

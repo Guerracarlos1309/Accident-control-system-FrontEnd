@@ -1,15 +1,17 @@
 import { useState, useEffect } from "react";
-import { 
-  Plus, 
-  Loader2, 
-  Calendar, 
-  User, 
-  MapPin, 
-  Shield, 
-  Eye, 
+import {
+  Plus,
+  Loader2,
+  Calendar,
+  User,
+  MapPin,
+  Shield,
+  Eye,
   Pencil,
   Info,
-  Layers
+  Layers,
+  Search,
+  Filter,
 } from "lucide-react";
 import Modal from "../../../../components/Modal";
 import ProtectionForm from "./ProtectionForm";
@@ -26,6 +28,8 @@ export default function ProtectionManager() {
   const [inspections, setInspections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isFetchingEdit, setIsFetchingEdit] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const api = helpFetch();
   const { showNotification } = useNotification();
   const { user } = useAuth();
@@ -37,11 +41,14 @@ export default function ProtectionManager() {
       if (res && !res.err) {
         // Filter for Protection Equipment inspections (EPI)
         const protectionInspections = res.filter(
-          (i) => i.type === "Proteccion" || i.protectionInspection
+          (i) => i.type === "Proteccion" || i.protectionInspection,
         );
         setInspections(protectionInspections);
       } else {
-        showNotification("Error al cargar historial de inspecciones de equipos", "error");
+        showNotification(
+          "Error al cargar historial de inspecciones de equipos",
+          "error",
+        );
       }
     } catch (error) {
       showNotification("Error de conexión al servidor", "error");
@@ -67,7 +74,10 @@ export default function ProtectionManager() {
         setInitialData(res);
         setIsModalOpen(true);
       } else {
-        showNotification("No se pudo cargar la información para editar", "error");
+        showNotification(
+          "No se pudo cargar la información para editar",
+          "error",
+        );
       }
     } catch (error) {
       showNotification("Error de conexión al intentar editar", "error");
@@ -81,9 +91,28 @@ export default function ProtectionManager() {
     setInitialData(null);
   };
 
+  // Lógica de filtrado combinada
+  const filteredInspections = inspections.filter((insp) => {
+    const matchesSearch =
+      insp.id.toString().includes(searchTerm) ||
+      (insp.inspectionNumber &&
+        insp.inspectionNumber
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())) ||
+      `${insp.inspector?.firstName} ${insp.inspector?.lastName}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      (insp.facility?.name &&
+        insp.facility.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const matchesStatus =
+      statusFilter === "all" || String(insp.statusId) === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="space-y-6 text-txt-main">
-      
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -91,11 +120,12 @@ export default function ProtectionManager() {
             Inspección de Equipos de Protección (EPI / EPC)
           </h2>
           <p className="text-txt-muted mt-1 text-sm md:text-base">
-            Control de inventario, operatividad y novedades de los equipos de protección personal y colectiva.
+            Control de inventario, operatividad y novedades de los equipos de
+            protección personal y colectiva.
           </p>
         </div>
-        {user?.role !== 'Analista' && (
-          <button 
+        {user?.role !== "Analista" && (
+          <button
             className="btn-primary w-full sm:w-auto shadow-lg shadow-corpoelec-blue/20 cursor-pointer"
             onClick={() => setIsModalOpen(true)}
           >
@@ -105,19 +135,64 @@ export default function ProtectionManager() {
         )}
       </div>
 
+      {/* BARRA DE FILTROS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-4 rounded-[2rem] border border-border-main/50 shadow-sm animate-in fade-in slide-in-from-top-2 duration-500">
+        <div className="md:col-span-2 relative group">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-txt-muted group-focus-within:text-corpoelec-blue transition-colors">
+            <Search size={18} />
+          </div>
+          <input
+            type="text"
+            placeholder="Buscar por código, inspector o sede..."
+            className="input-field !pl-12 h-12 w-full text-xs font-bold uppercase tracking-widest"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm("")}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-corpoelec-red uppercase hover:underline"
+            >
+              Limpiar
+            </button>
+          )}
+        </div>
+        <div className="relative group">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-txt-muted group-focus-within:text-corpoelec-blue transition-colors">
+            <Filter size={18} />
+          </div>
+          <select
+            className="input-field !pl-12 h-12 w-full text-xs font-bold uppercase tracking-widest cursor-pointer"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="all">Todos los Estados</option>
+            <option value="1">Pendientes</option>
+            <option value="2">En Proceso</option>
+            <option value="3">Completados</option>
+          </select>
+        </div>
+      </div>
+
       {/* TABLE/GRID SECTION */}
       <div className="glass-panel overflow-hidden border border-border-main/50 rounded-[2rem]">
-        {loading && inspections.length === 0 ? (
+        {loading ? (
           <div className="flex flex-col items-center justify-center py-20 space-y-4 text-txt-muted">
             <Loader2 size={40} className="text-corpoelec-blue animate-spin" />
-            <p className="text-[10px] font-black uppercase tracking-[0.2em]">Buscando reportes de equipos...</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em]">
+              Buscando reportes de equipos...
+            </p>
           </div>
-        ) : inspections.length === 0 ? (
+        ) : filteredInspections.length === 0 ? (
           <div className="text-center py-20 text-txt-muted">
             <div className="w-16 h-16 bg-bg-main/20 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-border-main">
               <Layers size={32} className="text-txt-muted" />
             </div>
-            <p className="font-bold uppercase tracking-widest text-xs">No hay inspecciones de protección registradas.</p>
+            <p className="font-bold uppercase tracking-widest text-xs">
+              {searchTerm || statusFilter !== "all"
+                ? "No se encontraron resultados para los filtros aplicados."
+                : "No hay inspecciones de protección registradas."}
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -133,9 +208,9 @@ export default function ProtectionManager() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-main/20">
-                {inspections.map((insp) => (
-                  <tr 
-                    key={insp.id} 
+                {filteredInspections.map((insp) => (
+                  <tr
+                    key={insp.id}
                     className="hover:bg-bg-main/5 transition-colors group cursor-pointer"
                     onClick={() => handleViewDetails(insp.id)}
                   >
@@ -179,13 +254,13 @@ export default function ProtectionManager() {
                     </td>
                     <td className="px-8 py-5">
                       <div className="flex justify-center">
-                        <span 
+                        <span
                           className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                            insp.statusId === 1
+                            insp.statusId === 3
                               ? "bg-emerald-500/5 text-emerald-500 border-emerald-500/20"
-                              : insp.statusId === 2
+                              : insp.statusId === 1
                                 ? "bg-amber-500/5 text-amber-500 border-amber-500/20"
-                                : "bg-txt-muted/5 text-txt-muted border-border-main"
+                                : "bg-corpoelec-blue/5 text-corpoelec-blue border-corpoelec-blue/20"
                           }`}
                         >
                           {insp.status?.name || "Pendiente"}
@@ -193,7 +268,7 @@ export default function ProtectionManager() {
                       </div>
                     </td>
                     <td className="px-8 py-5 text-right">
-                      {user?.role !== 'Analista' && (
+                      {user?.role !== "Analista" && (
                         <button
                           className="p-2 text-txt-muted hover:text-corpoelec-blue transition-all bg-transparent hover:bg-bg-main/10 rounded-lg group cursor-pointer"
                           disabled={isFetchingEdit === insp.id}
@@ -205,7 +280,10 @@ export default function ProtectionManager() {
                           {isFetchingEdit === insp.id ? (
                             <Loader2 size={18} className="animate-spin" />
                           ) : (
-                            <Pencil size={18} className="transition-transform group-hover:scale-110" />
+                            <Pencil
+                              size={18}
+                              className="transition-transform group-hover:scale-110"
+                            />
                           )}
                         </button>
                       )}
@@ -216,7 +294,10 @@ export default function ProtectionManager() {
                           handleViewDetails(insp.id);
                         }}
                       >
-                        <Eye size={18} className="transition-transform group-hover:scale-110" />
+                        <Eye
+                          size={18}
+                          className="transition-transform group-hover:scale-110"
+                        />
                       </button>
                     </td>
                   </tr>
@@ -231,10 +312,14 @@ export default function ProtectionManager() {
       <Modal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        title={initialData ? "Editar Inspección de Equipos (EPI)" : "Registrar Inspección de Equipos (EPI)"}
+        title={
+          initialData
+            ? "Editar Inspección de Equipos (EPI)"
+            : "Registrar Inspección de Equipos (EPI)"
+        }
         maxWidth="max-w-4xl"
       >
-        <ProtectionForm 
+        <ProtectionForm
           onCancel={handleCloseModal}
           onSuccess={fetchInspections}
           initialData={initialData}
@@ -256,7 +341,6 @@ export default function ProtectionManager() {
           <ProtectionInspectionDetails inspectionId={selectedInspectionId} />
         )}
       </Modal>
-
     </div>
   );
 }
