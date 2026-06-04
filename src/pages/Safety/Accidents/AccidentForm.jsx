@@ -24,7 +24,7 @@ import GeographicCascade from "../../../components/GeographicCascade";
 import { helpFetch } from "../../../helpers/helpFetch";
 import { useNotification } from "../../../context/NotificationContext";
 
-const ACCIDENT_HIERARCHY = [
+export const ACCIDENT_HIERARCHY = [
   {
     code: "C.2.1",
     name: "Laboral",
@@ -225,7 +225,7 @@ const ACCIDENT_HIERARCHY = [
   },
 ];
 
-const HAZARD_HIERARCHY = [
+export const HAZARD_HIERARCHY = [
   {
     code: "C.4.1",
     name: "AGENTE / ELEMENTO",
@@ -590,7 +590,7 @@ const HAZARD_HIERARCHY = [
   },
 ];
 
-const CONTACT_EXPOSURE_HIERARCHY = [
+export const CONTACT_EXPOSURE_HIERARCHY = [
   {
     code: "C.5.1",
     name: "Golpeado",
@@ -802,7 +802,7 @@ const CONTACT_EXPOSURE_HIERARCHY = [
   },
 ];
 
-const AFFECTATION_CLASS_HIERARCHY = [
+export const AFFECTATION_CLASS_HIERARCHY = [
   {
     code: "C.7.1",
     name: "CLASE A: Incidente Sin Afectación",
@@ -985,7 +985,7 @@ const INJURY_CONSEQUENCE_OPTIONS = [
   { value: "4", label: "4 - Muerte" },
 ];
 
-const AFFECTATION_SUBJECT_HIERARCHY = [
+export const AFFECTATION_SUBJECT_HIERARCHY = [
   {
     code: "C.8.1",
     name: "Personas",
@@ -1136,6 +1136,14 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
           stateId: initialData.parish.city?.stateId || "",
           cityId: initialData.parish.cityId || "",
           parish: initialData.parishId || "",
+        });
+      }
+
+      if (initialData.medicalCenter && initialData.medicalCenter.parish) {
+        setMedicalLocation({
+          stateId: initialData.medicalCenter.parish.city?.stateId || "",
+          cityId: initialData.medicalCenter.parish.cityId || "",
+          parish: initialData.medicalCenter.parishId || "",
         });
       }
     }
@@ -2360,6 +2368,21 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
 
         {activeTab === "details" && (
           <div className="space-y-6 animate-in fade-in duration-300">
+            {formData.accidentControlNumber && (
+              <div className="p-4 bg-corpoelec-blue/5 border border-corpoelec-blue/20 rounded-2xl flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Shield size={18} className="text-corpoelec-blue" />
+                  <div>
+                    <p className="text-[10px] font-black text-txt-muted uppercase tracking-widest leading-none mb-1">
+                      Número de Control de Accidente
+                    </p>
+                    <p className="text-sm font-black text-corpoelec-blue tracking-wider">
+                      {formData.accidentControlNumber}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="space-y-1">
               <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
                 Actividad que realizaba el trabajador *

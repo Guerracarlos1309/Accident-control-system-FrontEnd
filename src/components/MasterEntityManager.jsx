@@ -96,7 +96,9 @@ export default function MasterEntityManager({
     }),
   );
 
-  const displayData = isExpanded ? filteredData : filteredData.slice(0, initialLimit);
+  const displayData = isExpanded
+    ? filteredData
+    : filteredData.slice(0, initialLimit);
 
   const handleOpenModal = (item = null) => {
     setEditingItem(item);
@@ -215,7 +217,7 @@ export default function MasterEntityManager({
               `Gestión centralizada de ${entityName.toLowerCase()}s.`}
           </p>
         </div>
-        {!allowReactivate && user?.role !== 'Analista' && (
+        {!allowReactivate && user?.role !== "Analista" && (
           <button onClick={() => handleOpenModal()} className="btn-primary">
             <Plus size={18} />
             <span>Nuevo {entityName}</span>
@@ -247,10 +249,6 @@ export default function MasterEntityManager({
             ) : (
               <List size={18} />
             )}
-          </button>
-          <button className="btn-secondary h-12">
-            <Filter size={18} />
-            <span>Filtros</span>
           </button>
         </div>
       </div>
@@ -291,14 +289,23 @@ export default function MasterEntityManager({
                     >
                       {fields.map((field) => {
                         // Display logic: prioritize joined object names
-                        const relationObj = field.displayKey ? item[field.displayKey] : null;
+                        const relationObj = field.displayKey
+                          ? item[field.displayKey]
+                          : null;
                         const value = item[field.name];
 
                         let displayValue = "";
                         if (relationObj && typeof relationObj === "object") {
-                          displayValue = relationObj.name || relationObj.label || relationObj.title;
-                        } else if (typeof value === "object" && value !== null) {
-                          displayValue = value.name || value.label || value.title;
+                          displayValue =
+                            relationObj.name ||
+                            relationObj.label ||
+                            relationObj.title;
+                        } else if (
+                          typeof value === "object" &&
+                          value !== null
+                        ) {
+                          displayValue =
+                            value.name || value.label || value.title;
                         } else {
                           displayValue = value;
                         }
@@ -318,7 +325,7 @@ export default function MasterEntityManager({
                       })}
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-1 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
-                          {allowReactivate && user?.role !== 'Analista' && (
+                          {allowReactivate && user?.role !== "Analista" && (
                             <button
                               onClick={() => handleReactivate(item)}
                               className="p-2 text-txt-muted hover:text-green-500 hover:bg-green-500/10 rounded-xl transition-all"
@@ -336,7 +343,7 @@ export default function MasterEntityManager({
                               <Eye size={16} />
                             </button>
                           )}
-                          {user?.role !== 'Analista' && (
+                          {user?.role !== "Analista" && (
                             <>
                               <button
                                 onClick={() => handleOpenModal(item)}
@@ -385,7 +392,7 @@ export default function MasterEntityManager({
                 className="glass-panel p-6 rounded-3xl border border-border-main/50 transition-colors group relative"
               >
                 <div className="absolute top-4 right-4 flex gap-1">
-                  {allowReactivate && user?.role !== 'Analista' && (
+                  {allowReactivate && user?.role !== "Analista" && (
                     <button
                       onClick={() => handleReactivate(item)}
                       className="p-2 bg-bg-surface rounded-xl text-green-500 border border-border-main/50 hover:bg-green-500/10"
@@ -403,7 +410,7 @@ export default function MasterEntityManager({
                       <Eye size={14} />
                     </button>
                   )}
-                  {user?.role !== 'Analista' && (
+                  {user?.role !== "Analista" && (
                     <>
                       <button
                         onClick={() => handleOpenModal(item)}
@@ -428,7 +435,9 @@ export default function MasterEntityManager({
                 </div>
                 <div className="space-y-4">
                   {fields.slice(0, 3).map((f) => {
-                    const relationObj = f.displayKey ? item[f.displayKey] : null;
+                    const relationObj = f.displayKey
+                      ? item[f.displayKey]
+                      : null;
                     const val = item[f.name];
 
                     let disp = "";

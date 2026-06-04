@@ -43,6 +43,9 @@ async function alterPostgres() {
   await client.query(`ALTER TABLE employee_accident ADD COLUMN IF NOT EXISTS injury_consequence VARCHAR(50)`);
   console.log("Added injury_consequence to employee_accident.");
 
+  await client.query(`ALTER TABLE accident ADD COLUMN IF NOT EXISTS accident_control_number VARCHAR(50)`);
+  console.log("Added accident_control_number to accident.");
+
   await client.end();
 }
 

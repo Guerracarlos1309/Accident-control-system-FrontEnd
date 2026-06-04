@@ -128,9 +128,15 @@ export default function Dashboard() {
         setMonthlyAccidents(chartData);
 
         // 2. Build additional custom statistics
-        const statusPending = accidentsList.filter((a) => a.processStatusId === 1 || !a.processStatusId).length;
-        const statusInProcess = accidentsList.filter((a) => a.processStatusId === 2).length;
-        const statusCompleted = accidentsList.filter((a) => a.processStatusId === 3).length;
+        const statusPending = accidentsList.filter(
+          (a) => a.processStatusId === 1 || !a.processStatusId,
+        ).length;
+        const statusInProcess = accidentsList.filter(
+          (a) => a.processStatusId === 2,
+        ).length;
+        const statusCompleted = accidentsList.filter(
+          (a) => a.processStatusId === 3,
+        ).length;
 
         // Top accident types
         const typesMap = {};
@@ -238,7 +244,8 @@ export default function Dashboard() {
 
   // Calculate scaling for dynamic chart bars
   const maxAccidentCount = Math.max(...monthlyAccidents.map((m) => m.count), 1);
-  const totalInvolvedStats = stats.statusPending + stats.statusInProcess + stats.statusCompleted;
+  const totalInvolvedStats =
+    stats.statusPending + stats.statusInProcess + stats.statusCompleted;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 text-txt-main">
@@ -249,21 +256,17 @@ export default function Dashboard() {
           <div className="space-y-2">
             <h2 className="text-2xl md:text-3xl font-black text-txt-main tracking-tight flex items-center gap-3 uppercase">
               Resumen de Gestión{" "}
-              <Zap
-                size={24}
-                className="text-amber-400 fill-amber-400 animate-pulse animate-duration-1000"
-              />
             </h2>
             <p className="text-txt-muted max-w-xl text-xs md:text-sm leading-relaxed">
               El panel de control ASHO reporta una{" "}
               <span className="text-emerald-500 font-black uppercase">
                 Gestión Sincronizada
               </span>
-              . Los indicadores corresponden a los registros en tiempo real extraídos de la infraestructura del sistema.
+              . Los indicadores corresponden a los registros en tiempo real
+              extraídos de la infraestructura del sistema.
             </p>
           </div>
           <div className="flex items-center gap-3 bg-bg-main/40 px-5 py-3.5 rounded-2xl border border-border-main/60 self-stretch md:self-auto justify-center">
-            <Sparkles size={16} className="text-corpoelec-blue animate-pulse" />
             <div className="text-left">
               <span className="text-[8px] font-black text-txt-muted uppercase tracking-widest block">
                 Última Sincronización
@@ -386,7 +389,7 @@ export default function Dashboard() {
           </div>
           <div>
             <p className="text-[9px] font-black text-txt-muted uppercase tracking-[0.2em]">
-              Incidentes Reportados
+              Accidentes Reportados
             </p>
             {loading ? (
               <Loader2
@@ -412,7 +415,7 @@ export default function Dashboard() {
               <div className="space-y-1">
                 <h4 className="text-lg md:text-xl font-black text-txt-main uppercase tracking-tight flex items-center gap-2">
                   <TrendingUp size={20} className="text-corpoelec-red" />
-                  Historial de Incidentes
+                  Historial de Accidentes
                 </h4>
                 <p className="text-[9px] font-black text-txt-muted uppercase tracking-widest">
                   Estadísticas reales de accidentabilidad de los últimos 6 meses
@@ -452,7 +455,7 @@ export default function Dashboard() {
                             : "bg-bg-main/20 border border-border-main/60 hover:border-corpoelec-blue/30"
                         }`}
                         style={{ height: `${percentage}%` }}
-                        title={`${m.count} incidentes`}
+                        title={`${m.count} Accidentes`}
                       ></div>
                       <span className="text-[8px] font-black text-txt-muted uppercase tracking-widest">
                         {m.label}
@@ -469,7 +472,7 @@ export default function Dashboard() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
               <div className="space-y-1">
                 <h4 className="text-md font-black text-txt-main uppercase tracking-tight">
-                  Distribución Analítica de Incidentes
+                  Distribución Analítica de Accidentes
                 </h4>
                 <p className="text-[9px] font-black text-txt-muted uppercase tracking-widest">
                   Análisis cruzado por estado de flujo y tipos más comunes
@@ -501,7 +504,10 @@ export default function Dashboard() {
 
             {loading ? (
               <div className="py-12 flex justify-center">
-                <Loader2 size={24} className="animate-spin text-corpoelec-blue" />
+                <Loader2
+                  size={24}
+                  className="animate-spin text-corpoelec-blue"
+                />
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
@@ -510,12 +516,14 @@ export default function Dashboard() {
                   <span className="text-[9px] font-black text-txt-muted uppercase tracking-widest block mb-1">
                     FLUJO DE INVESTIGACIONES
                   </span>
-                  
+
                   {/* Pendientes */}
                   <div className="space-y-1">
                     <div className="flex justify-between text-[10px] font-black text-txt-main uppercase">
                       <span>Pendientes</span>
-                      <span className="text-amber-500">{stats.statusPending}</span>
+                      <span className="text-amber-500">
+                        {stats.statusPending}
+                      </span>
                     </div>
                     <div className="h-2 w-full bg-bg-main/40 rounded-full overflow-hidden">
                       <div
@@ -535,7 +543,9 @@ export default function Dashboard() {
                   <div className="space-y-1">
                     <div className="flex justify-between text-[10px] font-black text-txt-main uppercase">
                       <span>En Proceso</span>
-                      <span className="text-corpoelec-blue">{stats.statusInProcess}</span>
+                      <span className="text-corpoelec-blue">
+                        {stats.statusInProcess}
+                      </span>
                     </div>
                     <div className="h-2 w-full bg-bg-main/40 rounded-full overflow-hidden">
                       <div
@@ -543,7 +553,8 @@ export default function Dashboard() {
                         style={{
                           width: `${
                             totalInvolvedStats > 0
-                              ? (stats.statusInProcess / totalInvolvedStats) * 100
+                              ? (stats.statusInProcess / totalInvolvedStats) *
+                                100
                               : 0
                           }%`,
                         }}
@@ -555,7 +566,9 @@ export default function Dashboard() {
                   <div className="space-y-1">
                     <div className="flex justify-between text-[10px] font-black text-txt-main uppercase">
                       <span>Completados</span>
-                      <span className="text-green-500">{stats.statusCompleted}</span>
+                      <span className="text-green-500">
+                        {stats.statusCompleted}
+                      </span>
                     </div>
                     <div className="h-2 w-full bg-bg-main/40 rounded-full overflow-hidden">
                       <div
@@ -563,7 +576,8 @@ export default function Dashboard() {
                         style={{
                           width: `${
                             totalInvolvedStats > 0
-                              ? (stats.statusCompleted / totalInvolvedStats) * 100
+                              ? (stats.statusCompleted / totalInvolvedStats) *
+                                100
                               : 0
                           }%`,
                         }}
@@ -581,17 +595,26 @@ export default function Dashboard() {
                       </p>
                     ) : (
                       stats.topTypes.map((t, index) => {
-                        const totalTypesCount = Math.max(...stats.topTypes.map((x) => x.count), 1);
+                        const totalTypesCount = Math.max(
+                          ...stats.topTypes.map((x) => x.count),
+                          1,
+                        );
                         return (
                           <div key={index} className="space-y-1.5">
                             <div className="flex justify-between text-xs font-bold text-txt-main uppercase">
-                              <span className="truncate max-w-[220px]">{t.name}</span>
-                              <span className="text-txt-muted text-[10px]">{t.count} sopesados</span>
+                              <span className="truncate max-w-[220px]">
+                                {t.name}
+                              </span>
+                              <span className="text-txt-muted text-[10px]">
+                                {t.count} Accidentes
+                              </span>
                             </div>
                             <div className="h-2.5 w-full bg-bg-main/30 rounded-full overflow-hidden">
                               <div
                                 className="h-full bg-gradient-to-r from-corpoelec-red to-orange-500 rounded-full transition-all duration-1000"
-                                style={{ width: `${(t.count / totalTypesCount) * 100}%` }}
+                                style={{
+                                  width: `${(t.count / totalTypesCount) * 100}%`,
+                                }}
                               ></div>
                             </div>
                           </div>
@@ -604,17 +627,26 @@ export default function Dashboard() {
                     </p>
                   ) : (
                     stats.topFacilities.map((f, index) => {
-                      const totalFacsCount = Math.max(...stats.topFacilities.map((x) => x.count), 1);
+                      const totalFacsCount = Math.max(
+                        ...stats.topFacilities.map((x) => x.count),
+                        1,
+                      );
                       return (
                         <div key={index} className="space-y-1.5">
                           <div className="flex justify-between text-xs font-bold text-txt-main uppercase">
-                            <span className="truncate max-w-[220px]">{f.name}</span>
-                            <span className="text-txt-muted text-[10px]">{f.count} casos</span>
+                            <span className="truncate max-w-[220px]">
+                              {f.name}
+                            </span>
+                            <span className="text-txt-muted text-[10px]">
+                              {f.count} casos
+                            </span>
                           </div>
                           <div className="h-2.5 w-full bg-bg-main/30 rounded-full overflow-hidden">
                             <div
                               className="h-full bg-gradient-to-r from-corpoelec-blue to-emerald-500 rounded-full transition-all duration-1000"
-                              style={{ width: `${(f.count / totalFacsCount) * 100}%` }}
+                              style={{
+                                width: `${(f.count / totalFacsCount) * 100}%`,
+                              }}
                             ></div>
                           </div>
                         </div>
@@ -767,4 +799,3 @@ export default function Dashboard() {
     </div>
   );
 }
-

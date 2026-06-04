@@ -19,6 +19,13 @@ import {
 } from "lucide-react";
 import { helpFetch } from "../../../helpers/helpFetch";
 import { useNotification } from "../../../context/NotificationContext";
+import { getNameByCode } from "./FilterName";
+import {
+  AFFECTATION_CLASS_HIERARCHY,
+  CONTACT_EXPOSURE_HIERARCHY,
+  HAZARD_HIERARCHY,
+  AFFECTATION_SUBJECT_HIERARCHY,
+} from "./AccidentForm";
 
 export default function AccidentDetails({ accident }) {
   const [showEmployeeCard, setShowEmployeeCard] = useState(null);
@@ -208,19 +215,28 @@ export default function AccidentDetails({ accident }) {
               />
               <DataRow
                 label="Peligro (Agente/Condición)"
-                value={accident.hazardCode}
+                value={getNameByCode(HAZARD_HIERARCHY, accident.hazardCode)}
               />
               <DataRow
                 label="Tipo de Exposición"
-                value={accident.contactExposureCode}
+                value={getNameByCode(
+                  CONTACT_EXPOSURE_HIERARCHY,
+                  accident.contactExposureCode,
+                )}
               />
               <DataRow
                 label="Clase de Afectación"
-                value={accident.affectationClassCode}
+                value={getNameByCode(
+                  AFFECTATION_CLASS_HIERARCHY,
+                  accident.affectationClassCode,
+                )}
               />
               <DataRow
                 label="Sujeto de Afectación"
-                value={accident.affectationSubjectCode}
+                value={getNameByCode(
+                  AFFECTATION_SUBJECT_HIERARCHY,
+                  accident.affectationSubjectCode,
+                )}
               />
               <DataRow
                 label="Afectación Bienes/Procesos"
@@ -321,6 +337,79 @@ export default function AccidentDetails({ accident }) {
                               <span className="text-[8px] font-black text-amber-600 uppercase tracking-widest bg-amber-500/5 border border-amber-500/10 px-2 py-0.5 rounded-md">
                                 {inv.restDays}{" "}
                                 {inv.restDays === 1 ? "Día" : "Días"} Reposo
+                              </span>
+                            )}
+                            {inv.injuryLevel && (
+                              <span className="text-[8px] font-black text-corpoelec-blue uppercase tracking-widest bg-corpoelec-blue/5 border border-corpoelec-blue/10 px-2 py-0.5 rounded-md">
+                                Nivel: {
+                                  inv.injuryLevel === "0" ? "Sin lesión" :
+                                  inv.injuryLevel === "1" ? "Leve" :
+                                  inv.injuryLevel === "2" ? "Moderada" :
+                                  inv.injuryLevel === "3" ? "Grave" :
+                                  inv.injuryLevel === "3_muy_grave" ? "Muy Grave" :
+                                  inv.injuryLevel === "4" ? "Mortal" : inv.injuryLevel
+                                }
+                              </span>
+                            )}
+                            {inv.affectedArea && inv.injuryLevel !== "0" && (
+                              <span className="text-[8px] font-black text-txt-muted uppercase tracking-widest bg-bg-main border border-border-main px-2 py-0.5 rounded-md">
+                                Área: {
+                                  inv.affectedArea === "1" ? "Cabeza / cara" :
+                                  inv.affectedArea === "2" ? "Cuello" :
+                                  inv.affectedArea === "3" ? "Tronco" :
+                                  inv.affectedArea === "4" ? "Espalda" :
+                                  inv.affectedArea === "5" ? "Extremidades Sup." :
+                                  inv.affectedArea === "6" ? "Extremidades Inf." :
+                                  inv.affectedArea === "7" ? "Ubicaciones múltiples" :
+                                  inv.affectedArea === "8" ? "Sistemas Orgánicos" :
+                                  inv.affectedArea === "9" ? "No Clasificadas" :
+                                  inv.affectedArea === "10" ? "No especificadas" : inv.affectedArea
+                                }
+                              </span>
+                            )}
+                            {inv.injuryNature && inv.injuryLevel !== "0" && (
+                              <span className="text-[8px] font-black text-txt-muted uppercase tracking-widest bg-bg-main border border-border-main px-2 py-0.5 rounded-md">
+                                Nat: {
+                                  inv.injuryNature === "1" ? "Ahogamiento/asfixia" :
+                                  inv.injuryNature === "2" ? "Amputación" :
+                                  inv.injuryNature === "3" ? "Contusiones/aplastamientos" :
+                                  inv.injuryNature === "4" ? "Presión Atmosférica" :
+                                  inv.injuryNature === "5" ? "Causas Externas" :
+                                  inv.injuryNature === "6" ? "Cuerpo extraño" :
+                                  inv.injuryNature === "7" ? "Calor" :
+                                  inv.injuryNature === "8" ? "Contacto eléctrico" :
+                                  inv.injuryNature === "9" ? "Frío" :
+                                  inv.injuryNature === "10" ? "Ruido/vibración" :
+                                  inv.injuryNature === "11" ? "Radiaciones" :
+                                  inv.injuryNature === "12" ? "Sustancias/biológicos" :
+                                  inv.injuryNature === "13" ? "Envenenamiento" :
+                                  inv.injuryNature === "14" ? "Esguinces/torceduras" :
+                                  inv.injuryNature === "15" ? "Fracturas" :
+                                  inv.injuryNature === "16" ? "Heridas" :
+                                  inv.injuryNature === "17" ? "Hernia" :
+                                  inv.injuryNature === "18" ? "Lesión Interna" :
+                                  inv.injuryNature === "19" ? "Lesiones múltiples" :
+                                  inv.injuryNature === "20" ? "Luxaciones" :
+                                  inv.injuryNature === "21" ? "Otros" :
+                                  inv.injuryNature === "22" ? "Quemaduras" :
+                                  inv.injuryNature === "23" ? "Reacciones alérgicas" :
+                                  inv.injuryNature === "24" ? "Desconocida/Sin especificar" :
+                                  inv.injuryNature === "25" ? "Trauma psíquico" :
+                                  inv.injuryNature === "26" ? "Médula espinal" :
+                                  inv.injuryNature === "27" ? "Traumatismo intracraneal" :
+                                  inv.injuryNature === "28" ? "Traumatismos superficiales" : inv.injuryNature
+                                }
+                              </span>
+                            )}
+                            {inv.injuryConsequence && inv.injuryLevel !== "0" && (
+                              <span className="text-[8px] font-black text-txt-muted uppercase tracking-widest bg-bg-main border border-border-main px-2 py-0.5 rounded-md">
+                                Consecuencia: {
+                                  inv.injuryConsequence === "0" ? "Sin discapacidad" :
+                                  inv.injuryConsequence === "1" ? "Discapacidad parcial perm." :
+                                  inv.injuryConsequence === "2" ? "Discapacidad total perm." :
+                                  inv.injuryConsequence === "3" ? "Gran discapacidad" :
+                                  inv.injuryConsequence === "4" ? "Muerte" : inv.injuryConsequence
+                                }
                               </span>
                             )}
                           </div>

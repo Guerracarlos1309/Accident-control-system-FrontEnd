@@ -4,16 +4,16 @@ import { helpFetch } from "../helpers/helpFetch";
 /**
  * GeographicCascade - Reusable 3-level select fetching data from the database.
  */
-export default function GeographicCascade({ 
-  value = { stateId: "", cityId: "", parish: "" }, 
+export default function GeographicCascade({
+  value = { stateId: "", cityId: "", parish: "" },
   onChange,
   required = false,
-  disabled = false
+  disabled = false,
 }) {
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
   const [parishes, setParishes] = useState([]);
-  
+
   const [loadingStates, setLoadingStates] = useState(false);
   const [loadingCities, setLoadingCities] = useState(false);
   const [loadingParishes, setLoadingParishes] = useState(false);
@@ -89,16 +89,20 @@ export default function GeographicCascade({
     }
 
     // Find names for metadata
-    const stateObj = states.find(s => s.id == updatedLocation.stateId);
-    const cityObj = cities.find(c => c.id == updatedLocation.cityId);
-    const parishObj = parishes.find(p => p.id == updatedLocation.parish);
-    
+    const stateObj = states.find((s) => s.id == updatedLocation.stateId);
+    const cityObj = cities.find((c) => c.id == updatedLocation.cityId);
+    const parishObj = parishes.find((p) => p.id == updatedLocation.parish);
+
     const metadata = {
       ...updatedLocation,
       stateName: stateObj?.name || "",
       cityName: cityObj?.name || "",
       parishName: parishObj?.name || "",
-      fullText: `${parishObj?.name ? parishObj.name + ", " : ""}${cityObj?.name ? cityObj.name + ", " : ""}${stateObj?.name || ""}`.replace(/, $/, "")
+      fullText:
+        `${parishObj?.name ? parishObj.name + ", " : ""}${cityObj?.name ? cityObj.name + ", " : ""}${stateObj?.name || ""}`.replace(
+          /, $/,
+          "",
+        ),
     };
 
     onChange(metadata);
@@ -108,53 +112,77 @@ export default function GeographicCascade({
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
       {/* Estado */}
       <div className="space-y-1">
-        <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">Estado {required && "*"}</label>
-        <select 
-          name="stateId" 
-          value={value.stateId} 
+        <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">
+          Estado {required && "*"}
+        </label>
+        <select
+          name="stateId"
+          value={value.stateId}
           onChange={handleSelectChange}
           required={required}
           disabled={disabled}
-          className={`input-field h-12 text-sm font-bold ${disabled ? 'opacity-50 cursor-not-allowed bg-bg-main/5' : ''}`}
+          className={`input-field h-12 text-sm font-bold ${disabled ? "opacity-50 cursor-not-allowed bg-bg-main/5" : ""}`}
         >
-          <option value="">{loadingStates ? "Cargando..." : "Seleccione..."}</option>
-          {states.map(s => <option key={s.id} value={s.id}>{s.name.toUpperCase()}</option>)}
+          <option value="">
+            {loadingStates ? "Cargando..." : "Seleccione..."}
+          </option>
+          {states.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name.toUpperCase()}
+            </option>
+          ))}
         </select>
       </div>
 
       {/* Ciudad */}
       <div className="space-y-1">
-        <label className={`text-[11px] font-black uppercase tracking-[0.15em] ml-1 ${!value.stateId || disabled ? 'text-txt-muted/30' : 'text-txt-muted'}`}>
-          Ciudad {required && "*"}
+        <label
+          className={`text-[11px] font-black uppercase tracking-[0.15em] ml-1 ${!value.stateId || disabled ? "text-txt-muted/30" : "text-txt-muted"}`}
+        >
+          Municipio {required && "*"}
         </label>
-        <select 
-          name="cityId" 
+        <select
+          name="cityId"
           disabled={disabled || !value.stateId || loadingCities}
-          value={value.cityId} 
+          value={value.cityId}
           onChange={handleSelectChange}
           required={required}
-          className={`input-field h-12 text-sm font-bold ${disabled || !value.stateId ? 'opacity-40 cursor-not-allowed grayscale' : ''}`}
+          className={`input-field h-12 text-sm font-bold ${disabled || !value.stateId ? "opacity-40 cursor-not-allowed grayscale" : ""}`}
         >
-          <option value="">{loadingCities ? "Cargando..." : "Seleccione..."}</option>
-          {cities.map(c => <option key={c.id} value={c.id}>{c.name.toUpperCase()}</option>)}
+          <option value="">
+            {loadingCities ? "Cargando..." : "Seleccione..."}
+          </option>
+          {cities.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name.toUpperCase()}
+            </option>
+          ))}
         </select>
       </div>
 
       {/* Parroquia / Localidad */}
       <div className="space-y-1">
-        <label className={`text-[11px] font-black uppercase tracking-[0.15em] ml-1 ${!value.cityId || disabled ? 'text-txt-muted/30' : 'text-txt-muted'}`}>
+        <label
+          className={`text-[11px] font-black uppercase tracking-[0.15em] ml-1 ${!value.cityId || disabled ? "text-txt-muted/30" : "text-txt-muted"}`}
+        >
           Parroquia {required && "*"}
         </label>
-        <select 
-          name="parish" 
+        <select
+          name="parish"
           disabled={disabled || !value.cityId || loadingParishes}
-          value={value.parish} 
+          value={value.parish}
           onChange={handleSelectChange}
           required={required}
-          className={`input-field h-12 text-sm font-bold ${disabled || !value.cityId ? 'opacity-40 cursor-not-allowed grayscale' : ''}`}
+          className={`input-field h-12 text-sm font-bold ${disabled || !value.cityId ? "opacity-40 cursor-not-allowed grayscale" : ""}`}
         >
-          <option value="">{loadingParishes ? "Cargando..." : "Seleccione..."}</option>
-          {parishes.map(p => <option key={p.id} value={p.id}>{p.name.toUpperCase()}</option>)}
+          <option value="">
+            {loadingParishes ? "Cargando..." : "Seleccione..."}
+          </option>
+          {parishes.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name.toUpperCase()}
+            </option>
+          ))}
         </select>
       </div>
     </div>
