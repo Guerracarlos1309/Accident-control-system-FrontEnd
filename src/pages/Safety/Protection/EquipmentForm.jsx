@@ -5,8 +5,10 @@ import {
   Layers,
   Heart
 } from "lucide-react";
-
+import { useNotification } from "../../../context/NotificationContext";
+import { validateGenericText } from "../../../helpers/validationHelper";
 export default function EquipmentForm({ onCancel, onSubmit, initialData }) {
+  const { showNotification } = useNotification();
   // Extract details from initialData
   const officialName = initialData?.name || "EQUIPO DE PROTECCIÓN";
   const categoryId = initialData?.categoryId;
@@ -19,6 +21,26 @@ export default function EquipmentForm({ onCancel, onSubmit, initialData }) {
     classification: "OTROS", // CABEZA | PECHO | PIERNAS | PIES | OTROS
     entryDate: new Date().toISOString().split("T")[0]
   });
+
+  const [errors, setErrors] = useState({});
+
+  const validateField = (name, value) => {
+    let result = { isValid: true, message: "" };
+    if (name === "brand" || name === "model" || name === "code") {
+      const label = name === "brand" ? "Marca" : name === "model" ? "Modelo" : "Código";
+      result = validateGenericText(value, label, 2, false);
+    }
+    setErrors((prev) => ({
+      ...prev,
+      [name]: result.isValid ? "" : result.message,
+    }));
+    return result.isValid;
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    validateField(name, value);
+  };
 
   useEffect(() => {
     if (initialData) {
@@ -51,11 +73,26 @@ export default function EquipmentForm({ onCancel, onSubmit, initialData }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: value };
+      if (errors[name]) {
+        validateField(name, value);
+      }
+      return updated;
+    });
   };
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
+
+    const isBrandValid = validateField("brand", formData.brand);
+    const isModelValid = validateField("model", formData.model);
+    const isCodeValid = validateField("code", formData.code);
+
+    if (!isBrandValid || !isModelValid || !isCodeValid) {
+      showNotification("No se puede guardar. Hay campos con datos inválidos o sospechosos.", "error");
+      return;
+    }
     
     const cleanBrand = formData.brand.trim().toUpperCase();
     const cleanModel = formData.model.trim().toUpperCase();
@@ -64,7 +101,7 @@ export default function EquipmentForm({ onCancel, onSubmit, initialData }) {
     
     // Pack classification, brand, model, and serial details inside the description field
     const packedDescription = `CLASIF: ${cleanClasif} | MARCA: ${cleanBrand || "GENÉRICO"} | MODELO: ${cleanModel || "N/A"} | COD: ${cleanCode || "S/N"}`;
-
+ 
     const payload = {
       name: officialName.toUpperCase(),
       categoryId: parseInt(categoryId),
@@ -73,7 +110,7 @@ export default function EquipmentForm({ onCancel, onSubmit, initialData }) {
       lastUpdate: formData.entryDate,
       description: packedDescription
     };
-
+ 
     onSubmit(payload);
   };
 
@@ -145,9 +182,15 @@ export default function EquipmentForm({ onCancel, onSubmit, initialData }) {
                 name="brand"
                 value={formData.brand}
                 onChange={handleChange}
-                className="input-field h-12 border border-border-main focus:border-corpoelec-blue uppercase"
+                onBlur={handleBlur}
+                className={`input-field h-12 border focus:border-corpoelec-blue uppercase ${errors.brand ? "border-corpoelec-red focus:border-corpoelec-red focus:ring-corpoelec-red/10" : "border-border-main"}`}
                 placeholder="Ej: MSA / 3M"
               />
+              {errors.brand && (
+                <p className="text-[10px] text-corpoelec-red font-black uppercase mt-1 ml-1 leading-tight">
+                  {errors.brand}
+                </p>
+              )}
             </div>
             
             <div className="space-y-1">
@@ -159,12 +202,18 @@ export default function EquipmentForm({ onCancel, onSubmit, initialData }) {
                 name="model"
                 value={formData.model}
                 onChange={handleChange}
-                className="input-field h-12 border border-border-main focus:border-corpoelec-blue uppercase"
+                onBlur={handleBlur}
+                className={`input-field h-12 border focus:border-corpoelec-blue uppercase ${errors.model ? "border-corpoelec-red focus:border-corpoelec-red focus:ring-corpoelec-red/10" : "border-border-main"}`}
                 placeholder="Ej: V-GARD / DIELECTR"
               />
+              {errors.model && (
+                <p className="text-[10px] text-corpoelec-red font-black uppercase mt-1 ml-1 leading-tight">
+                  {errors.model}
+                </p>
+              )}
             </div>
           </div>
-
+ 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
@@ -175,9 +224,15 @@ export default function EquipmentForm({ onCancel, onSubmit, initialData }) {
                 name="code"
                 value={formData.code}
                 onChange={handleChange}
-                className="input-field h-12 border border-border-main focus:border-corpoelec-blue font-mono uppercase"
+                onBlur={handleBlur}
+                className={`input-field h-12 border focus:border-corpoelec-blue font-mono uppercase ${errors.code ? "border-corpoelec-red focus:border-corpoelec-red focus:ring-corpoelec-red/10" : "border-border-main"}`}
                 placeholder="Ej: SN-2026-XXXX"
               />
+              {errors.code && (
+                <p className="text-[10px] text-corpoelec-red font-black uppercase mt-1 ml-1 leading-tight">
+                  {errors.code}
+                </p>
+              )}
             </div>
             
             <div className="space-y-1">

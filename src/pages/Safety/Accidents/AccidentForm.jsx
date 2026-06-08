@@ -1526,9 +1526,12 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
       }
 
       try {
-        // Ejemplo de cómo podrías obtener el correlativo real del backend:
-        // const response = await api.get(`/accidents/next-correlative?year=${formData.accidentDate.split('-')[0]}`);
-        // if (!response.err) correlative = String(response.count).padStart(3, '0');
+        const response = await api.get(
+          `/accidents/next-correlative?year=${formData.accidentDate.split('-')[0]}&nature=${formData.accidentNature}&prefix=${formData.regionPrefix || '32'}`
+        );
+        if (response && !response.err && response.count !== undefined) {
+          correlative = String(response.count).padStart(3, '0');
+        }
       } catch (e) {
         console.error("Error fetching correlative", e);
       }
@@ -3206,15 +3209,10 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                 <select
                   name="managementId"
                   required
-                  disabled={formData.affectedPersonnel.length > 0}
                   value={formData.managementId}
                   onChange={handleChange}
                   className={`input-field h-12 transition-all ${
                     errors.managementId ? "border-corpoelec-red" : ""
-                  } ${
-                    formData.affectedPersonnel.length > 0
-                      ? "bg-bg-main/20 border-dashed border-corpoelec-blue/30 text-corpoelec-blue font-bold cursor-not-allowed"
-                      : ""
                   }`}
                 >
                   <option value="">Seleccione Gerencia...</option>
@@ -3225,9 +3223,9 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                   ))}
                 </select>
                 {formData.affectedPersonnel.length > 0 ? (
-                  <p className="text-[9px] text-corpoelec-blue font-black uppercase tracking-wider mt-1.5 flex items-center gap-1.5 animate-pulse">
+                  <p className="text-[9px] text-corpoelec-blue font-black uppercase tracking-wider mt-1.5 flex items-center gap-1.5">
                     <span className="h-1.5 w-1.5 rounded-full bg-corpoelec-blue"></span>
-                    Asignado automáticamente por el personal vinculado
+                    Sugerido por el personal vinculado (puede cambiarlo si lo desea)
                   </p>
                 ) : errors.managementId ? (
                   <p className="text-[9px] text-corpoelec-red font-black uppercase mt-1">
@@ -3267,12 +3265,15 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                             {person?.firstName || "N/A"}{" "}
                             {person?.lastName || ""}
                           </p>
-                          <div className="flex items-center gap-2 mt-0.5">
+                          <div className="flex flex-wrap items-center gap-2 mt-1">
                             <span className="text-[9px] font-black text-txt-muted uppercase tracking-tighter bg-bg-main px-2 py-0.5 rounded-md border border-border-main">
                               CI: {person?.idCard || "---"}
                             </span>
                             <span className="text-[9px] font-black text-corpoelec-blue uppercase tracking-tighter bg-corpoelec-blue/5 px-2 py-0.5 rounded-md border border-corpoelec-blue/10">
                               Nro: {person.personalNumber}
+                            </span>
+                            <span className="text-[9px] font-black text-amber-600 uppercase tracking-tighter bg-amber-500/5 px-2 py-0.5 rounded-md border border-amber-500/10">
+                              Gerencia: {person.management?.name || "No especificada"}
                             </span>
                           </div>
                         </div>

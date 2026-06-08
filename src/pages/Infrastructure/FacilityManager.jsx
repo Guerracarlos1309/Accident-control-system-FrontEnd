@@ -422,6 +422,7 @@ export default function FacilityManager() {
       >
         <FacilityForm
           data={editingFacility}
+          facilities={facilities}
           onCancel={handleModalClose}
           onSubmitSuccess={() => {
             handleModalClose();

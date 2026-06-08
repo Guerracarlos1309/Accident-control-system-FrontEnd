@@ -16,6 +16,7 @@ import Modal from "./Modal";
 import { helpFetch } from "../helpers/helpFetch";
 import { useNotification } from "../context/NotificationContext";
 import { useAuth } from "../context/AuthContext";
+import { validateGenericText } from "../helpers/validationHelper";
 
 /**
  * MasterEntityManager - Unified component for managing any entity (Employees, Catalogs, Vehicles, etc.)
@@ -55,9 +56,29 @@ export default function MasterEntityManager({
   const [data, setData] = useState(initialData);
   const [loading, setLoading] = useState(!!apiPath);
   const [currentView, setCurrentView] = useState(viewType);
+  const [errors, setErrors] = useState({});
   const api = helpFetch();
   const { showNotification } = useNotification();
   const { user } = useAuth();
+
+  const validateField = (name, value, fieldConfig) => {
+    if (!fieldConfig) return true;
+    if (!fieldConfig.type || fieldConfig.type === "text" || fieldConfig.type === "textarea") {
+      const result = validateGenericText(value, fieldConfig.label, 3, fieldConfig.required);
+      setErrors((prev) => ({
+        ...prev,
+        [name]: result.isValid ? "" : result.message,
+      }));
+      return result.isValid;
+    }
+    return true;
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    const fieldConfig = fields.find((f) => f.name === name);
+    validateField(name, value, fieldConfig);
+  };
 
   const fetchData = async () => {
     if (!apiPath) return;
@@ -103,16 +124,46 @@ export default function MasterEntityManager({
   const handleOpenModal = (item = null) => {
     setEditingItem(item);
     setFormData(item || {});
+    setErrors({});
     setIsModalOpen(true);
   };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: value };
+      const fieldConfig = fields.find((f) => f.name === name);
+      if (errors[name]) {
+        validateField(name, value, fieldConfig);
+      }
+      return updated;
+    });
   };
 
   const handleSubmit = async (e, providedData = null) => {
     if (e && typeof e.preventDefault === "function") e.preventDefault();
     if (!apiPath) return;
+
+    if (!providedData) {
+      let formHasErrors = false;
+      fields.forEach((f) => {
+        if (!f.type || f.type === "text" || f.type === "textarea") {
+          const val = formData[f.name] || "";
+          const isValid = validateField(f.name, val, f);
+          if (!isValid) {
+            formHasErrors = true;
+          }
+        }
+      });
+
+      if (formHasErrors) {
+        showNotification(
+          "No se puede guardar el registro. Hay campos con datos inválidos o sospechosos.",
+          "error"
+        );
+        return;
+      }
+    }
 
     // Use provided data (from custom form) or internal formData (from auto-gen form)
     const dataToSave = providedData || formData;
@@ -313,7 +364,7 @@ export default function MasterEntityManager({
                         return (
                           <td
                             key={field.name}
-                            className="px-6 py-4 text-sm font-semibold text-txt-sub"
+                            className="px-6 py-4 text-sm font-semibold text-txt-sub uppercase"
                           >
                             {displayValue || (
                               <span className="text-txt-muted/50 italic font-normal">
@@ -454,7 +505,7 @@ export default function MasterEntityManager({
                         <p className="text-[9px] uppercase tracking-[0.2em] text-txt-muted font-black mb-1">
                           {f.label}
                         </p>
-                        <p className="text-txt-main font-bold truncate leading-tight">
+                        <p className="text-txt-main font-bold truncate leading-tight uppercase">
                           {disp || "—"}
                         </p>
                       </div>
@@ -527,24 +578,38 @@ export default function MasterEntityManager({
                       ))}
                     </select>
                   ) : f.type === "textarea" ? (
-                    <textarea
-                      name={f.name}
-                      value={formData[f.name] || ""}
-                      onChange={handleChange}
-                      required={f.required}
-                      className="input-field min-h-[140px] py-4 text-sm font-bold"
-                      placeholder={`Ingrese ${f.label.toLowerCase()}...`}
-                    />
+                    <>
+                      <textarea
+                        name={f.name}
+                        value={formData[f.name] || ""}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        className={`input-field min-h-[140px] py-4 text-sm font-bold ${errors[f.name] ? "border-corpoelec-red focus:border-corpoelec-red focus:ring-corpoelec-red/10" : ""}`}
+                        placeholder={`Ingrese ${f.label.toLowerCase()}...`}
+                      />
+                      {errors[f.name] && (
+                        <p className="text-[10px] text-corpoelec-red font-black uppercase mt-1 ml-1 leading-tight">
+                          {errors[f.name]}
+                        </p>
+                      )}
+                    </>
                   ) : (
-                    <input
-                      type={f.type || "text"}
-                      name={f.name}
-                      value={formData[f.name] || ""}
-                      onChange={handleChange}
-                      required={f.required}
-                      className="input-field h-12 text-sm font-bold"
-                      placeholder={`Ingrese ${f.label.toLowerCase()}...`}
-                    />
+                    <>
+                      <input
+                        type={f.type || "text"}
+                        name={f.name}
+                        value={formData[f.name] || ""}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        className={`input-field h-12 text-sm font-bold ${errors[f.name] ? "border-corpoelec-red focus:border-corpoelec-red focus:ring-corpoelec-red/10" : ""}`}
+                        placeholder={`Ingrese ${f.label.toLowerCase()}...`}
+                      />
+                      {errors[f.name] && (
+                        <p className="text-[10px] text-corpoelec-red font-black uppercase mt-1 ml-1 leading-tight">
+                          {errors[f.name]}
+                        </p>
+                      )}
+                    </>
                   )}
                 </div>
               ))}

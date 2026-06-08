@@ -13,6 +13,14 @@ import {
 import GeographicCascade from "../../../components/GeographicCascade";
 import { helpFetch } from "../../../helpers/helpFetch";
 import { useNotification } from "../../../context/NotificationContext";
+import {
+  validateName,
+  validateIdCardNumber,
+  validatePersonalNumber,
+  validateEmailAddress,
+  validatePhoneNumber,
+  validateOfficePhoneNumber,
+} from "../../../helpers/validationHelper";
 
 export default function EmployeeForm({ data, onCancel, onSubmit }) {
   const [activeTab, setActiveTab] = useState("identity");
@@ -52,7 +60,59 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
   const [imagePreview, setImagePreview] = useState(null);
   const fileInputRef = useRef(null);
 
+  const [errors, setErrors] = useState({});
+
   const api = helpFetch();
+
+  const validateField = (name, value) => {
+    let result = { isValid: true, message: "" };
+
+    switch (name) {
+      case "firstName":
+        result = validateName(value, "Nombres", true);
+        break;
+      case "lastName":
+        result = validateName(value, "Apellidos", true);
+        break;
+      case "idNumber":
+        result = validateIdCardNumber(value, true);
+        break;
+      case "personalNumber":
+        result = validatePersonalNumber(value, true);
+        break;
+      case "email":
+        result = validateEmailAddress(value, false);
+        break;
+      case "phone":
+        result = validatePhoneNumber(value, "Teléfono Personal", false);
+        break;
+      case "officePhone":
+        result = validateOfficePhoneNumber(value, false);
+        break;
+      default:
+        break;
+    }
+
+    setErrors((prev) => ({
+      ...prev,
+      [name]: result.isValid ? "" : result.message,
+    }));
+
+    return result.isValid;
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    validateField(name, value);
+  };
+
+  const handleIdNumberBlur = () => {
+    const result = validateIdCardNumber(idNumber, true);
+    setErrors((prev) => ({
+      ...prev,
+      idNumber: result.isValid ? "" : result.message,
+    }));
+  };
 
   // Load catalogs and sync initial data
   useEffect(() => {
@@ -79,6 +139,7 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
             managementId: data.managementId?.toString() || "",
             jobTitleId: data.jobTitleId?.toString() || "",
             occupationId: data.occupationId?.toString() || "",
+            officePhone: data.officePhone || "",
           });
 
           if (data.imageUrl) {
@@ -95,6 +156,13 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
               // Fallback if no hyphen
               setIdNumber(data.idCard.replace(/\D/g, ""));
             }
+          }
+
+          // Sync homeAddress geographic cascade from stored text
+          // homeAddress is stored as plain text (e.g. "Parroquia, Ciudad, Estado")
+          // We show the stored text but let the user re-select if they want to change it
+          if (data.homeAddress) {
+            setHomeGeo((prev) => ({ ...prev })); // trigger re-render keeping stored text visible
           }
         }
       } catch (error) {
@@ -157,13 +225,26 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
       }
     }
 
-    setFormData({ ...formData, [name]: value });
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: value };
+      if (errors[name]) {
+        validateField(name, value);
+      }
+      return updated;
+    });
   };
 
   const handleIdNumberChange = (e) => {
     const val = e.target.value.replace(/\D/g, ""); // Extract digits only
     setIdNumber(val);
     setFormData((prev) => ({ ...prev, idCard: `${idPrefix}-${val}` }));
+    if (errors.idNumber) {
+      const result = validateIdCardNumber(val, true);
+      setErrors((prev) => ({
+        ...prev,
+        idNumber: result.isValid ? "" : result.message,
+      }));
+    }
   };
 
   const handleIdPrefixChange = (e) => {
@@ -228,77 +309,38 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
       return;
     }
 
-    // 1.2. Validate Names and Last Names (must contain only letters and spaces)
-    if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(formData.firstName)) {
-      showNotification(
-        "El nombre solo puede contener letras y espacios",
-        "error",
-      );
-      return;
-    }
+    // Run heuristic validations
+    const isFirstNameValid = validateField("firstName", formData.firstName);
+    const isLastNameValid = validateField("lastName", formData.lastName);
+    const isIdNumberValid = validateField("idNumber", idNumber);
+    const isPersonalNumberValid = validateField("personalNumber", formData.personalNumber);
+    const isEmailValid = validateField("email", formData.email);
+    const isPhoneValid = validateField("phone", formData.phone);
+    const isOfficePhoneValid = validateField("officePhone", formData.officePhone);
 
-    if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(formData.lastName)) {
+    if (
+      !isFirstNameValid ||
+      !isLastNameValid ||
+      !isIdNumberValid ||
+      !isPersonalNumberValid ||
+      !isEmailValid ||
+      !isPhoneValid ||
+      !isOfficePhoneValid
+    ) {
       showNotification(
-        "El apellido solo puede contener letras y espacios",
-        "error",
+        "No se puede registrar el empleado. Hay campos con datos inválidos o sospechosos.",
+        "error"
       );
-      return;
-    }
 
-    // 1.5. Validate N° de Personal (must be between 5 and 7 digits)
-    if (!/^\d{5,7}$/.test(formData.personalNumber)) {
-      showNotification(
-        "El número de personal debe contener entre 5 y 7 dígitos numéricos",
-        "error",
-      );
-      return;
-    }
-
-    // 2. Validate Cédula of Identity (must be between 5 and 8 digits)
-    if (!/^\d{5,8}$/.test(idNumber)) {
-      showNotification(
-        "La cédula de identidad debe contener entre 5 y 8 dígitos numéricos",
-        "error",
-      );
-      return;
-    }
-
-    // 3. Validate Email format (if provided)
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      showNotification(
-        "Por favor, introduzca un correo electrónico válido (Ej: usuario@empresa.com)",
-        "error",
-      );
-      return;
-    }
-
-    // 4. Validate Phone format (if provided)
-    if (formData.phone) {
-      const cleanPhone = formData.phone.replace(/\D/g, "");
-      const isValidVenezuelan =
-        /^0(412|414|424|416|426|2\d{2})\d{7}$/.test(cleanPhone) ||
-        /^58(412|414|424|416|426|2\d{2})\d{7}$/.test(cleanPhone);
-      if (!isValidVenezuelan) {
-        showNotification(
-          "El número de teléfono debe ser un número de teléfono venezolano válido (ej: 04141234567 o 02121234567)",
-          "error",
-        );
-        return;
+      // Determine which tab has the first error and switch to it
+      if (!isFirstNameValid || !isIdNumberValid || !isPersonalNumberValid) {
+        setActiveTab("identity");
+      } else if (!isEmailValid || !isPhoneValid) {
+        setActiveTab("contact");
+      } else if (!isOfficePhoneValid) {
+        setActiveTab("labor");
       }
-    }
-
-    if (formData.officePhone) {
-      const cleanOfficePhone = formData.officePhone.replace(/\D/g, "");
-      const isValidVenezuelan =
-        /^0(412|414|424|416|426|2\d{2})\d{7}$/.test(cleanOfficePhone) ||
-        /^58(412|414|424|416|426|2\d{2})\d{7}$/.test(cleanOfficePhone);
-      if (!isValidVenezuelan) {
-        showNotification(
-          "El teléfono de oficina debe ser un número de teléfono venezolano válido (ej: 04141234567 o 02121234567)",
-          "error",
-        );
-        return;
-      }
+      return;
     }
 
     // 5. Validate Birth Date (must not be in the future and employee must be >= 18 years old)
@@ -353,6 +395,8 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
     const finalData = {
       ...formData,
       idCard: `${idPrefix}-${idNumber}`,
+      // Send officePhone as null if empty so the backend stores null
+      officePhone: formData.officePhone && formData.officePhone.trim() !== "" ? formData.officePhone.trim() : null,
     };
 
     const formDataToSend = new FormData();
@@ -443,15 +487,22 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                 required
                 value={formData.firstName}
                 onChange={handleChange}
-                className="input-field h-12"
+                onBlur={handleBlur}
+                className={`input-field h-12 uppercase ${errors.firstName ? "border-corpoelec-red focus:border-corpoelec-red focus:ring-corpoelec-red/10" : ""}`}
                 maxLength={30}
               />
 
-              <div>
-                <p className="text-[9px] text-txt-muted font-bold tracking-tight mt-1 ml-1 self-end uppercase">
-                  Debe contener solo letras
+              {errors.firstName ? (
+                <p className="text-[10px] text-corpoelec-red font-black uppercase mt-1 ml-1 leading-tight">
+                  {errors.firstName}
                 </p>
-              </div>
+              ) : (
+                <div>
+                  <p className="text-[9px] text-txt-muted font-bold tracking-tight mt-1 ml-1 self-end uppercase">
+                    Debe contener solo letras
+                  </p>
+                </div>
+              )}
             </div>
             <div className="space-y-1">
               <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">
@@ -463,14 +514,21 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                 required
                 value={formData.lastName}
                 onChange={handleChange}
-                className="input-field h-12"
+                onBlur={handleBlur}
+                className={`input-field h-12 uppercase ${errors.lastName ? "border-corpoelec-red focus:border-corpoelec-red focus:ring-corpoelec-red/10" : ""}`}
                 maxLength={30}
               />
-              <div>
-                <p className="text-[9px] text-txt-muted font-bold tracking-tight mt-1 ml-1 self-end uppercase">
-                  Debe contener solo letras
+              {errors.lastName ? (
+                <p className="text-[10px] text-corpoelec-red font-black uppercase mt-1 ml-1 leading-tight">
+                  {errors.lastName}
                 </p>
-              </div>
+              ) : (
+                <div>
+                  <p className="text-[9px] text-txt-muted font-bold tracking-tight mt-1 ml-1 self-end uppercase">
+                    Debe contener solo letras
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Cédula Estilizada */}
@@ -478,7 +536,7 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
               <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">
                 Cédula de Identidad *
               </label>
-              <div className="flex items-stretch h-12 rounded-xl overflow-hidden border border-border-main focus-within:border-corpoelec-blue focus-within:ring-4 focus-within:ring-corpoelec-blue/10 bg-bg-surface transition-all">
+              <div className={`flex items-stretch h-12 rounded-xl overflow-hidden border bg-bg-surface transition-all ${errors.idNumber ? "border-corpoelec-red focus-within:border-corpoelec-red focus-within:ring-corpoelec-red/10" : "border-border-main focus-within:border-corpoelec-blue focus-within:ring-corpoelec-blue/10"}`}>
                 <select
                   value={idPrefix}
                   onChange={handleIdPrefixChange}
@@ -492,17 +550,24 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                   required
                   value={idNumber}
                   onChange={handleIdNumberChange}
-                  className="flex-1 px-4 bg-transparent outline-none text-sm font-semibold text-txt-main placeholder:text-txt-muted/30"
+                  onBlur={handleIdNumberBlur}
+                  className="flex-1 px-4 bg-transparent outline-none text-sm font-semibold text-txt-main placeholder:text-txt-muted/30 uppercase"
                   placeholder="Número de cédula"
                   maxLength={8}
                 />
               </div>
 
-              <div>
-                <p className="text-[9px] text-txt-muted font-bold tracking-tight mt-1 ml-1 self-end uppercase">
-                  De 5 a 8 dígitos (Solo dígitos)
+              {errors.idNumber ? (
+                <p className="text-[10px] text-corpoelec-red font-black uppercase mt-1 ml-1 leading-tight">
+                  {errors.idNumber}
                 </p>
-              </div>
+              ) : (
+                <div>
+                  <p className="text-[9px] text-txt-muted font-bold tracking-tight mt-1 ml-1 self-end uppercase">
+                    De 5 a 8 dígitos (Solo dígitos)
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* N° Personal Estilizado */}
@@ -517,7 +582,8 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                 disabled={!!data}
                 value={formData.personalNumber}
                 onChange={handleChange}
-                className={`input-field h-12 text-sm font-semibold ${data ? "bg-bg-main/20 cursor-not-allowed opacity-70" : ""}`}
+                onBlur={handleBlur}
+                className={`input-field h-12 text-sm font-semibold uppercase ${data ? "bg-bg-main/20 cursor-not-allowed opacity-70" : ""} ${errors.personalNumber ? "border-corpoelec-red focus:border-corpoelec-red focus:ring-corpoelec-red/10" : ""}`}
                 placeholder="Numero de personal"
                 maxLength={7}
               />
@@ -527,9 +593,15 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                 </p>
               )}
               {!data && (
-                <p className="text-[9px] text-txt-muted font-bold tracking-tight mt-1 ml-1 self-end uppercase">
-                  De 5 a 7 dígitos (Solo dígitos)
-                </p>
+                errors.personalNumber ? (
+                  <p className="text-[10px] text-corpoelec-red font-black uppercase mt-1 ml-1 leading-tight">
+                    {errors.personalNumber}
+                  </p>
+                ) : (
+                  <p className="text-[9px] text-txt-muted font-bold tracking-tight mt-1 ml-1 self-end uppercase">
+                    De 5 a 7 dígitos (Solo dígitos)
+                  </p>
+                )
               )}
             </div>
 
@@ -605,10 +677,16 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="input-field h-12"
+                onBlur={handleBlur}
+                className={`input-field h-12 uppercase ${errors.email ? "border-corpoelec-red focus:border-corpoelec-red focus:ring-corpoelec-red/10" : ""}`}
                 placeholder="usuario@ejemplo.com"
                 maxLength={30}
               />
+              {errors.email && (
+                <p className="text-[10px] text-corpoelec-red font-black uppercase mt-1 ml-1 leading-tight">
+                  {errors.email}
+                </p>
+              )}
             </div>
             <div className="space-y-1">
               <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">
@@ -619,20 +697,27 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                className="input-field h-12"
+                onBlur={handleBlur}
+                className={`input-field h-12 uppercase ${errors.phone ? "border-corpoelec-red focus:border-corpoelec-red focus:ring-corpoelec-red/10" : ""}`}
                 placeholder="04XX-XXXXXXX"
                 maxLength={15}
                 onKeyDown={(e) => {
-                  if (!/[0-9]/.test(e.key) && e.key !== "Backspace") {
+                  if (!/[0-9]/.test(e.key) && e.key !== "Backspace" && e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Delete" && e.key !== "Tab") {
                     e.preventDefault();
                   }
                 }}
               />
-              <div>
-                <p className="text-[9px] text-txt-muted font-bold tracking-tight mt-1 ml-1 self-end uppercase">
-                  Debe contener solo números
+              {errors.phone ? (
+                <p className="text-[10px] text-corpoelec-red font-black uppercase mt-1 ml-1 leading-tight">
+                  {errors.phone}
                 </p>
-              </div>
+              ) : (
+                <div>
+                  <p className="text-[9px] text-txt-muted font-bold tracking-tight mt-1 ml-1 self-end uppercase">
+                    Debe contener solo números
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="col-span-1 md:col-span-2 p-6 rounded-3xl border border-border-main/50 mt-2 bg-bg-main/5">
@@ -645,6 +730,12 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                 value={homeGeo}
                 onChange={handleHomeGeoChange}
               />
+              <div className="mt-3 text-[10px] text-txt-muted font-bold uppercase tracking-widest pl-1">
+                Registrado como:{" "}
+                <span className="text-corpoelec-blue underline decoration-corpoelec-red/30 underline-offset-4">
+                  {formData.homeAddress || "Pendiente..."}
+                </span>
+              </div>
             </div>
 
             <div className="space-y-1">
@@ -824,27 +915,35 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
 
             <div className="space-y-1 col-span-1 md:col-span-2">
               <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1 flex items-center gap-2">
-                Teléfono Extensión / Oficina
+                <PhoneCall size={14} /> Teléfono Extensión / Oficina
+                <span className="text-txt-muted/40 font-normal normal-case tracking-normal">(Opcional)</span>
               </label>
               <input
                 type="text"
                 name="officePhone"
                 value={formData.officePhone}
                 onChange={handleChange}
-                className="input-field h-12"
-                placeholder="Ext. XXX o Directo X-XXX-XXXX"
-                maxLength={15}
+                onBlur={handleBlur}
+                className={`input-field h-12 uppercase ${errors.officePhone ? "border-corpoelec-red focus:border-corpoelec-red focus:ring-corpoelec-red/10" : ""}`}
+                placeholder="Ext. XXX o número directo (máx. 11 dígitos)"
+                maxLength={11}
                 onKeyDown={(e) => {
-                  if (!/[0-9]/.test(e.key) && e.key !== "Backspace") {
+                  if (!/[0-9]/.test(e.key) && e.key !== "Backspace" && e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Delete" && e.key !== "Tab") {
                     e.preventDefault();
                   }
                 }}
               />
-              <div>
-                <p className="text-[9px] text-txt-muted font-bold tracking-tight mt-1 ml-1 self-end uppercase">
-                  Debe contener solo números
+              {errors.officePhone ? (
+                <p className="text-[10px] text-corpoelec-red font-black uppercase mt-1 ml-1 leading-tight">
+                  {errors.officePhone}
                 </p>
-              </div>
+              ) : (
+                <div>
+                  <p className="text-[9px] text-txt-muted font-bold tracking-tight mt-1 ml-1 self-end uppercase">
+                    Opcional · Máximo 11 dígitos numéricos
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}

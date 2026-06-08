@@ -305,8 +305,11 @@ export default function AccidentDetails({ accident }) {
                         <p className="text-xs font-black text-txt-main uppercase tracking-tight">
                           {inv.employee?.firstName} {inv.employee?.lastName}
                         </p>
-                        <p className="text-[9px] font-black text-txt-muted uppercase">
-                          CI: {inv.employee?.idCard || inv.employee?.id_card}
+                        <p className="text-[9px] font-black text-txt-muted uppercase flex flex-wrap gap-2 items-center mt-1">
+                          <span>CI: {inv.employee?.idCard || inv.employee?.id_card}</span>
+                          <span className="text-[8px] font-black text-amber-600 tracking-wider bg-amber-500/5 border border-amber-500/10 px-1.5 py-0.5 rounded-md">
+                            Gerencia: {inv.employee?.management?.name || "No especificada"}
+                          </span>
                         </p>
                         {(inv.injuryType ||
                           inv.magnitude ||

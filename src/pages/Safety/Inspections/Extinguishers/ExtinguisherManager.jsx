@@ -8,7 +8,9 @@ import {
   Shield,
   Eye,
   Pencil,
-  Info,
+  Search,
+  X,
+  SlidersHorizontal,
 } from "lucide-react";
 import Modal from "../../../../components/Modal";
 import ExtinguisherForm from "./ExtinguisherForm";
@@ -25,6 +27,16 @@ export default function ExtinguisherManager() {
   const [inspections, setInspections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isFetchingEdit, setIsFetchingEdit] = useState(false);
+
+  // ── Filtros ──────────────────────────────────────────────
+  const [searchTerm, setSearchTerm] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [selectedFacility, setSelectedFacility] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  // ─────────────────────────────────────────────────────────
+
   const api = helpFetch();
   const { showNotification } = useNotification();
   const { user } = useAuth();
@@ -85,6 +97,74 @@ export default function ExtinguisherManager() {
     setInitialData(null);
   };
 
+  // ── Opciones únicas para desplegables ─────────────────────
+  const uniqueFacilities = Array.from(
+    new Map(
+      inspections
+        .filter((i) => i.facility)
+        .map((i) => [i.facility.id, i.facility]),
+    ).values(),
+  );
+
+  const uniqueStatuses = Array.from(
+    new Map(
+      inspections.filter((i) => i.status).map((i) => [i.status.id, i.status]),
+    ).values(),
+  );
+
+  // ── Limpiar filtros ───────────────────────────────────────
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setStartDate("");
+    setEndDate("");
+    setSelectedFacility("");
+    setSelectedStatus("");
+  };
+
+  const hasActiveFilters =
+    searchTerm || startDate || endDate || selectedFacility || selectedStatus;
+
+  // ── Lógica de filtrado ────────────────────────────────────
+  const filteredInspections = inspections.filter((insp) => {
+    // Búsqueda libre
+    if (searchTerm.trim() !== "") {
+      const term = searchTerm.toLowerCase();
+      const inspNum = (insp.inspectionNumber || "").toLowerCase();
+      const facilityName = (insp.facility?.name || "").toLowerCase();
+      const inspectorName =
+        `${insp.inspector?.firstName || ""} ${insp.inspector?.lastName || ""}`.toLowerCase();
+      const statusName = (insp.status?.name || "").toLowerCase();
+      const idStr = String(insp.id);
+
+      const matches =
+        inspNum.includes(term) ||
+        facilityName.includes(term) ||
+        inspectorName.includes(term) ||
+        statusName.includes(term) ||
+        idStr.includes(term);
+
+      if (!matches) return false;
+    }
+
+    // Rango de fechas
+    const inspDate = insp.date ? insp.date.substring(0, 10) : "";
+    if (startDate && inspDate < startDate) return false;
+    if (endDate && inspDate > endDate) return false;
+
+    // Filtro por sede
+    if (
+      selectedFacility &&
+      String(insp.facility?.id) !== String(selectedFacility)
+    )
+      return false;
+
+    // Filtro por estado
+    if (selectedStatus && String(insp.statusId) !== String(selectedStatus))
+      return false;
+
+    return true;
+  });
+
   return (
     <div className="space-y-6 text-txt-main">
       {/* HEADER */}
@@ -109,6 +189,125 @@ export default function ExtinguisherManager() {
         )}
       </div>
 
+      {/* ── Barra de Filtros y Búsqueda ───────────────────── */}
+      {!loading && inspections.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex flex-col md:flex-row gap-4 items-center">
+            {/* Campo de Búsqueda */}
+            <div className="relative flex-1 w-full">
+              <input
+                type="text"
+                placeholder="Buscar por código, sede, inspector, estado..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="input-field pl-12 h-12 w-full font-bold uppercase text-xs tracking-wider placeholder:text-txt-muted/30"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-txt-muted hover:text-txt-main transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+
+            {/* Botones de Control */}
+            <div className="flex items-center gap-3 w-full md:w-auto shrink-0 justify-end">
+              <button
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                className={`h-12 px-6 rounded-xl border font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-all ${
+                  showAdvancedFilters
+                    ? "bg-corpoelec-blue/10 border-corpoelec-blue text-corpoelec-blue shadow-lg shadow-corpoelec-blue/5"
+                    : "bg-bg-surface border-border-main text-txt-muted hover:text-txt-main hover:bg-bg-main"
+                }`}
+              >
+                <SlidersHorizontal size={16} />
+                <span>Filtros Avanzados</span>
+              </button>
+
+              {hasActiveFilters && (
+                <button
+                  onClick={handleClearFilters}
+                  className="h-12 px-5 rounded-xl border border-corpoelec-red/20 bg-corpoelec-red/10 text-corpoelec-red font-black text-xs uppercase tracking-wider hover:bg-corpoelec-red/20 transition-all active:scale-95 shrink-0"
+                >
+                  Limpiar
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Panel de Filtros Avanzados */}
+          {showAdvancedFilters && (
+            <div className="glass-panel p-6 rounded-[2rem] border border-border-main/40 bg-bg-surface/50 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 animate-in slide-in-from-top duration-300">
+              {/* Fecha Desde */}
+              <div className="space-y-1">
+                <label className="text-[9px] font-black text-txt-muted uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                  <Calendar size={12} /> Fecha Desde
+                </label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="input-field h-11 text-xs"
+                />
+              </div>
+
+              {/* Fecha Hasta */}
+              <div className="space-y-1">
+                <label className="text-[9px] font-black text-txt-muted uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                  <Calendar size={12} /> Fecha Hasta
+                </label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="input-field h-11 text-xs"
+                />
+              </div>
+
+              {/* Sede / Centro */}
+              <div className="space-y-1">
+                <label className="text-[9px] font-black text-txt-muted uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                  <MapPin size={12} /> Sede / Centro
+                </label>
+                <select
+                  value={selectedFacility}
+                  onChange={(e) => setSelectedFacility(e.target.value)}
+                  className="input-field h-11 text-xs font-bold"
+                >
+                  <option value="">TODAS LAS SEDES</option>
+                  {uniqueFacilities.map((fac) => (
+                    <option key={fac.id} value={fac.id}>
+                      {fac.name.toUpperCase()}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Estado Global */}
+              <div className="space-y-1">
+                <label className="text-[9px] font-black text-txt-muted uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                  <Shield size={12} /> Estado Global
+                </label>
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  className="input-field h-11 text-xs font-bold"
+                >
+                  <option value="">TODOS LOS ESTADOS</option>
+                  {uniqueStatuses.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name.toUpperCase()}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* TABLE/GRID SECTION */}
       <div className="glass-panel overflow-hidden border border-border-main/50 rounded-[2rem]">
         {loading && inspections.length === 0 ? (
@@ -127,6 +326,18 @@ export default function ExtinguisherManager() {
               No hay auditorías de extintores registradas.
             </p>
           </div>
+        ) : filteredInspections.length === 0 ? (
+          <div className="text-center py-20 text-txt-muted">
+            <div className="w-16 h-16 bg-bg-main/20 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-border-main">
+              <Search size={28} className="text-txt-muted/40" />
+            </div>
+            <p className="font-bold uppercase tracking-widest text-xs">
+              Sin resultados de búsqueda.
+            </p>
+            <p className="text-[10px] mt-1 italic">
+              Ninguna inspección coincide con los filtros aplicados.
+            </p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -141,7 +352,7 @@ export default function ExtinguisherManager() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-main/20">
-                {inspections.map((insp) => (
+                {filteredInspections.map((insp) => (
                   <tr
                     key={insp.id}
                     className="hover:bg-bg-main/5 transition-colors group cursor-pointer"

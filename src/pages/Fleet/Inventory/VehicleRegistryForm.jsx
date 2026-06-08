@@ -10,6 +10,7 @@ import {
   Loader2,
   Camera,
   X,
+  MapPin,
   Image as ImageIcon,
 } from "lucide-react";
 import { helpFetch } from "../../../helpers/helpFetch";
@@ -28,12 +29,14 @@ export default function VehicleRegistryForm({
     vehicleTypeId: initialData?.vehicleTypeId || "",
     color: initialData?.color || "",
     year: initialData?.year || new Date().getFullYear(),
+    facilityId: initialData?.facilityId || "",
   });
 
   const [lookups, setLookups] = useState({
     brands: [],
     models: [],
     types: [],
+    facilities: [],
   });
 
   const [selectedBrand, setSelectedBrand] = useState("");
@@ -51,16 +54,18 @@ export default function VehicleRegistryForm({
   useEffect(() => {
     const fetchLookups = async () => {
       try {
-        const [brandsRes, modelsRes, typesRes] = await Promise.all([
+        const [brandsRes, modelsRes, typesRes, facRes] = await Promise.all([
           api.get("/lookups/brands"),
           api.get("/lookups/models"),
           api.get("/lookups/vehicle-types"),
+          api.get("/facilities"),
         ]);
 
         setLookups({
           brands: Array.isArray(brandsRes) ? brandsRes : [],
           models: Array.isArray(modelsRes) ? modelsRes : [],
           types: Array.isArray(typesRes) ? typesRes : [],
+          facilities: Array.isArray(facRes) ? facRes : [],
         });
 
         if (brandsRes?.err || modelsRes?.err || typesRes?.err) {
@@ -142,7 +147,13 @@ export default function VehicleRegistryForm({
       return;
     }
 
-    // 2. Year of fabrication validation
+    // 2. Facility validation
+    if (!formData.facilityId) {
+      showNotification("Debe seleccionar la sede o instalación asignada al vehículo", "error");
+      return;
+    }
+
+    // 3. Year of fabrication validation
     const yearVal = parseInt(formData.year, 10);
     const currentYear = new Date().getFullYear();
     if (isNaN(yearVal) || yearVal < 1900 || yearVal > currentYear + 1) {
@@ -163,7 +174,9 @@ export default function VehicleRegistryForm({
 
       const sendData = new FormData();
       Object.keys(formData).forEach((key) => {
-        sendData.append(key, formData[key]);
+        if (formData[key] !== "" && formData[key] !== null) {
+          sendData.append(key, formData[key]);
+        }
       });
 
       imageFiles.forEach((file) => {
@@ -251,6 +264,26 @@ export default function VehicleRegistryForm({
                 onChange={handleChange}
                 className="input-field h-11"
               />
+            </div>
+            {/* Sede Asignada — span completo */}
+            <div className="space-y-1 md:col-span-2">
+              <label className="text-[11px] font-bold text-txt-muted uppercase tracking-wider flex items-center gap-1">
+                <MapPin size={12} className="text-corpoelec-blue" /> Sede / Instalación Asignada *
+              </label>
+              <select
+                name="facilityId"
+                required
+                value={formData.facilityId}
+                onChange={handleChange}
+                className="input-field h-11 cursor-pointer"
+              >
+                <option value="">Seleccione la sede del vehículo...</option>
+                {lookups.facilities.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>

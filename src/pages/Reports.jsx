@@ -29,6 +29,44 @@ export default function ReportCenter() {
     inspections: 0
   });
 
+  const [accidentDistribution, setAccidentDistribution] = useState([]);
+
+  // Custom columns configuration state
+  const [customMode, setCustomMode] = useState({
+    payroll: false,
+    accidents: false,
+    inspections: false
+  });
+
+  const [selectedCols, setSelectedCols] = useState({
+    payroll: ['personalNumber', 'idCard', 'fullName', 'management', 'jobTitle'],
+    accidents: ['accidentControlNumber', 'accidentDate', 'accidentType', 'facility', 'status'],
+    inspections: ['inspectionNumber', 'date', 'facility', 'inspector', 'typeStatus']
+  });
+
+  const [monthlyTrend, setMonthlyTrend] = useState(
+    Array.from({ length: 12 }, (_, i) => ({ monthIdx: i, accidents: 0, inspections: 0, total: 0 }))
+  );
+
+  const handleColChange = (type, colKey, checked) => {
+    const list = selectedCols[type];
+    if (checked) {
+      if (list.length >= 7) {
+        showNotification("Puedes seleccionar un máximo de 7 columnas para garantizar la legibilidad en el PDF.", "warning");
+        return;
+      }
+      setSelectedCols(prev => ({
+        ...prev,
+        [type]: [...prev[type], colKey]
+      }));
+    } else {
+      setSelectedCols(prev => ({
+        ...prev,
+        [type]: prev[type].filter(k => k !== colKey)
+      }));
+    }
+  };
+
   // Custom Dynamic Report generator state
   const [customReportType, setCustomReportType] = useState("accidents");
   const [startDate, setStartDate] = useState("");
@@ -69,12 +107,57 @@ export default function ReportCenter() {
           api.get("/lookups/inspection-status")
         ]);
 
+        const accidentsList = Array.isArray(accRes) ? accRes : [];
+        const inspectionsList = Array.isArray(inspRes) ? inspRes : [];
+
         setStats({
-          accidents: Array.isArray(accRes) ? accRes.length : 0,
+          accidents: accidentsList.length,
           employees: Array.isArray(empRes) ? empRes.length : 0,
           users: Array.isArray(userRes) ? userRes.length : 0,
-          inspections: Array.isArray(inspRes) ? inspRes.length : 0
+          inspections: inspectionsList.length
         });
+
+        // Compute accident distribution by type from real data
+        const typeColors = ['#005C9E', '#E30613', '#F59E0B', '#10B981', '#8B5CF6', '#EC4899', '#06B6D4'];
+        const typeCounts = {};
+        accidentsList.forEach(acc => {
+          const typeName = acc.type?.name || 'Sin clasificar';
+          typeCounts[typeName] = (typeCounts[typeName] || 0) + 1;
+        });
+        const total = accidentsList.length || 1;
+        const distData = Object.entries(typeCounts)
+          .sort((a, b) => b[1] - a[1])
+          .map(([name, count], idx) => ({
+            name,
+            count,
+            pct: Math.round((count / total) * 100),
+            color: typeColors[idx % typeColors.length]
+          }));
+        setAccidentDistribution(distData);
+
+        const currentYear = new Date().getFullYear();
+        const trendData = Array.from({ length: 12 }, (_, monthIdx) => {
+          const accCount = accidentsList.filter(acc => {
+            const dateStr = acc.date || acc.accidentDate;
+            if (!dateStr) return false;
+            const d = new Date(dateStr);
+            return d.getFullYear() === currentYear && d.getMonth() === monthIdx;
+          }).length;
+
+          const inspCount = inspectionsList.filter(insp => {
+            if (!insp.date) return false;
+            const d = new Date(insp.date);
+            return d.getFullYear() === currentYear && d.getMonth() === monthIdx;
+          }).length;
+
+          return {
+            monthIdx,
+            accidents: accCount,
+            inspections: inspCount,
+            total: accCount + inspCount
+          };
+        });
+        setMonthlyTrend(trendData);
 
         if (Array.isArray(mgtRes)) setManagements(mgtRes);
         if (Array.isArray(facRes)) setFacilities(facRes);
@@ -94,7 +177,17 @@ export default function ReportCenter() {
     setDownloading(prev => ({ ...prev, [type]: true }));
     try {
       showNotification("Generando y descargando PDF...", "info");
-      await api.download(endpoint, defaultName);
+      let url = endpoint;
+      if (customMode[type]) {
+        const cols = selectedCols[type];
+        if (cols.length === 0) {
+          showNotification("Selecciona al menos una columna para exportar", "warning");
+          setDownloading(prev => ({ ...prev, [type]: false }));
+          return;
+        }
+        url += `?columns=${cols.join(",")}`;
+      }
+      await api.download(url, defaultName);
       clearNotifications();
       showNotification("Reporte descargado con éxito", "success");
     } catch (error) {
@@ -117,6 +210,16 @@ export default function ReportCenter() {
       
       const idsParam = previewRecords.map(r => r.id).join(",");
       let queryParams = `?reportType=${customReportType}&ids=${idsParam}`;
+
+      if (customMode[customReportType]) {
+        const cols = selectedCols[customReportType];
+        if (cols.length === 0) {
+          showNotification("Selecciona al menos una columna para exportar", "warning");
+          setCustomDownloading(false);
+          return;
+        }
+        queryParams += `&columns=${cols.join(",")}`;
+      }
 
       const filename = `reporte_personalizado_${customReportType}_${new Date().toISOString().split("T")[0]}.pdf`;
       await api.download(`/reports/custom${queryParams}`, filename);
@@ -226,73 +329,128 @@ export default function ReportCenter() {
               <TrendingUp size={16} className="text-corpoelec-blue" />
               Tendencia de Incidentes
             </h3>
-            <div className="flex gap-2">
-              <span className="w-3 h-3 rounded-full bg-corpoelec-blue shadow-[0_0_10px_rgba(0,92,158,0.5)]" />
-              <span className="w-3 h-3 rounded-full bg-corpoelec-red shadow-[0_0_10px_rgba(227,6,19,0.5)]" />
+            <div className="flex gap-4 items-center select-none">
+              <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-wider text-txt-muted">
+                <span className="w-2.5 h-2.5 rounded-full bg-corpoelec-blue shadow-[0_0_8px_rgba(0,92,158,0.4)]" />
+                <span>Inspecciones</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-wider text-txt-muted">
+                <span className="w-2.5 h-2.5 rounded-full bg-corpoelec-red shadow-[0_0_8px_rgba(227,6,19,0.4)]" />
+                <span>Accidentes</span>
+              </div>
             </div>
           </div>
-          
           <div className="h-64 flex items-end gap-3 px-2 pt-10">
-             {[45, 78, 52, 91, 63, 84, 55, 67, 88, 42, 60, 75].map((val, i) => (
-               <div key={i} className="flex-1 flex flex-col items-center gap-2 group relative">
-                 <div className="w-full bg-corpoelec-blue/10 rounded-full h-full relative overflow-hidden flex items-end">
-                    <div 
-                      className="w-full bg-gradient-to-t from-corpoelec-blue/80 to-corpoelec-blue rounded-full transition-all duration-1000 group-hover:brightness-125"
-                      style={{ height: `${val}%` }}
-                    />
+             {monthlyTrend.map((val, i) => {
+               const maxTrendVal = Math.max(...monthlyTrend.map(t => t.total), 1);
+               const percentage = maxTrendVal > 0 ? (val.total / maxTrendVal) * 80 + 10 : 10;
+               const accidentsPercent = val.total > 0 ? (val.accidents / val.total) * 100 : 0;
+               const inspectionsPercent = val.total > 0 ? (val.inspections / val.total) * 100 : 0;
+
+               return (
+                 <div key={i} className="flex-1 h-full flex flex-col justify-end items-center group relative">
+                   <div className="text-[10px] font-black text-txt-main mb-1.5 transition-transform duration-300 group-hover:scale-110">
+                     {val.total}
+                   </div>
+                   <div 
+                     className={`w-full h-40 rounded-full relative overflow-hidden flex flex-col justify-end border cursor-pointer transition-all duration-700 ${
+                       val.total > 0 
+                         ? "bg-bg-main/20 border-border-main/20 shadow-inner" 
+                         : "bg-bg-main/10 border-border-main/40 hover:border-corpoelec-blue/30"
+                     }`}
+                     title={`Total: ${val.total} incidentes (Inspecciones: ${val.inspections}, Accidentes: ${val.accidents})`}
+                     style={{ height: `${percentage}%` }}
+                   >
+                     {val.total > 0 && (
+                       <>
+                         {/* Accidentes (Red part - top) */}
+                         <div 
+                           className="w-full bg-gradient-to-t from-corpoelec-red/70 to-corpoelec-red hover:brightness-110 transition-all duration-700"
+                           style={{ height: `${accidentsPercent}%` }}
+                           title={`${val.accidents} Accidentes`}
+                         />
+                         {/* Inspecciones (Blue part - bottom) */}
+                         <div 
+                           className="w-full bg-gradient-to-t from-corpoelec-blue/60 to-corpoelec-blue border-t border-white/10 hover:brightness-110 transition-all duration-700"
+                           style={{ height: `${inspectionsPercent}%` }}
+                           title={`${val.inspections} Inspecciones`}
+                         />
+                       </>
+                     )}
+                   </div>
+                   <span className="text-[9px] font-black text-txt-muted uppercase tracking-widest mt-2">
+                     {['E','F','M','A','M','J','J','A','S','O','N','D'][i]}
+                   </span>
                  </div>
-                 <span className="text-[9px] font-black text-txt-muted uppercase opacity-40">{['E','F','M','A','M','J','J','A','S','O','N','D'][i]}</span>
-                 <div className="absolute -top-6 bg-txt-main text-bg-main px-2 py-1 rounded text-[9px] font-bold opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                    {val}
-                 </div>
-               </div>
-             ))}
+               );
+             })}
           </div>
         </div>
 
-        {/* Distribution Mockup */}
+        {/* Distribution by Accident Type – real data donut */}
         <div className="glass-panel p-8 rounded-[2.5rem] border border-border-main/50 space-y-6">
            <h3 className="text-sm font-black text-txt-main uppercase tracking-widest flex items-center gap-2">
               <PieChartIcon size={16} className="text-corpoelec-blue" />
-              Distribución por Severidad
+              Distribución por Tipo de Accidente
             </h3>
-            
-            <div className="flex items-center justify-around h-64 relative">
-               <div className="relative w-48 h-48">
-                  {/* Mock Pie CSS-only segments */}
-                  <div className="absolute inset-0 rounded-full border-[20px] border-emerald-500 border-l-transparent border-b-transparent rotate-45" />
-                  <div className="absolute inset-0 rounded-full border-[20px] border-amber-500 border-t-transparent border-r-transparent -rotate-12" />
-                  <div className="absolute inset-0 rounded-full border-[20px] border-corpoelec-red border-t-transparent border-r-transparent rotate-[60deg]" />
-                  <div className="absolute inset-4 rounded-full bg-bg-surface flex flex-col items-center justify-center border border-border-main/50">
-                    <p className="text-2xl font-black text-txt-main">100%</p>
-                    <p className="text-[8px] font-black text-txt-muted uppercase tracking-[0.2em]">Analizado</p>
-                  </div>
-               </div>
 
-               <div className="space-y-4 w-40">
-                  <div className="flex items-center gap-3">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <div className="flex-1">
-                      <p className="text-[10px] font-black text-txt-main uppercase leading-none">Bajo Riesgo</p>
-                      <p className="text-[9px] text-txt-muted font-bold mt-0.5">65% Incidencias</p>
-                    </div>
+            {loading ? (
+              <div className="h-64 flex items-center justify-center">
+                <Loader2 size={32} className="animate-spin text-txt-muted/40" />
+              </div>
+            ) : accidentDistribution.length === 0 ? (
+              <div className="h-64 flex flex-col items-center justify-center gap-3">
+                <ShieldAlert size={32} className="text-txt-muted/30" />
+                <p className="text-[10px] font-black text-txt-muted uppercase tracking-wider">Sin accidentes registrados</p>
+              </div>
+            ) : (
+              <div className="flex items-center justify-around h-64 relative">
+                {/* SVG Donut Chart */}
+                <div className="relative w-44 h-44 flex-shrink-0">
+                  <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                    {(() => {
+                      const CIRC = 2 * Math.PI * 38; // ~238.76
+                      let offset = 0;
+                      return accidentDistribution.map((item, i) => {
+                        const segLen = (item.pct / 100) * CIRC;
+                        const gap = CIRC - segLen;
+                        const el = (
+                          <circle
+                            key={i}
+                            cx="50" cy="50" r="38"
+                            fill="none"
+                            stroke={item.color}
+                            strokeWidth="16"
+                            strokeDasharray={`${segLen} ${gap}`}
+                            strokeDashoffset={-offset}
+                            className="transition-all duration-700"
+                          />
+                        );
+                        offset += segLen;
+                        return el;
+                      });
+                    })()}
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <p className="text-2xl font-black text-txt-main">{stats.accidents}</p>
+                    <p className="text-[8px] font-black text-txt-muted uppercase tracking-[0.15em]">Accidentes</p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="w-2 h-2 rounded-full bg-amber-500" />
-                    <div className="flex-1">
-                      <p className="text-[10px] font-black text-txt-main uppercase leading-none">Moderado</p>
-                      <p className="text-[9px] text-txt-muted font-bold mt-0.5">25% Incidencias</p>
+                </div>
+
+                {/* Legend */}
+                <div className="space-y-2.5 w-44 max-h-56 overflow-y-auto pr-1">
+                  {accidentDistribution.map((item, i) => (
+                    <div key={i} className="flex items-center gap-2.5">
+                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: item.color }} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[9px] font-black text-txt-main uppercase leading-tight truncate" title={item.name}>{item.name}</p>
+                        <p className="text-[9px] text-txt-muted font-bold">{item.count} caso{item.count !== 1 ? 's' : ''} · {item.pct}%</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="w-2 h-2 rounded-full bg-corpoelec-red" />
-                    <div className="flex-1">
-                      <p className="text-[10px] font-black text-txt-main uppercase leading-none">Crítico</p>
-                      <p className="text-[9px] text-txt-muted font-bold mt-0.5">10% Incidencias</p>
-                    </div>
-                  </div>
-               </div>
-            </div>
+                  ))}
+                </div>
+              </div>
+            )}
         </div>
       </div>
 
@@ -310,7 +468,7 @@ export default function ReportCenter() {
           
           {/* Payroll PDF */}
           <div className="bg-bg-main/30 p-6 rounded-3xl border border-border-main/30 flex flex-col justify-between space-y-4 hover:border-corpoelec-blue/40 transition-all group">
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="p-3 bg-corpoelec-blue/10 text-corpoelec-blue rounded-2xl w-fit">
                 <Users size={22} />
               </div>
@@ -318,6 +476,62 @@ export default function ReportCenter() {
               <p className="text-[10px] text-txt-muted font-semibold leading-relaxed uppercase">
                 Listado oficial completo de todo el personal activo en el sistema, detallando cargo, gerencia y cédula de identidad.
               </p>
+
+              {/* Selector de modo */}
+              <div className="flex gap-1 p-1 bg-bg-surface border border-border-main/30 rounded-xl w-full">
+                <button
+                  type="button"
+                  onClick={() => setCustomMode(prev => ({ ...prev, payroll: false }))}
+                  className={`flex-1 py-1 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer ${!customMode.payroll ? 'bg-corpoelec-blue text-white shadow-sm' : 'text-txt-muted hover:text-txt-main'}`}
+                >
+                  Estándar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCustomMode(prev => ({ ...prev, payroll: true }))}
+                  className={`flex-1 py-1 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer ${customMode.payroll ? 'bg-corpoelec-blue text-white shadow-sm' : 'text-txt-muted hover:text-txt-main'}`}
+                >
+                  Personalizado
+                </button>
+              </div>
+
+              {/* Checkboxes de Columnas */}
+              {customMode.payroll && (
+                <div className="space-y-1.5 p-3 bg-bg-surface border border-border-main/30 rounded-2xl">
+                  <span className="text-[8px] font-black text-txt-muted uppercase tracking-wider block mb-1">Campos a incluir:</span>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                    {[
+                      { key: 'personalNumber', label: 'Ficha / Pers.' },
+                      { key: 'idCard', label: 'Cédula' },
+                      { key: 'fullName', label: 'Nombre Completo' },
+                      { key: 'management', label: 'Gerencia' },
+                      { key: 'jobTitle', label: 'Cargo' },
+                      { key: 'occupation', label: 'Ocupación' },
+                      { key: 'phone', label: 'Teléfono' },
+                      { key: 'gender', label: 'Género' },
+                      { key: 'birthDate', label: 'Fec. Nacimiento' },
+                      { key: 'email', label: 'Correo' },
+                      { key: 'maritalStatus', label: 'Estado Civil' },
+                      { key: 'dominantHand', label: 'Lateralidad' },
+                      { key: 'birthPlace', label: 'Lugar Nacimiento' },
+                      { key: 'homeAddress', label: 'Dirección' },
+                      { key: 'educationLevel', label: 'Niv. Educativo' },
+                      { key: 'hireDate', label: 'Fec. Ingreso' },
+                      { key: 'officePhone', label: 'Tel. Oficina' }
+                    ].map(col => (
+                      <label key={col.key} className="flex items-center gap-2 text-[10px] font-semibold text-txt-sub cursor-pointer hover:text-txt-main transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={selectedCols.payroll.includes(col.key)}
+                          onChange={(e) => handleColChange('payroll', col.key, e.target.checked)}
+                          className="accent-corpoelec-blue rounded cursor-pointer"
+                        />
+                        <span>{col.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             <button 
               disabled={downloading.payroll}
@@ -335,7 +549,7 @@ export default function ReportCenter() {
 
           {/* Accidents List PDF */}
           <div className="bg-bg-main/30 p-6 rounded-3xl border border-border-main/30 flex flex-col justify-between space-y-4 hover:border-corpoelec-red/40 transition-all group">
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="p-3 bg-corpoelec-red/10 text-corpoelec-red rounded-2xl w-fit">
                 <ShieldAlert size={22} />
               </div>
@@ -343,6 +557,56 @@ export default function ReportCenter() {
               <p className="text-[10px] text-txt-muted font-semibold leading-relaxed uppercase">
                 Reporte consolidado del listado general de todos los accidentes e incidentes registrados, con fecha, tipo y estatus del caso.
               </p>
+
+              {/* Selector de modo */}
+              <div className="flex gap-1 p-1 bg-bg-surface border border-border-main/30 rounded-xl w-full">
+                <button
+                  type="button"
+                  onClick={() => setCustomMode(prev => ({ ...prev, accidents: false }))}
+                  className={`flex-1 py-1 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer ${!customMode.accidents ? 'bg-corpoelec-red text-white shadow-sm' : 'text-txt-muted hover:text-txt-main'}`}
+                >
+                  Estándar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCustomMode(prev => ({ ...prev, accidents: true }))}
+                  className={`flex-1 py-1 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer ${customMode.accidents ? 'bg-corpoelec-red text-white shadow-sm' : 'text-txt-muted hover:text-txt-main'}`}
+                >
+                  Personalizado
+                </button>
+              </div>
+
+              {/* Checkboxes de Columnas */}
+              {customMode.accidents && (
+                <div className="space-y-1.5 p-3 bg-bg-surface border border-border-main/30 rounded-2xl">
+                  <span className="text-[8px] font-black text-txt-muted uppercase tracking-wider block mb-1">Campos a incluir:</span>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                    {[
+                      { key: 'accidentControlNumber', label: 'Código / Control' },
+                      { key: 'accidentDate', label: 'Fecha' },
+                      { key: 'accidentTime', label: 'Hora' },
+                      { key: 'accidentType', label: 'Tipo de Accidente' },
+                      { key: 'facility', label: 'Instalación' },
+                      { key: 'management', label: 'Gerencia' },
+                      { key: 'status', label: 'Estatus' },
+                      { key: 'description', label: 'Descripción' },
+                      { key: 'medicalCenterName', label: 'Centro Médico' },
+                      { key: 'medicalObservations', label: 'Obs. Médicas' },
+                      { key: 'globalObservations', label: 'Obs. Globales' }
+                    ].map(col => (
+                      <label key={col.key} className="flex items-center gap-2 text-[10px] font-semibold text-txt-sub cursor-pointer hover:text-txt-main transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={selectedCols.accidents.includes(col.key)}
+                          onChange={(e) => handleColChange('accidents', col.key, e.target.checked)}
+                          className="accent-corpoelec-red rounded cursor-pointer"
+                        />
+                        <span>{col.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             <button 
               disabled={downloading.accidents}
@@ -360,7 +624,7 @@ export default function ReportCenter() {
 
           {/* Inspections List PDF */}
           <div className="bg-bg-main/30 p-6 rounded-3xl border border-border-main/30 flex flex-col justify-between space-y-4 hover:border-amber-500/40 transition-all group">
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="p-3 bg-amber-500/10 text-amber-500 rounded-2xl w-fit">
                 <FileText size={22} />
               </div>
@@ -368,6 +632,53 @@ export default function ReportCenter() {
               <p className="text-[10px] text-txt-muted font-semibold leading-relaxed uppercase">
                 Compendio completo de todas las inspecciones de seguridad realizadas (generales, extintores y vehicular).
               </p>
+
+              {/* Selector de modo */}
+              <div className="flex gap-1 p-1 bg-bg-surface border border-border-main/30 rounded-xl w-full">
+                <button
+                  type="button"
+                  onClick={() => setCustomMode(prev => ({ ...prev, inspections: false }))}
+                  className={`flex-1 py-1 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer ${!customMode.inspections ? 'bg-amber-500 text-white shadow-sm' : 'text-txt-muted hover:text-txt-main'}`}
+                >
+                  Estándar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCustomMode(prev => ({ ...prev, inspections: true }))}
+                  className={`flex-1 py-1 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer ${customMode.inspections ? 'bg-amber-500 text-white shadow-sm' : 'text-txt-muted hover:text-txt-main'}`}
+                >
+                  Personalizado
+                </button>
+              </div>
+
+              {/* Checkboxes de Columnas */}
+              {customMode.inspections && (
+                <div className="space-y-1.5 p-3 bg-bg-surface border border-border-main/30 rounded-2xl">
+                  <span className="text-[8px] font-black text-txt-muted uppercase tracking-wider block mb-1">Campos a incluir:</span>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                    {[
+                      { key: 'inspectionNumber', label: 'Código / Inspección' },
+                      { key: 'date', label: 'Fecha' },
+                      { key: 'facility', label: 'Instalación' },
+                      { key: 'inspector', label: 'Inspector' },
+                      { key: 'typeStatus', label: 'Tipo Inspección' },
+                      { key: 'status', label: 'Estatus' },
+                      { key: 'coordinates', label: 'Coordenadas' },
+                      { key: 'observations', label: 'Observaciones' }
+                    ].map(col => (
+                      <label key={col.key} className="flex items-center gap-2 text-[10px] font-semibold text-txt-sub cursor-pointer hover:text-txt-main transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={selectedCols.inspections.includes(col.key)}
+                          onChange={(e) => handleColChange('inspections', col.key, e.target.checked)}
+                          className="accent-amber-500 rounded cursor-pointer"
+                        />
+                        <span>{col.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             <button 
               disabled={downloading.inspections}

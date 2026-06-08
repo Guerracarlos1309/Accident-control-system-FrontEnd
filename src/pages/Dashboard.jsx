@@ -443,21 +443,23 @@ export default function Dashboard() {
                   return (
                     <div
                       key={idx}
-                      className="group flex-1 flex flex-col items-center gap-3"
+                      className="group flex-1 h-full flex flex-col justify-end items-center"
                     >
-                      <div className="text-[10px] font-black text-corpoelec-red opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform -translate-y-1">
+                      <div className="text-[10px] font-black text-corpoelec-red mb-1.5 transition-transform duration-300 group-hover:scale-110">
                         {m.count}
                       </div>
-                      <div
-                        className={`w-full rounded-2xl transition-all duration-700 cursor-pointer ${
-                          m.count > 0
-                            ? "bg-corpoelec-red/20 border border-corpoelec-red/40 hover:bg-corpoelec-red hover:shadow-[0_0_20px_rgba(227,6,19,0.25)]"
-                            : "bg-bg-main/20 border border-border-main/60 hover:border-corpoelec-blue/30"
-                        }`}
-                        style={{ height: `${percentage}%` }}
-                        title={`${m.count} Accidentes`}
-                      ></div>
-                      <span className="text-[8px] font-black text-txt-muted uppercase tracking-widest">
+                      <div className="w-full h-44 flex items-end relative">
+                        <div
+                          className={`w-full rounded-t-xl transition-all duration-700 cursor-pointer ${
+                            m.count > 0
+                              ? "bg-gradient-to-t from-corpoelec-red/50 to-corpoelec-red border border-corpoelec-red/60 hover:brightness-110 hover:shadow-[0_0_15px_rgba(227,6,19,0.35)]"
+                              : "bg-bg-main/20 border border-border-main/60 hover:border-corpoelec-blue/30"
+                          }`}
+                          style={{ height: `${percentage}%` }}
+                          title={`${m.count} Accidentes`}
+                        />
+                      </div>
+                      <span className="text-[8px] font-black text-txt-muted uppercase tracking-widest mt-2">
                         {m.label}
                       </span>
                     </div>
