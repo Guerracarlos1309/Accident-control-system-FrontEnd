@@ -51,10 +51,12 @@ export default function AccidentsManager() {
         const list = Array.isArray(res) ? res : [];
         setAccidents(list);
         const years = Array.from(
-          new Set(list.map((a) => a.period?.annuality).filter(Boolean))
+          new Set(list.map((a) => a.period?.annuality).filter(Boolean)),
         ).sort((a, b) => b - a);
         if (years.length > 0) {
-          setSelectedYear(prev => prev && years.includes(prev) ? prev : years[0]);
+          setSelectedYear((prev) =>
+            prev && years.includes(prev) ? prev : years[0],
+          );
         } else {
           setSelectedYear(new Date().getFullYear().toString());
         }
@@ -71,7 +73,7 @@ export default function AccidentsManager() {
   }, []);
 
   const uniqueYears = Array.from(
-    new Set(accidents.map((a) => a.period?.annuality).filter(Boolean))
+    new Set(accidents.map((a) => a.period?.annuality).filter(Boolean)),
   ).sort((a, b) => b - a);
 
   const handleSaveAccident = async (data) => {
@@ -108,8 +110,6 @@ export default function AccidentsManager() {
       showNotification("Error al conectar con el servidor", "error");
     }
   };
-
-
 
   const handleViewDetails = async (acc) => {
     if (!acc) return;
@@ -161,7 +161,8 @@ export default function AccidentsManager() {
   };
 
   const filteredAccidents = accidents.filter((acc) => {
-    if (selectedYear && String(acc.period?.annuality) !== String(selectedYear)) return false;
+    if (selectedYear && String(acc.period?.annuality) !== String(selectedYear))
+      return false;
 
     // Free text search in affected employee name, ID card, control number, description, custom location, facility name, parish, city, state, or type
     if (searchTerm.trim() !== "") {
@@ -264,7 +265,13 @@ export default function AccidentsManager() {
                       : "border-transparent text-txt-muted hover:text-txt-main"
                   }`}
                 >
-                  Año {year} ({accidents.filter((a) => String(a.period?.annuality) === String(year)).length})
+                  Año {year} (
+                  {
+                    accidents.filter(
+                      (a) => String(a.period?.annuality) === String(year),
+                    ).length
+                  }
+                  )
                 </button>
               ))
             )}
@@ -490,15 +497,11 @@ export default function AccidentsManager() {
                   key={acc.id}
                   className="glass-panel p-6 rounded-3xl border border-border-main/50 hover:border-corpoelec-blue/30 transition-all group relative overflow-hidden"
                 >
-                  <div
-                    className="absolute top-0 right-0 w-32 h-32 bg-corpoelec-red/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"
-                  ></div>
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-corpoelec-red/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
 
                   <div className="flex justify-between items-start mb-6 relative z-10">
                     <div className="flex items-center gap-3">
-                      <div
-                        className="p-3 bg-corpoelec-red/10 text-corpoelec-red rounded-2xl"
-                      >
+                      <div className="p-3 bg-corpoelec-red/10 text-corpoelec-red rounded-2xl">
                         <AlertCircle size={20} />
                       </div>
                       <div>
@@ -646,7 +649,8 @@ export default function AccidentsManager() {
 
                       <td className="p-5 ">
                         <span className="text-xs font-bold text-txt-main">
-                          {acc.inpsaselFileNumber}
+                          {acc.accidentControlNumber ||
+                            acc.accident_control_number}
                         </span>
                       </td>
                       <td className="p-5 text-xs font-bold text-txt-main tracking-widest">

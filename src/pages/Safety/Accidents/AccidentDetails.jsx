@@ -608,8 +608,7 @@ export default function AccidentDetails({ accident }) {
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3">
             {/* Número de Control resaltado al lado de INPSASEL */}
-            {(accident.accidentControlNumber ||
-              accident.accident_control_number) && (
+            {accident.accidentControlNumber && (
               <div className="flex items-center gap-2 p-3 bg-corpoelec-blue/5 text-corpoelec-blue rounded-xl border border-corpoelec-blue/10 shadow-sm animate-in fade-in zoom-in duration-300">
                 <Shield size={14} className="text-corpoelec-blue" />
                 <span className="text-[10px] font-black text-corpoelec-blue uppercase tracking-widest">
@@ -638,26 +637,6 @@ export default function AccidentDetails({ accident }) {
               </div>
             )}
           </div>
-
-          {(accident.accidentControlNumber ||
-            accident.accident_control_number) && (
-            <div className="mt-8 flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-white border border-border-main rounded-[2rem] shadow-sm">
-              <div className="flex items-center gap-4">
-                <div className="h-12 w-12 bg-corpoelec-blue/10 rounded-2xl flex items-center justify-center text-corpoelec-blue">
-                  <FileText size={24} />
-                </div>
-                <div>
-                  <h3 className="text-[10px] font-black text-txt-muted uppercase tracking-[0.2em]">
-                    Número de Control de Accidente
-                  </h3>
-                  <p className="text-xl font-black text-corpoelec-blue tracking-widest">
-                    {accident.accidentControlNumber ||
-                      accident.accident_control_number}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </section>
 
