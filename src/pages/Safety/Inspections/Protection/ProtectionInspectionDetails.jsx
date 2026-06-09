@@ -207,7 +207,7 @@ export default function ProtectionInspectionDetails({ inspectionId }) {
                       <th className="px-4 py-3 text-center w-24">Medida</th>
                       <th className="px-4 py-3 text-center w-24 bg-emerald-500/5 text-emerald-500">Buenos</th>
                       <th className="px-4 py-3 text-center w-24 bg-corpoelec-red/5 text-corpoelec-red">No Sirven</th>
-                      <th className="px-4 py-3 text-center w-24 bg-amber-500/5 text-amber-500">No Existen</th>
+                      <th className="px-4 py-3 text-center w-24 bg-corpoelec-blue/5 text-corpoelec-blue">Total</th>
                       <th className="px-5 py-3">Diagnóstico</th>
                       <th className="px-5 py-3">Observaciones Técnicas</th>
                     </tr>
@@ -265,8 +265,8 @@ export default function ProtectionInspectionDetails({ inspectionId }) {
                             {malos}
                           </td>
 
-                          <td className={`px-4 py-3 text-center text-xs font-black bg-amber-500/5 ${noExisten > 0 ? "text-amber-500 font-black" : "text-txt-muted"}`}>
-                            {noExisten}
+                          <td className="px-4 py-3 text-center text-xs font-black text-corpoelec-blue bg-corpoelec-blue/5">
+                            {buenos + malos}
                           </td>
 
                           <td className="px-5 py-3">

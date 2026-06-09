@@ -12,6 +12,7 @@ import {
   Search,
   X,
   SlidersHorizontal,
+  Shield,
 } from "lucide-react";
 import Modal from "../../../../components/Modal";
 import VehicleForm from "./VehicleForm";

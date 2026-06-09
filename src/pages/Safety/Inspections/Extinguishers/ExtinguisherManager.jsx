@@ -35,6 +35,7 @@ export default function ExtinguisherManager() {
   const [selectedFacility, setSelectedFacility] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+
   // ─────────────────────────────────────────────────────────
 
   const api = helpFetch();
@@ -119,6 +120,7 @@ export default function ExtinguisherManager() {
     setEndDate("");
     setSelectedFacility("");
     setSelectedStatus("");
+    setselectedEmployee("");
   };
 
   const hasActiveFilters =

@@ -239,7 +239,7 @@ export default function ProtectionForm({
     );
     if (!hasAnyData) {
       showNotification(
-        "Debe registrar cantidades (Buenos, No Sirven o No Existen) en al menos un equipo",
+        "Debe registrar cantidades (Buenos o No Sirven) en al menos un equipo",
         "error",
       );
       return;
