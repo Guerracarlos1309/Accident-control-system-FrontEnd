@@ -12,8 +12,8 @@ export default function EmployeeManager() {
       fields={[
         { name: "personalNumber", label: "N° Personal" },
         { name: "idCard", label: "Cédula" },
-        { name: "firstName", label: "Nombre" },
-        { name: "lastName", label: "Apellido" },
+        { name: "firstName", label: "Nombres" },
+        { name: "lastName", label: "Apellidos" },
         { name: "occupation", label: "Cargo", displayKey: "occupation" },
       ]}
       FormComponent={EmployeeForm}
