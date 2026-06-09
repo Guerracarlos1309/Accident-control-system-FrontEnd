@@ -14,7 +14,7 @@ export default function EmployeeManager() {
         { name: "idCard", label: "Cédula" },
         { name: "firstName", label: "Nombre" },
         { name: "lastName", label: "Apellido" },
-        { name: "jobTitle", label: "Cargo", displayKey: "jobTitle" },
+        { name: "occupation", label: "Cargo", displayKey: "occupation" },
       ]}
       FormComponent={EmployeeForm}
       ViewComponent={EmployeeDetails}

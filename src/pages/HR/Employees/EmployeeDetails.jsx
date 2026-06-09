@@ -81,7 +81,7 @@ export default function EmployeeDetails({ data }) {
         </div>
         <div>
           <h2 className="text-xl font-bold text-txt-main leading-tight">{data.firstName} {data.lastName}</h2>
-          <p className="text-xs font-black uppercase tracking-widest text-txt-muted mt-1">{data.jobTitle?.name || "Cargo no asignado"}</p>
+          <p className="text-xs font-black uppercase tracking-widest text-txt-muted mt-1">{data.occupation?.name || "Cargo no asignado"}</p>
           <div className="flex gap-2 mt-2">
              <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-tighter ${data.status === 1 ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-txt-muted/10 text-txt-muted border border-txt-muted/20'}`}>
                {data.status === 1 ? "Activo" : "Inactivo"}
@@ -107,7 +107,7 @@ export default function EmployeeDetails({ data }) {
         {/* Datos Laborales */}
         <Section title="Datos Institucionales" icon={Briefcase}>
           <DetailItem icon={Briefcase} label="Gerencia" value={data.management?.name} />
-          <DetailItem icon={Briefcase} label="Ocupación Específica" value={data.occupation?.name} />
+          <DetailItem icon={Briefcase} label="Ocupación Específica" value={data.jobTitle?.name} />
           <DetailItem icon={Calendar} label="Fecha de Ingreso" value={data.hireDate} />
           <DetailItem icon={GraduationCap} label="Nivel Educativo" value={getEducationLabel(data.educationLevel)} />
           <DetailItem icon={Phone} label="Ext. Oficina" value={data.officePhone} />

@@ -22,6 +22,30 @@ import {
   validateOfficePhoneNumber,
 } from "../../../helpers/validationHelper";
 
+// ─── Static mapping: management name keywords → allowed job title IDs & occupation IDs ───
+// Job Title IDs: 1-4 = ASHO, 10-14 = Operativo/Campo, 20-23 = Administrativo/Soporte
+// Occupation IDs: 1=Directivo, 2=Técnico/Especialista, 3=Operativo/Campo, 4=Administrativo, 5=Supervisor
+const MANAGEMENT_FILTER_MAP = [
+  {
+    // ASHO / Prevención
+    keywords: ["asho", "ambiente", "prevenci", "protecci", "seguridad", "higiene"],
+    jobTitleIds: [1, 2, 3, 4],
+    occupationIds: [1, 2, 4, 5],
+  },
+  {
+    // Operativas / campo
+    keywords: ["distribuci", "transmisi", "generaci", "vegetaci", "mantenimiento", "liniero", "operaci"],
+    jobTitleIds: [10, 11, 12, 13, 14],
+    occupationIds: [1, 3, 5],
+  },
+  {
+    // Administrativo / soporte
+    keywords: ["bienes", "servicios", "talento", "recursos humanos", "administra", "planificaci", "sistemas", "tecnolog", "finanzas", "contabilidad", "legal", "jur"],
+    jobTitleIds: [20, 21, 22, 23],
+    occupationIds: [1, 2, 4],
+  },
+];
+
 export default function EmployeeForm({ data, onCancel, onSubmit }) {
   const [activeTab, setActiveTab] = useState("identity");
   const [loadingCatalogs, setLoadingCatalogs] = useState(true);
@@ -208,6 +232,38 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
     [formData.hireDate],
   );
 
+  // ─── Smart filtering based on selected management ───
+  const selectedManagementName = useMemo(() => {
+    if (!formData.managementId) return "";
+    const found = catalogs.managements.find(
+      (m) => String(m.id) === String(formData.managementId)
+    );
+    return found ? found.name.toLowerCase() : "";
+  }, [formData.managementId, catalogs.managements]);
+
+  const activeFilter = useMemo(() => {
+    if (!selectedManagementName) return null;
+    return (
+      MANAGEMENT_FILTER_MAP.find((rule) =>
+        rule.keywords.some((kw) => selectedManagementName.includes(kw))
+      ) || null
+    );
+  }, [selectedManagementName]);
+
+  const filteredJobTitles = useMemo(() => {
+    if (!activeFilter) return catalogs.jobTitles;
+    return catalogs.jobTitles.filter((jt) =>
+      activeFilter.jobTitleIds.includes(jt.id)
+    );
+  }, [activeFilter, catalogs.jobTitles]);
+
+  const filteredOccupations = useMemo(() => {
+    if (!activeFilter) return catalogs.occupations;
+    return catalogs.occupations.filter((o) =>
+      activeFilter.occupationIds.includes(o.id)
+    );
+  }, [activeFilter, catalogs.occupations]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -227,6 +283,11 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
 
     setFormData((prev) => {
       const updated = { ...prev, [name]: value };
+      // When management changes, reset dependent selects
+      if (name === "managementId") {
+        updated.jobTitleId = "";
+        updated.occupationId = "";
+      }
       if (errors[name]) {
         validateField(name, value);
       }
@@ -294,8 +355,8 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
       { key: "lastName", label: "Apellidos" },
       { key: "personalNumber", label: "N° de Personal" },
       { key: "managementId", label: "Gerencia" },
-      { key: "jobTitleId", label: "Cargo Institucional" },
-      { key: "occupationId", label: "Ocupación" },
+      { key: "occupationId", label: "Cargo Institucional" },
+      { key: "jobTitleId", label: "Ocupación" },
       { key: "gender", label: "Sexo" },
     ];
 
@@ -832,28 +893,7 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
             </div>
             <div className="space-y-1">
               <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">
-                Cargo Institucional
-              </label>
-              <select
-                name="jobTitleId"
-                value={formData.jobTitleId}
-                onChange={handleChange}
-                className="input-field h-12"
-                required
-              >
-                <option value="">
-                  {loadingCatalogs ? "Cargando..." : "Seleccione..."}
-                </option>
-                {catalogs.jobTitles.map((j) => (
-                  <option key={j.id} value={j.id}>
-                    {j.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">
-                Ocupación Específica
+                Cargo Institucional *
               </label>
               <select
                 name="occupationId"
@@ -861,16 +901,57 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                 onChange={handleChange}
                 className="input-field h-12"
                 required
+                disabled={!formData.managementId || loadingCatalogs}
               >
                 <option value="">
-                  {loadingCatalogs ? "Cargando..." : "Seleccione..."}
+                  {loadingCatalogs
+                    ? "Cargando..."
+                    : !formData.managementId
+                    ? "Seleccione una gerencia primero"
+                    : "Seleccione..."}
                 </option>
-                {catalogs.occupations.map((o) => (
+                {filteredOccupations.map((o) => (
                   <option key={o.id} value={o.id}>
                     {o.name}
                   </option>
                 ))}
               </select>
+              {!formData.managementId && !loadingCatalogs && (
+                <p className="text-[9px] text-corpoelec-blue/70 font-bold uppercase tracking-widest mt-1 ml-1">
+                  ↑ Seleccione la gerencia para ver los cargos disponibles
+                </p>
+              )}
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">
+                Ocupación Específica *
+              </label>
+              <select
+                name="jobTitleId"
+                value={formData.jobTitleId}
+                onChange={handleChange}
+                className="input-field h-12"
+                required
+                disabled={!formData.managementId || loadingCatalogs}
+              >
+                <option value="">
+                  {loadingCatalogs
+                    ? "Cargando..."
+                    : !formData.managementId
+                    ? "Seleccione una gerencia primero"
+                    : "Seleccione..."}
+                </option>
+                {filteredJobTitles.map((j) => (
+                  <option key={j.id} value={j.id}>
+                    {j.name}
+                  </option>
+                ))}
+              </select>
+              {!formData.managementId && !loadingCatalogs && (
+                <p className="text-[9px] text-corpoelec-blue/70 font-bold uppercase tracking-widest mt-1 ml-1">
+                  ↑ Seleccione la gerencia para ver las ocupaciones disponibles
+                </p>
+              )}
             </div>
             <div className="space-y-1">
               <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">
