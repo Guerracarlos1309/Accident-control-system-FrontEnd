@@ -20,7 +20,11 @@ export default function Login() {
     setIsSubmitting(true);
     setError(null);
 
-    const result = await login(formData.username.trim().toLowerCase(), formData.password, false);
+    const result = await login(
+      formData.username.trim().toLowerCase(),
+      formData.password,
+      false,
+    );
 
     setIsSubmitting(false);
 
@@ -46,16 +50,15 @@ export default function Login() {
           </div>
 
           {/* Brand Header */}
-          <div className="text-center lg:text-left mb-12">
-            <h1 className="text-5xl font-black text-corpoelec-blue tracking-tighter uppercase">
-              ASHO
+          <div className="text-center lg:text-left mb-12 select-none">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-corpoelec-blue tracking-tight leading-none uppercase">
+              Sistema de Control y Gestión
             </h1>
-            <div className="h-1.5 w-12 bg-corpoelec-red mt-3 rounded-full mx-auto lg:mx-0"></div>
-            <p className="text-slate-400 font-bold mt-4 uppercase tracking-[0.2em] text-[10px]">
-              Sistema de Gestión Integral
+            <p className="mt-2 text-sm font-semibold text-slate-500 uppercase tracking-wider">
+              Accidentes e Inspecciones — ASHO
             </p>
+            <div className="h-1 w-20 bg-corpoelec-red mt-4 rounded-full mx-auto lg:mx-0"></div>
           </div>
-
           {/* Minimalist Login Form */}
           <div className="space-y-8">
             {error && (
@@ -144,8 +147,13 @@ export default function Login() {
               className="w-full h-full object-contain"
             />
           </div>
-          <h2 className="text-4xl font-black text-white uppercase tracking-tighter leading-none">
-            CONTROL <br /> & <span className="text-blue-200">PREVENCIÓN</span>
+          <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tight leading-none flex flex-col gap-1">
+            <span className="text-3xl md:text-xl font-bold text-slate-400 tracking-widest">
+              Gerencia
+            </span>
+            <span className="text-white">
+              ASHO <span className="font-black text-white">— Táchira</span>
+            </span>
           </h2>
           <div className="w-12 h-1 bg-corpoelec-red mx-auto mt-6 rounded-full opacity-60"></div>
         </div>
