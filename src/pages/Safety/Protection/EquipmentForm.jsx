@@ -122,7 +122,7 @@ export default function EquipmentForm({ onCancel, onSubmit, initialData }) {
         <div className="bg-corpoelec-blue/5 border border-corpoelec-blue/20 p-4 rounded-2xl flex flex-col gap-1.5 shrink-0">
           <div className="flex items-center gap-2 text-corpoelec-blue">
             <Layers size={14} />
-            <span className="text-[10px] font-black uppercase tracking-wider">Detalle del Renglón a Configurar</span>
+            <span className="text-[10px] font-black uppercase tracking-wider">Detalle del Equipo a Configurar</span>
           </div>
           <span className="text-xs font-black uppercase text-txt-main">
             {categoryId?.toString().padStart(2, "0")} - {officialName}
@@ -266,7 +266,7 @@ export default function EquipmentForm({ onCancel, onSubmit, initialData }) {
           type="submit" 
           className="px-8 py-2.5 rounded-xl bg-corpoelec-blue text-white text-[11px] font-black uppercase shadow-lg shadow-corpoelec-blue/15 hover:bg-corpoelec-blue/90 transition-all cursor-pointer"
         >
-          Guardar Especificación
+          Guardar Equipo
         </button>
       </div>
     </form>

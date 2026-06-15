@@ -218,11 +218,74 @@ export default function VehicleForm({
     );
   };
 
+  const isBinaryAccessory = (name) => {
+    const lower = (name || "").toLowerCase();
+    return (
+      lower.includes("pito") ||
+      lower.includes("corneta") ||
+      lower.includes("documento") ||
+      lower.includes("herramienta") ||
+      lower.includes("sistema elevacion") ||
+      lower.includes("motor sist") ||
+      lower.includes("tapa") ||
+      lower.includes("varilla") ||
+      lower.includes("otros") ||
+      lower.includes("estabilizador")
+    );
+  };
+
+  const getLimitForAccessory = (name) => {
+    const lower = (name || "").toLowerCase();
+    if (lower.includes("extintor")) return 1;
+    if (lower.includes("caucho repuesto") || lower.includes("caucho de repuesto")) return 1;
+    if (lower.includes("triángulo") || lower.includes("triangulo")) return 2;
+    if (lower.includes("cinturón") || lower.includes("cinturon")) return 6;
+    if (lower.includes("asiento")) return 6;
+    if (lower.includes("puerta")) return 4;
+    if (lower.includes("parabrisa")) return 2;
+    if (lower.includes("vidrios laterales") || lower.includes("vidrio lateral")) return 6;
+    if (lower.includes("vidrio trasero")) return 1;
+    if (lower.includes("limpiaparabrisa")) return 2;
+    if (lower.includes("tuerca")) return 24;
+    if (lower.includes("cauchos")) return 6;
+    if (lower.includes("luces delanteras") || lower.includes("luz delantera")) return 2;
+    if (lower.includes("cruce")) return 2;
+    if (lower.includes("emergencia")) return 4;
+    if (lower.includes("retroceso")) return 2;
+    if (lower.includes("freno")) return 3;
+    if (lower.includes("interna")) return 2;
+    if (lower.includes("gato")) return 1;
+    if (lower.includes("llave")) return 1;
+    if (lower.includes("espejo")) return 1;
+    return 10;
+  };
+
   const updateAccessoryValue = (id, field, value) => {
     setAccessories((prev) =>
-      prev.map((acc) =>
-        acc.accessoryId === id ? { ...acc, [field]: value } : acc,
-      ),
+      prev.map((acc) => {
+        if (acc.accessoryId === id) {
+          const limit = getLimitForAccessory(acc.name);
+          const cleanValue = Math.max(0, value);
+          let newBuenos = field === "buenos" ? cleanValue : acc.buenos;
+          let newMalos = field === "malos" ? cleanValue : acc.malos;
+
+          if (newBuenos + newMalos > limit) {
+            if (field === "buenos") {
+              newMalos = Math.max(0, limit - newBuenos);
+              if (newBuenos > limit) {
+                newBuenos = limit;
+              }
+            } else if (field === "malos") {
+              newBuenos = Math.max(0, limit - newMalos);
+              if (newMalos > limit) {
+                newMalos = limit;
+              }
+            }
+          }
+          return { ...acc, buenos: newBuenos, malos: newMalos };
+        }
+        return acc;
+      }),
     );
   };
 
@@ -516,7 +579,9 @@ export default function VehicleForm({
                     <tr className="bg-bg-main/5 text-[10px] font-black uppercase text-txt-muted tracking-[0.2em] border-b border-border-main">
                       <th className="px-6 py-4 w-12 text-center">Nro</th>
                       <th className="px-6 py-4">Accesorio / Equipo</th>
-                      <th className="px-6 py-4 text-center w-36">¿Existe?</th>
+                      <th className="px-6 py-4 text-center w-36">
+                        Sirve/Existe
+                      </th>
                       <th className="px-4 py-4 text-center w-24 bg-emerald-500/5 text-emerald-500">
                         Sirve
                       </th>
@@ -570,54 +635,68 @@ export default function VehicleForm({
 
                         {/* Sirve (Buenos) */}
                         <td
-                          className={`px-4 py-3 bg-emerald-500/5 transition-all duration-300 ${!acc.exists ? "opacity-20" : ""}`}
+                          className={`px-4 py-3 bg-emerald-500/5 text-center transition-all duration-300 ${!acc.exists ? "opacity-20" : ""}`}
                         >
-                          <input
-                            type="number"
-                            min="0"
-                            disabled={!acc.exists}
-                            value={
-                              !acc.exists
-                                ? "0"
-                                : acc.buenos === 0
-                                  ? ""
-                                  : acc.buenos
-                            }
-                            onChange={(e) =>
-                              updateAccessoryValue(
-                                acc.accessoryId,
-                                "buenos",
-                                parseInt(e.target.value) || 0,
-                              )
-                            }
-                            className="w-full rounded-xl px-2.5 py-2 text-center text-xs font-black bg-bg-surface border border-emerald-500/30 text-emerald-500 focus:border-emerald-500 outline-none shadow-inner disabled:cursor-not-allowed"
-                          />
+                          {isBinaryAccessory(acc.name) ? (
+                            <span className="text-[10px] font-black text-emerald-500 uppercase tracking-wider">
+                              {acc.exists ? "✓ SÍ" : "—"}
+                            </span>
+                          ) : (
+                            <input
+                              type="number"
+                              min="0"
+                              max={getLimitForAccessory(acc.name)}
+                              disabled={!acc.exists}
+                              value={
+                                !acc.exists
+                                  ? "0"
+                                  : acc.buenos === 0
+                                    ? ""
+                                    : acc.buenos
+                              }
+                              onChange={(e) =>
+                                updateAccessoryValue(
+                                  acc.accessoryId,
+                                  "buenos",
+                                  parseInt(e.target.value) || 0,
+                                )
+                              }
+                              className="w-full rounded-xl px-2.5 py-2 text-center text-xs font-black bg-bg-surface border border-emerald-500/30 text-emerald-500 focus:border-emerald-500 outline-none shadow-inner disabled:cursor-not-allowed"
+                            />
+                          )}
                         </td>
 
                         {/* No Sirve (Fallas) */}
                         <td
-                          className={`px-4 py-3 bg-corpoelec-red/5 transition-all duration-300 ${!acc.exists ? "opacity-20" : ""}`}
+                          className={`px-4 py-3 bg-corpoelec-red/5 text-center transition-all duration-300 ${!acc.exists ? "opacity-20" : ""}`}
                         >
-                          <input
-                            type="number"
-                            min="0"
-                            disabled={!acc.exists}
-                            value={
-                              !acc.exists
-                                ? "0"
-                                : acc.malos === 0
-                                  ? ""
-                                  : acc.malos
-                            }
-                            onChange={(e) =>
-                              updateAccessoryValue(
-                                acc.accessoryId,
-                                "malos",
-                                parseInt(e.target.value) || 0,
-                              )
-                            }
-                            className="w-full rounded-xl px-2.5 py-2 text-center text-xs font-black bg-bg-surface border border-corpoelec-red/30 text-corpoelec-red focus:border-corpoelec-red outline-none shadow-inner disabled:cursor-not-allowed"
-                          />
+                          {isBinaryAccessory(acc.name) ? (
+                            <span className="text-[10px] font-black text-corpoelec-red/50 uppercase tracking-wider">
+                              {!acc.exists ? "✗ NO/FALLA" : "—"}
+                            </span>
+                          ) : (
+                            <input
+                              type="number"
+                              min="0"
+                              max={getLimitForAccessory(acc.name)}
+                              disabled={!acc.exists}
+                              value={
+                                !acc.exists
+                                  ? "0"
+                                  : acc.malos === 0
+                                    ? ""
+                                    : acc.malos
+                              }
+                              onChange={(e) =>
+                                updateAccessoryValue(
+                                  acc.accessoryId,
+                                  "malos",
+                                  parseInt(e.target.value) || 0,
+                                )
+                              }
+                              className="w-full rounded-xl px-2.5 py-2 text-center text-xs font-black bg-bg-surface border border-corpoelec-red/30 text-corpoelec-red focus:border-corpoelec-red outline-none shadow-inner disabled:cursor-not-allowed"
+                            />
+                          )}
                         </td>
 
                         {/* Cantidad Total */}

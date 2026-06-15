@@ -79,7 +79,7 @@ export default function ProtectionInventory() {
       const res = await api[method.toLowerCase()](url, { body: payload });
       if (res && !res.err) {
         showNotification(
-          "Especificación de equipo guardada con éxito",
+          "Equipo guardado con éxito",
           "success",
         );
         setIsModalOpen(false);
@@ -226,7 +226,7 @@ export default function ProtectionInventory() {
       {/* KPI METRIC CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-black tracking-tighter">
         <StatCard
-          label="Total Renglones Oficiales"
+          label="Total Ítems Oficiales"
           value={totalItemsCount}
           icon={Boxes}
           color="text-corpoelec-blue bg-corpoelec-blue/10 border-corpoelec-blue/20"
@@ -247,7 +247,7 @@ export default function ProtectionInventory() {
           subtitle="Protección Colectiva (24-38)"
         />
         <StatCard
-          label="Renglones Configurados"
+          label="Ítems Configurados"
           value={configuredItems}
           icon={Tag}
           color="text-amber-500 bg-amber-500/10 border-amber-500/20"
@@ -305,10 +305,9 @@ export default function ProtectionInventory() {
             <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
                 <tr className="bg-bg-main/5 text-[10px] font-black uppercase text-txt-muted tracking-[0.2em] border-b border-border-main">
-                  <th className="px-8 py-5 w-16 text-center">Renglón</th>
+                  <th className="px-8 py-5 w-16 text-center">Ítem</th>
                   <th className="px-8 py-5">Nombre Oficial del Material</th>
                   <th className="px-8 py-5">Clasificación Corporal</th>
-                  <th className="px-8 py-5">Especificación Técnica / Serial</th>
                   <th className="px-8 py-5 text-center w-36">Tipo</th>
                   <th className="px-8 py-5 text-center w-36">Unidad</th>
                   <th className="px-8 py-5 text-right w-24">Acciones</th>
@@ -318,7 +317,7 @@ export default function ProtectionInventory() {
                 {filteredEquipment.length === 0 ? (
                   <tr>
                     <td
-                      colSpan="7"
+                      colSpan="6"
                       className="text-center py-16 text-txt-muted"
                     >
                       <ShieldAlert
@@ -345,7 +344,7 @@ export default function ProtectionInventory() {
                         key={item.categoryId}
                         className="hover:bg-bg-main/5 transition-colors group"
                       >
-                        {/* Category ID as Renglón */}
+                        {/* Category ID as Ítem */}
                         <td className="px-8 py-5 text-center text-xs font-mono font-bold text-txt-muted">
                           {item.categoryId.toString().padStart(2, "0")}
                         </td>
@@ -364,14 +363,7 @@ export default function ProtectionInventory() {
                           {renderClassificationBadge(classification)}
                         </td>
 
-                        {/* Description / Brand info */}
-                        <td className="px-8 py-5">
-                          <span
-                            className={`text-xs font-semibold uppercase ${isConfigured ? "text-txt-sub font-semibold" : "text-txt-muted/40 font-normal italic"}`}
-                          >
-                            {cleanSpecs}
-                          </span>
-                        </td>
+                        {/* Description / Brand info column removed to simplify dashboard */}
 
                         {/* Type Badge */}
                         <td className="px-8 py-5 text-center">
@@ -400,12 +392,12 @@ export default function ProtectionInventory() {
                             className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${
                               isConfigured
                                 ? "border-border-main text-txt-muted hover:text-corpoelec-blue hover:border-corpoelec-blue/20 hover:bg-corpoelec-blue/5"
-                                : "border-amber-500/30 text-amber-500 hover:text-amber-600 hover:border-amber-500/50 hover:bg-amber-500/5 animate-pulse"
+                                : "border-amber-500/30 text-amber-500 hover:text-amber-600 hover:border-amber-500/50 hover:bg-amber-500/5"
                             }`}
                             title={
                               isConfigured
-                                ? "Editar especificación"
-                                : "Configurar especificación técnica"
+                                ? "Editar"
+                                : "Configurar"
                             }
                           >
                             <Edit size={14} />
@@ -427,8 +419,8 @@ export default function ProtectionInventory() {
         onClose={() => setIsModalOpen(false)}
         title={
           editingEquipment?.id !== null
-            ? "Editar Especificación de Equipo"
-            : "Configurar Especificación de Equipo"
+            ? "Editar Equipo"
+            : "Configurar Equipo"
         }
         maxWidth="max-w-2xl"
       >
