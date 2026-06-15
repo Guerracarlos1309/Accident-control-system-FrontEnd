@@ -29,7 +29,7 @@ export default function VehicleDetails({ data }) {
       <div className="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 glass-panel rounded-3xl border border-corpoelec-blue/20 bg-gradient-to-br from-corpoelec-blue/5 to-transparent">
         <div className="h-24 w-24 rounded-2xl bg-corpoelec-blue/10 border border-corpoelec-blue/20 flex items-center justify-center text-corpoelec-blue overflow-hidden shrink-0">
           {data.images && data.images.length > 0 ? (
-            <img src={`http://localhost:3000${data.images[0].imageUrl}`} alt="Vehículo Principal" className="w-full h-full object-cover" />
+            <img src={`${window.BACKEND_URL || "http://localhost:3000"}${data.images[0].imageUrl}`} alt="Vehículo Principal" className="w-full h-full object-cover" />
           ) : (
             <Car size={48} />
           )}
@@ -73,7 +73,7 @@ export default function VehicleDetails({ data }) {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 p-4 rounded-3xl bg-bg-main/5 border border-border-main/30">
             {data.images.map((img) => (
               <div key={img.id} className="relative aspect-square rounded-2xl overflow-hidden border border-border-main hover:border-corpoelec-blue transition-colors group cursor-pointer">
-                <img src={`http://localhost:3000${img.imageUrl}`} alt="Vehículo Detalle" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <img src={`${window.BACKEND_URL || "http://localhost:3000"}${img.imageUrl}`} alt="Vehículo Detalle" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
               </div>
             ))}
           </div>

@@ -422,7 +422,7 @@ export default function VehicleRegistryForm({
                   className="relative aspect-square rounded-xl overflow-hidden group border border-border-main"
                 >
                   <img
-                    src={`http://localhost:3000${img.imageUrl}`}
+                    src={`${window.BACKEND_URL || "http://localhost:3000"}${img.imageUrl}`}
                     alt="Vehículo"
                     className="w-full h-full object-cover"
                   />

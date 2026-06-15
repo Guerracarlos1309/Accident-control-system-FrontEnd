@@ -1,11 +1,13 @@
 // Detecta si la app corre en modo desarrollo local (localhost) o en producción (Tauri)
-const isDevelopment =
-  window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1";
+const isDevelopment = import.meta.env.DEV;
 
-const BASE_URL = isDevelopment
-  ? "http://localhost:3000/api"
-  : "http://10.68.19.200:3000/api";
+export const BACKEND_URL = isDevelopment
+  ? "http://localhost:3000"
+  : "http://10.68.19.200:3000";
+
+window.BACKEND_URL = BACKEND_URL;
+
+const BASE_URL = `${BACKEND_URL}/api`;
 
 export const helpFetch = () => {
   const customFetch = (endpoint, options) => {

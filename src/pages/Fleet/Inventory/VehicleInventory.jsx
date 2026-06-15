@@ -148,7 +148,7 @@ export default function VehicleInventory() {
                           {vehicle.images && vehicle.images.length > 0 ? (
                             <>
                               <img
-                                src={`http://localhost:3000${vehicle.images[0].imageUrl}`}
+                                src={`${window.BACKEND_URL || "http://localhost:3000"}${vehicle.images[0].imageUrl}`}
                                 alt="Vehículo"
                                 className="w-full h-full object-cover"
                               />

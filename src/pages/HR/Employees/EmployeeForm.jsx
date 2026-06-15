@@ -167,7 +167,7 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
           });
 
           if (data.imageUrl) {
-            setImagePreview(`http://localhost:3000${data.imageUrl}`);
+            setImagePreview(`${window.BACKEND_URL || "http://localhost:3000"}${data.imageUrl}`);
           }
 
           // Sync ID Card prefix and number

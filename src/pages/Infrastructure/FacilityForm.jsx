@@ -457,7 +457,7 @@ export default function FacilityForm({
                   className="relative aspect-square rounded-2xl overflow-hidden border border-border-main bg-bg-main group"
                 >
                   <img
-                    src={`http://localhost:3000${img.imageUrl}`}
+                    src={`${window.BACKEND_URL || "http://localhost:3000"}${img.imageUrl}`}
                     alt="Facility"
                     className="w-full h-full object-cover"
                   />

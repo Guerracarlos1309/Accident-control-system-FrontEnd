@@ -188,7 +188,7 @@ export default function FacilityManager() {
                     <div className="w-16 h-16 rounded-2xl bg-bg-main border border-border-main flex items-center justify-center text-corpoelec-blue shadow-inner group-hover:scale-110 transition-transform overflow-hidden">
                       {facility.images && facility.images.length > 0 ? (
                         <img
-                          src={`http://localhost:3000${facility.images[0].imageUrl}`}
+                          src={`${window.BACKEND_URL || "http://localhost:3000"}${facility.images[0].imageUrl}`}
                           alt={facility.name}
                           className="w-full h-full object-cover"
                         />
@@ -323,7 +323,7 @@ export default function FacilityManager() {
                           <div className="w-12 h-12 rounded-xl bg-bg-main border border-border-main flex items-center justify-center text-corpoelec-blue shrink-0 overflow-hidden">
                             {facility.images && facility.images.length > 0 ? (
                               <img
-                                src={`http://localhost:3000${facility.images[0].imageUrl}`}
+                                src={`${window.BACKEND_URL || "http://localhost:3000"}${facility.images[0].imageUrl}`}
                                 alt=""
                                 className="w-full h-full object-cover"
                               />

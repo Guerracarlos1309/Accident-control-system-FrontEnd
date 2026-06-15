@@ -42,7 +42,7 @@ export default function FacilityView({ facility }) {
             {facility.images && facility.images.length > 0 ? (
               <>
                 <img
-                  src={`http://localhost:3000${facility.images[currentImageIndex].imageUrl}`}
+                  src={`${window.BACKEND_URL || "http://localhost:3000"}${facility.images[currentImageIndex].imageUrl}`}
                   alt={facility.name}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
@@ -99,7 +99,7 @@ export default function FacilityView({ facility }) {
                   className={`relative w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 border-2 transition-all ${idx === currentImageIndex ? "border-corpoelec-blue scale-95 shadow-lg" : "border-transparent opacity-60 hover:opacity-100"}`}
                 >
                   <img
-                    src={`http://localhost:3000${img.imageUrl}`}
+                    src={`${window.BACKEND_URL || "http://localhost:3000"}${img.imageUrl}`}
                     alt=""
                     className="w-full h-full object-cover"
                   />
