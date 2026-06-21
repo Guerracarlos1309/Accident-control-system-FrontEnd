@@ -7,6 +7,7 @@ import {
   Trash2,
   Loader2,
   RefreshCw,
+  Pencil,
 } from "lucide-react";
 import Modal from "../../../components/Modal";
 import ConfirmModal from "../../../components/ConfirmModal";
@@ -91,7 +92,7 @@ export default function VehicleInventory() {
           >
             <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
           </button>
-          {user?.role !== 'Analista' && (
+          {user?.role !== "Analista" && (
             <button
               onClick={() => {
                 setSelectedVehicle(null);
@@ -188,7 +189,9 @@ export default function VehicleInventory() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className={`flex items-center justify-end gap-2 ${user?.role === 'Analista' ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'}`}>
+                      <div
+                        className={`flex items-center justify-end gap-2 ${user?.role === "Analista" ? "" : "opacity-0 group-hover:opacity-100 transition-opacity"}`}
+                      >
                         <button
                           onClick={() => {
                             setSelectedVehicle(vehicle);
@@ -198,7 +201,7 @@ export default function VehicleInventory() {
                         >
                           Ver Detalles
                         </button>
-                        {user?.role !== 'Analista' && (
+                        {user?.role !== "Analista" && (
                           <>
                             <button
                               onClick={() => {
@@ -208,7 +211,7 @@ export default function VehicleInventory() {
                               className="p-1.5 text-txt-muted hover:text-corpoelec-blue hover:bg-bg-main/10 rounded-lg transition-all"
                               title="Editar vehículo"
                             >
-                              <Settings size={16} />
+                              <Pencil size={16} />
                             </button>
                             <button
                               onClick={() => {

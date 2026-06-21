@@ -19,6 +19,15 @@ import { helpFetch } from "../../../../helpers/helpFetch";
 import { useNotification } from "../../../../context/NotificationContext";
 import { useAuth } from "../../../../context/AuthContext";
 
+const parseLocalDate = (dateStr) => {
+  if (!dateStr) return null;
+  const cleanStr = typeof dateStr === "string" ? dateStr.split("T")[0] : "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(cleanStr)) {
+    return new Date(cleanStr + "T00:00:00");
+  }
+  return new Date(dateStr);
+};
+
 export default function ExtinguisherManager() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -364,7 +373,7 @@ export default function ExtinguisherManager() {
                       <div className="flex flex-col">
                         <span className="text-sm font-bold text-txt-main flex items-center gap-2">
                           <Calendar size={14} className="text-corpoelec-blue" />
-                          {new Date(insp.date).toLocaleDateString()}
+                          {parseLocalDate(insp.date)?.toLocaleDateString()}
                         </span>
                         <span className="text-[10px] text-txt-muted font-mono mt-0.5 uppercase tracking-tighter">
                           ID: #{insp.id.toString().padStart(6, "0")}

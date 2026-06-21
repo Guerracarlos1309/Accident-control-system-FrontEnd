@@ -15,6 +15,25 @@ import {
 import { helpFetch } from "../helpers/helpFetch";
 import { useNotification } from "../context/NotificationContext";
 
+const formatLocalDate = (dateStr) => {
+  if (!dateStr) return "-";
+  const cleanStr = typeof dateStr === "string" ? dateStr.split("T")[0] : "";
+  const parts = cleanStr.split("-");
+  if (parts.length === 3) {
+    const [year, month, day] = parts;
+    return `${parseInt(day, 10)}/${parseInt(month, 10)}/${year}`;
+  }
+  return new Date(dateStr).toLocaleDateString();
+};
+const parseLocalDate = (dateStr) => {
+  if (!dateStr) return null;
+  const cleanStr = typeof dateStr === "string" ? dateStr.split("T")[0] : "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(cleanStr)) {
+    return new Date(cleanStr + "T00:00:00");
+  }
+  return new Date(dateStr);
+};
+
 export default function ReportCenter() {
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState({
@@ -177,14 +196,14 @@ export default function ReportCenter() {
           const accCount = accidentsList.filter((acc) => {
             const dateStr = acc.date || acc.accidentDate;
             if (!dateStr) return false;
-            const d = new Date(dateStr);
-            return d.getFullYear() === currentYear && d.getMonth() === monthIdx;
+            const d = parseLocalDate(dateStr);
+            return d && d.getFullYear() === currentYear && d.getMonth() === monthIdx;
           }).length;
 
           const inspCount = inspectionsList.filter((insp) => {
             if (!insp.date) return false;
-            const d = new Date(insp.date);
-            return d.getFullYear() === currentYear && d.getMonth() === monthIdx;
+            const d = parseLocalDate(insp.date);
+            return d && d.getFullYear() === currentYear && d.getMonth() === monthIdx;
           }).length;
 
           return {
@@ -1210,11 +1229,7 @@ export default function ReportCenter() {
                                 `ACC-${String(acc.id).padStart(4, "0")}`}
                             </td>
                             <td className="px-5 py-3.5 font-semibold">
-                              {acc.accidentDate
-                                ? new Date(
-                                    acc.accidentDate,
-                                  ).toLocaleDateString()
-                                : "-"}
+                              {formatLocalDate(acc.accidentDate)}
                             </td>
                             <td className="px-5 py-3.5 font-bold text-txt-main uppercase">
                               {acc.type?.name || "General"}
@@ -1260,9 +1275,7 @@ export default function ReportCenter() {
                                   `INSP-${String(insp.id).padStart(4, "0")}`}
                               </td>
                               <td className="px-5 py-3.5 font-semibold">
-                                {insp.date
-                                  ? new Date(insp.date).toLocaleDateString()
-                                  : "-"}
+                                {formatLocalDate(insp.date)}
                               </td>
                               <td className="px-5 py-3.5 font-bold text-txt-main uppercase">
                                 {insp.facility?.name || "-"}

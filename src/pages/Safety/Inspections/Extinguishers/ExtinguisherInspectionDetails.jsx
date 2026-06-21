@@ -18,6 +18,15 @@ import {
 import { helpFetch } from "../../../../helpers/helpFetch";
 import { useNotification } from "../../../../context/NotificationContext";
 
+const parseLocalDate = (dateStr) => {
+  if (!dateStr) return null;
+  const cleanStr = typeof dateStr === "string" ? dateStr.split("T")[0] : "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(cleanStr)) {
+    return new Date(cleanStr + "T00:00:00");
+  }
+  return new Date(dateStr);
+};
+
 export default function ExtinguisherInspectionDetails({ inspectionId }) {
   const [inspection, setInspection] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -244,7 +253,7 @@ export default function ExtinguisherInspectionDetails({ inspectionId }) {
            </div>
            <div>
               <span className="text-[9px] font-bold text-txt-muted uppercase tracking-tighter">Fecha de Auditoría</span>
-              <p className="text-sm font-bold text-txt-main">{new Date(inspection.date).toLocaleDateString(undefined, { dateStyle: 'long' })}</p>
+              <p className="text-sm font-bold text-txt-main">{parseLocalDate(inspection.date)?.toLocaleDateString(undefined, { dateStyle: 'long' })}</p>
            </div>
         </div>
 
@@ -372,13 +381,13 @@ export default function ExtinguisherInspectionDetails({ inspectionId }) {
                       <div>
                         <span className="text-[9px] font-bold text-txt-muted uppercase block leading-none mb-1">Fecha Recarga</span>
                         <span className="font-semibold text-txt-sub">
-                          {detail.rechargeDate ? new Date(detail.rechargeDate).toLocaleDateString() : "N/R"}
+                          {detail.rechargeDate ? parseLocalDate(detail.rechargeDate)?.toLocaleDateString() : "N/R"}
                         </span>
                       </div>
                       <div>
                         <span className="text-[9px] font-bold text-txt-muted uppercase block leading-none mb-1">Vencimiento</span>
                         <span className="font-semibold text-txt-sub">
-                          {detail.expirationDate ? new Date(detail.expirationDate).toLocaleDateString() : "N/R"}
+                          {detail.expirationDate ? parseLocalDate(detail.expirationDate)?.toLocaleDateString() : "N/R"}
                         </span>
                       </div>
                     </div>

@@ -264,6 +264,12 @@ export default function VehicleForm({
     setAccessories((prev) =>
       prev.map((acc) => {
         if (acc.accessoryId === id) {
+          // Handle text fields directly
+          if (field === "observation") {
+            return { ...acc, observation: value };
+          }
+
+          // Handle numeric fields with limit logic
           const limit = getLimitForAccessory(acc.name);
           const cleanValue = Math.max(0, value);
           let newBuenos = field === "buenos" ? cleanValue : acc.buenos;
@@ -272,14 +278,10 @@ export default function VehicleForm({
           if (newBuenos + newMalos > limit) {
             if (field === "buenos") {
               newMalos = Math.max(0, limit - newBuenos);
-              if (newBuenos > limit) {
-                newBuenos = limit;
-              }
+              if (newBuenos > limit) newBuenos = limit;
             } else if (field === "malos") {
               newBuenos = Math.max(0, limit - newMalos);
-              if (newMalos > limit) {
-                newMalos = limit;
-              }
+              if (newMalos > limit) newMalos = limit;
             }
           }
           return { ...acc, buenos: newBuenos, malos: newMalos };

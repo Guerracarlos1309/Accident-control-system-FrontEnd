@@ -25,7 +25,7 @@ import {
   CONTACT_EXPOSURE_HIERARCHY,
   HAZARD_HIERARCHY,
   AFFECTATION_SUBJECT_HIERARCHY,
-} from "./AccidentForm";
+} from "./accidentHierarchies";
 
 export default function AccidentDetails({ accident }) {
   const [showEmployeeCard, setShowEmployeeCard] = useState(null);

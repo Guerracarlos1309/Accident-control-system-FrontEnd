@@ -17,6 +17,15 @@ import {
 import { helpFetch } from "../../../../helpers/helpFetch";
 import { useNotification } from "../../../../context/NotificationContext";
 
+const parseLocalDate = (dateStr) => {
+  if (!dateStr) return null;
+  const cleanStr = typeof dateStr === "string" ? dateStr.split("T")[0] : "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(cleanStr)) {
+    return new Date(cleanStr + "T00:00:00");
+  }
+  return new Date(dateStr);
+};
+
 export default function ProtectionInspectionDetails({ inspectionId }) {
   const [inspection, setInspection] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -122,7 +131,7 @@ export default function ProtectionInspectionDetails({ inspectionId }) {
            </div>
            <div>
               <span className="text-[9px] font-bold text-txt-muted uppercase tracking-tighter">Fecha de Auditoría</span>
-              <p className="text-sm font-black text-txt-main">{new Date(inspection.date).toLocaleDateString(undefined, { dateStyle: 'long' })}</p>
+              <p className="text-sm font-black text-txt-main">{parseLocalDate(inspection.date)?.toLocaleDateString(undefined, { dateStyle: 'long' })}</p>
            </div>
         </div>
 

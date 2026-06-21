@@ -10,7 +10,7 @@ import Login from "./pages/Login";
 
 // Context Providers
 import { NotificationProvider } from "./context/NotificationContext";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider } from "./context/AuthProvider";
 import { ThemeProvider } from "./context/ThemeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 

@@ -103,7 +103,49 @@ export const helpFetch = () => {
         if (!res.ok) throw new Error("Error al descargar archivo");
         return res.blob();
       })
-      .then((blob) => {
+      .then(async (blob) => {
+        // Detectar si está corriendo dentro de Tauri
+        const isTauri = typeof window !== "undefined" && !!window.__TAURI__;
+
+        if (isTauri) {
+          try {
+            // Tauri v1 o Tauri v2 con API global habilitada
+            const tauriDialog = window.__TAURI__.dialog;
+            const tauriFs = window.__TAURI__.fs;
+
+            if (tauriDialog && tauriFs) {
+              const filters = [];
+              const ext = filename.split(".").pop();
+              if (ext) {
+                filters.push({
+                  name: ext.toUpperCase(),
+                  extensions: [ext],
+                });
+              }
+
+              // Mostrar el diálogo de guardado nativo
+              const filePath = await tauriDialog.save({
+                defaultPath: filename,
+                filters: filters,
+              });
+
+              if (filePath) {
+                // Convertir Blob a Uint8Array para Tauri
+                const arrayBuffer = await blob.arrayBuffer();
+                const binaryData = new Uint8Array(arrayBuffer);
+
+                // Guardar el archivo de forma binaria
+                await tauriFs.writeBinaryFile(filePath, binaryData);
+              }
+              return;
+            }
+          } catch (tauriError) {
+            console.error("Error al guardar archivo en Tauri:", tauriError);
+            // Intentar fallback al navegador
+          }
+        }
+
+        // Comportamiento estándar del navegador web (fuera de Tauri)
         const fileUrl = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = fileUrl;

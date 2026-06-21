@@ -22,6 +22,15 @@ import { useNavigate } from "react-router-dom";
 import { helpFetch } from "../helpers/helpFetch";
 import { useNotification } from "../context/NotificationContext";
 
+const parseLocalDate = (dateStr) => {
+  if (!dateStr) return null;
+  const cleanStr = typeof dateStr === "string" ? dateStr.split("T")[0] : "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(cleanStr)) {
+    return new Date(cleanStr + "T00:00:00");
+  }
+  return new Date(dateStr);
+};
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const api = helpFetch();
@@ -113,8 +122,9 @@ export default function Dashboard() {
           const count = accidentsList.filter((acc) => {
             if (!acc.date && !acc.accidentDate) return false;
             const dateStr = acc.date || acc.accidentDate;
-            const accDate = new Date(dateStr);
+            const accDate = parseLocalDate(dateStr);
             return (
+              accDate &&
               accDate.getMonth() === d.getMonth() &&
               accDate.getFullYear() === d.getFullYear()
             );
@@ -184,13 +194,13 @@ export default function Dashboard() {
             title: `Accidente: ${name}`,
             ref: acc.facility?.name || "INSTALACIÓN",
             time: dateVal
-              ? new Date(dateVal).toLocaleDateString("es-VE", {
+              ? parseLocalDate(dateVal).toLocaleDateString("es-VE", {
                   day: "2-digit",
                   month: "short",
                 })
               : "RECIENTE",
             path: "/accidents/register",
-            rawDate: dateVal ? new Date(dateVal) : new Date(0),
+            rawDate: dateVal ? parseLocalDate(dateVal) : new Date(0),
           });
         });
 
@@ -215,13 +225,13 @@ export default function Dashboard() {
             title: `${typeLabel} #${ins.inspectionNumber || ins.id}`,
             ref: ins.facility?.name || "SEDE",
             time: ins.date
-              ? new Date(ins.date).toLocaleDateString("es-VE", {
+              ? parseLocalDate(ins.date).toLocaleDateString("es-VE", {
                   day: "2-digit",
                   month: "short",
                 })
               : "RECIENTE",
             path,
-            rawDate: ins.date ? new Date(ins.date) : new Date(0),
+            rawDate: ins.date ? parseLocalDate(ins.date) : new Date(0),
           });
         });
 

@@ -15,6 +15,8 @@ import {
   SlidersHorizontal,
   Archive,
   ArchiveRestore,
+  Edit2,
+  Eye,
 } from "lucide-react";
 import Modal from "../../../components/Modal";
 import AccidentForm from "./AccidentForm";
@@ -663,7 +665,7 @@ export default function AccidentsManager() {
                             className="p-2 text-txt-muted hover:text-corpoelec-blue transition-all"
                             title="Editar"
                           >
-                            <FileText size={18} />
+                            <Edit2 size={18} />
                           </button>
                         )}
                         <button
@@ -671,7 +673,7 @@ export default function AccidentsManager() {
                           className="p-2 text-txt-muted hover:text-corpoelec-blue transition-all"
                           title="Detalles"
                         >
-                          <Shield size={18} />
+                          <Eye size={18} />
                         </button>
                       </td>
                     </tr>
