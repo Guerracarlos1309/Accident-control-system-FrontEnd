@@ -1,16 +1,28 @@
 // Detecta si la app corre en modo desarrollo local (localhost) o en producción (Tauri)
 const isDevelopment = import.meta.env.DEV;
 
-export const BACKEND_URL = isDevelopment
-  ? "http://localhost:3000"
-  : "http://10.68.19.200:3000";
+let BASE_URL = "http://localhost:3000/api";
+let configLoaded = false;
 
-window.BACKEND_URL = BACKEND_URL;
-
-const BASE_URL = `${BACKEND_URL}/api`;
+export const loadConfig = async () => {
+  if (configLoaded) return;
+  try {
+    const response = await fetch("/config.json");
+    const config = await response.json();
+    BASE_URL = `${config.API_URL}/api`;
+    configLoaded = true;
+    console.log("configuracion cargada", BASE_URL);
+  } catch (error) {
+    console.error(
+      "No se pudo cargar config.json, se usará localhost por defecto",
+      error,
+    );
+  }
+};
 
 export const helpFetch = () => {
-  const customFetch = (endpoint, options) => {
+  const customFetch = async (endpoint, options) => {
+    await loadConfig();
     const defaultHeader = {
       accept: "application/json",
       "Content-Type": "application/json",
@@ -85,7 +97,8 @@ export const helpFetch = () => {
     return customFetch(url, options);
   };
 
-  const download = (endpoint, filename) => {
+  const download = async (endpoint, filename) => {
+    await loadConfig();
     const defaultHeader = {};
     const token = sessionStorage.getItem("token");
     if (token) {
