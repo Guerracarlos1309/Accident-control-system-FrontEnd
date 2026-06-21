@@ -157,6 +157,7 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
 
         return {
           ...sanitizedData,
+          processStatusId: 2, // Se fuerza a "En Proceso" al abrir el formulario (edición o creación)
           // Asegurar mapeo de campos específicos desde el backend (compatibilidad snake_case)
           accidentControlNumber:
             initialData.accidentControlNumber ||
@@ -1139,8 +1140,19 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
       return;
     }
 
+    // Determine the status automatically based on documents checklist
+    let calculatedStatusId = 2; // Default: En Proceso (if catalogs.fileDocuments is empty or not loaded)
+    if (catalogs.fileDocuments && catalogs.fileDocuments.length > 0) {
+      if (formData.documentsCheck.length === catalogs.fileDocuments.length) {
+        calculatedStatusId = 3; // Completada (all checks checked)
+      } else {
+        calculatedStatusId = 1; // Pendiente (some checks missing)
+      }
+    }
+
     const finalData = {
       ...formData,
+      processStatusId: calculatedStatusId, // Automatically calculated
       magnitudeId: formData.magnitudeId ? parseInt(formData.magnitudeId) : null,
       locationType,
       incidentLocation: locationType === "custom" ? incidentLocation : null,
@@ -1328,10 +1340,10 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                   </label>
                   <select
                     name="processStatusId"
-                    required
+                    disabled
                     value={formData.processStatusId}
                     onChange={handleChange}
-                    className="input-field h-12"
+                    className="input-field h-12 bg-bg-main/30 cursor-not-allowed opacity-75"
                   >
                     {catalogs.inspectionStatuses.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -1339,6 +1351,9 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                       </option>
                     ))}
                   </select>
+                  <p className="text-[8px] font-bold text-txt-muted uppercase mt-1">
+                    Automático (En Proceso al editar, se calcula según checklist al guardar)
+                  </p>
                 </div>
                 <div className="space-y-1">
                   <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1 flex items-center gap-2">

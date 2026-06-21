@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { helpFetch } from "../helpers/helpFetch";
 import { useNotification } from "../context/NotificationContext";
+import { useAuth } from "../context/AuthContext";
 
 const formatLocalDate = (dateStr) => {
   if (!dateStr) return "-";
@@ -130,6 +131,8 @@ export default function ReportCenter() {
 
   const api = helpFetch();
   const { showNotification, clearNotifications } = useNotification();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "Administrador";
 
   useEffect(() => {
     const fetchStatsAndLookups = async () => {
@@ -147,7 +150,7 @@ export default function ReportCenter() {
         ] = await Promise.all([
           api.get("/accidents"),
           api.get("/employees"),
-          api.get("/users"),
+          isAdmin ? api.get("/users") : Promise.resolve([]),
           api.get("/inspections"),
           api.get("/lookups/managements"),
           api.get("/facilities"),
@@ -370,7 +373,7 @@ export default function ReportCenter() {
       </div>
 
       {/* KPI Section */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className={`grid grid-cols-1 sm:grid-cols-2 ${isAdmin ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-6`}>
         {[
           {
             label: "Accidentes Registrados",
@@ -386,7 +389,7 @@ export default function ReportCenter() {
             color: "text-corpoelec-blue",
             bg: "bg-corpoelec-blue/10",
           },
-          {
+          isAdmin && {
             label: "Usuarios Sistema",
             value: stats.users,
             icon: TrendingUp,
@@ -400,7 +403,7 @@ export default function ReportCenter() {
             color: "text-amber-500",
             bg: "bg-amber-500/10",
           },
-        ].map((kpi, idx) => (
+        ].filter(Boolean).map((kpi, idx) => (
           <div
             key={idx}
             className="glass-panel p-6 rounded-[2rem] border border-border-main/50 space-y-4 relative overflow-hidden group"
