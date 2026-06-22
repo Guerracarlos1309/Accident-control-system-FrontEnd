@@ -278,6 +278,7 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
   });
 
   const [isEditing, setIsEditing] = useState(false);
+  const [isManuallyEdited, setIsManuallyEdited] = useState(false);
 
   const [witnesses, setWitnesses] = useState([]);
   const [incidentLocation, setIncidentLocation] = useState({
@@ -557,6 +558,9 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
   // Lógica para generar el Número de Control de Accidente
   useEffect(() => {
     const generateControlNumber = async () => {
+      if (isManuallyEdited) {
+        return;
+      }
       if (!formData.accidentDate || !formData.accidentNature) {
         console.log("Esperando fecha y naturaleza para generar código...");
         return;
@@ -607,10 +611,10 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
 
       try {
         const response = await api.get(
-          `/accidents/next-correlative?year=${formData.accidentDate.split('-')[0]}&nature=${formData.accidentNature}&prefix=${formData.regionPrefix || '32'}`
+          `/accidents/next-correlative?year=${formData.accidentDate.split("-")[0]}&nature=${formData.accidentNature}&prefix=${formData.regionPrefix || "32"}`,
         );
         if (response && !response.err && response.count !== undefined) {
-          correlative = String(response.count).padStart(3, '0');
+          correlative = String(response.count).padStart(3, "0");
         }
       } catch (e) {
         console.error("Error fetching correlative", e);
@@ -884,6 +888,10 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    if (name === "accidentControlNumber") {
+      setIsManuallyEdited(true);
+    }
 
     if (name === "medicalCenterId") {
       const center = catalogs.medicalCenters.find(
@@ -1352,7 +1360,8 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                     ))}
                   </select>
                   <p className="text-[8px] font-bold text-txt-muted uppercase mt-1">
-                    Automático (En Proceso al editar, se calcula según checklist al guardar)
+                    Automático (En Proceso al editar, se calcula según checklist
+                    al guardar)
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -1482,7 +1491,7 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
             )}
             <div className="space-y-1">
               <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
-                Actividad que realizaba el trabajador *
+                Causa Probable
               </label>
               <textarea
                 name="activity"
@@ -2319,7 +2328,8 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                 {formData.affectedPersonnel.length > 0 ? (
                   <p className="text-[9px] text-corpoelec-blue font-black uppercase tracking-wider mt-1.5 flex items-center gap-1.5">
                     <span className="h-1.5 w-1.5 rounded-full bg-corpoelec-blue"></span>
-                    Sugerido por el personal vinculado (puede cambiarlo si lo desea)
+                    Sugerido por el personal vinculado (puede cambiarlo si lo
+                    desea)
                   </p>
                 ) : errors.managementId ? (
                   <p className="text-[9px] text-corpoelec-red font-black uppercase mt-1">
@@ -2367,7 +2377,8 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
                               Nro: {person.personalNumber}
                             </span>
                             <span className="text-[9px] font-black text-amber-600 uppercase tracking-tighter bg-amber-500/5 px-2 py-0.5 rounded-md border border-amber-500/10">
-                              Gerencia: {person.management?.name || "No especificada"}
+                              Gerencia:{" "}
+                              {person.management?.name || "No especificada"}
                             </span>
                           </div>
                         </div>
@@ -2661,13 +2672,17 @@ export default function AccidentForm({ onCancel, onSubmit, initialData }) {
               </div>
               <div className="space-y-1">
                 <label className="text-[11px] font-black text-corpoelec-blue uppercase tracking-[0.2em] ml-1">
-                  Número de Control
+                  Número de Control *
                 </label>
-                <div className="h-12 flex items-center justify-center px-4 bg-white border-2 border-corpoelec-blue rounded-xl shadow-md">
-                  <span className="text-[15px] text-xl font-black text-corpoelec-blue tracking-[0.3em]">
-                    {formData.accidentControlNumber || "GENERANDO"}
-                  </span>
-                </div>
+                <input
+                  type="text"
+                  name="accidentControlNumber"
+                  required
+                  value={formData.accidentControlNumber}
+                  onChange={handleChange}
+                  className="input-field h-12 text-center font-black text-lg tracking-[0.2em] border-2 border-corpoelec-blue focus:border-corpoelec-blue focus:ring-corpoelec-blue/10 uppercase"
+                  placeholder="GENERANDO..."
+                />
               </div>
             </div>
 

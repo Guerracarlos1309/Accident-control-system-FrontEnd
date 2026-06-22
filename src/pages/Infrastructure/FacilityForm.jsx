@@ -15,7 +15,10 @@ import {
 import GeographicCascade from "../../components/GeographicCascade";
 import { helpFetch } from "../../helpers/helpFetch";
 import { useNotification } from "../../context/NotificationContext";
-import { validateFacilityName, validateCoordinates } from "../../helpers/validationHelper";
+import {
+  validateFacilityName,
+  validateCoordinates,
+} from "../../helpers/validationHelper";
 
 export default function FacilityForm({
   data: editingData,
@@ -32,6 +35,18 @@ export default function FacilityForm({
 
   const [errors, setErrors] = useState({});
 
+  const isSubstationSelected = (typeId = formData.installationTypeId) => {
+    const selectedType = installationTypes.find(
+      (t) => String(t.id) === String(typeId)
+    );
+    if (!selectedType) return false;
+    return selectedType.name
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .includes("subestacion");
+  };
+
   const validateField = (name, value) => {
     let result = { isValid: true, message: "" };
     if (name === "name") {
@@ -46,16 +61,26 @@ export default function FacilityForm({
           return fac.coordinates.trim().replace(/\s+/g, "") === currentCoord;
         });
         if (isDuplicate) {
-          result = { isValid: false, message: "Ya existe otra sede registrada con estas mismas coordenadas GPS." };
+          result = {
+            isValid: false,
+            message:
+              "Ya existe otra sede registrada con estas mismas coordenadas GPS.",
+          };
         }
       }
     } else if (name === "installationTypeId") {
       if (!value) {
-        result = { isValid: false, message: "El tipo de instalación es obligatorio." };
+        result = {
+          isValid: false,
+          message: "El tipo de instalación es obligatorio.",
+        };
       }
     } else if (name === "voltageLevel") {
-      if (!value) {
-        result = { isValid: false, message: "El nivel de tensión es obligatorio." };
+      if (isSubstationSelected() && !value) {
+        result = {
+          isValid: false,
+          message: "El nivel de tensión es obligatorio.",
+        };
       }
     }
     setErrors((prev) => ({
@@ -76,23 +101,13 @@ export default function FacilityForm({
     parish: editingData?.location?.parishId || "",
   });
 
-  const defaultVoltages = [
-    "765 kV",
-    "400 kV",
-    "230 kV",
-    "115 kV",
-    "34.5 kV",
-    "24 kV",
-    "13.8 kV",
-    "4.16 kV",
-    "0.48 kV (480 V)",
-    "0.24 kV (240 V)",
-    "0.12 kV (120 V)",
-    "N/A"
-  ];
-  
+  const defaultVoltages = ["230 kV", "115 kV", "34.5 kV", "N/A"];
+
   const voltageOptions = [...defaultVoltages];
-  if (formData.voltageLevel && !defaultVoltages.includes(formData.voltageLevel)) {
+  if (
+    formData.voltageLevel &&
+    !defaultVoltages.includes(formData.voltageLevel)
+  ) {
     voltageOptions.unshift(formData.voltageLevel);
   }
 
@@ -123,7 +138,13 @@ export default function FacilityForm({
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => {
-      const updated = { ...prev, [name]: value };
+      let updated = { ...prev, [name]: value };
+      if (name === "installationTypeId") {
+        if (!isSubstationSelected(value)) {
+          updated.voltageLevel = "";
+          setErrors((prevErr) => ({ ...prevErr, voltageLevel: "" }));
+        }
+      }
       if (errors[name]) {
         validateField(name, value);
       }
@@ -181,7 +202,11 @@ export default function FacilityForm({
     let coordResult = validateCoordinates(formData.coordinates, false);
 
     // Check coordinates uniqueness
-    if (coordResult.isValid && formData.coordinates && Array.isArray(facilities)) {
+    if (
+      coordResult.isValid &&
+      formData.coordinates &&
+      Array.isArray(facilities)
+    ) {
       const currentCoord = formData.coordinates.trim().replace(/\s+/g, "");
       const isDuplicate = facilities.some((fac) => {
         if (editingData && fac.id === editingData.id) return false;
@@ -189,26 +214,38 @@ export default function FacilityForm({
         return fac.coordinates.trim().replace(/\s+/g, "") === currentCoord;
       });
       if (isDuplicate) {
-        coordResult = { isValid: false, message: "Ya existe otra sede registrada con estas mismas coordenadas GPS." };
+        coordResult = {
+          isValid: false,
+          message:
+            "Ya existe otra sede registrada con estas mismas coordenadas GPS.",
+        };
       }
     }
 
     const isTypeValid = !!formData.installationTypeId;
-    const isVoltageValid = !!formData.voltageLevel;
+    const isVoltageValid = !isSubstationSelected() || !!formData.voltageLevel;
     const isLocationValid = !!location.parish;
 
     // Build the new errors state
     const newErrors = {
       name: nameResult.isValid ? "" : nameResult.message,
       coordinates: coordResult.isValid ? "" : coordResult.message,
-      installationTypeId: isTypeValid ? "" : "El tipo de instalación es obligatorio.",
+      installationTypeId: isTypeValid
+        ? ""
+        : "El tipo de instalación es obligatorio.",
       voltageLevel: isVoltageValid ? "" : "El nivel de tensión es obligatorio.",
-      location: isLocationValid ? "" : "La ubicación geográfica es obligatoria"
+      location: isLocationValid ? "" : "La ubicación geográfica es obligatoria",
     };
 
     setErrors(newErrors);
 
-    if (!nameResult.isValid || !coordResult.isValid || !isTypeValid || !isVoltageValid || !isLocationValid) {
+    if (
+      !nameResult.isValid ||
+      !coordResult.isValid ||
+      !isTypeValid ||
+      (isSubstationSelected() && !isVoltageValid) ||
+      !isLocationValid
+    ) {
       showNotification(
         "No se puede guardar la instalación. Hay campos obligatorios vacíos, duplicados o con formato incorrecto.",
         "error",
@@ -224,7 +261,7 @@ export default function FacilityForm({
       data.append("name", formData.name);
       data.append("coordinates", formData.coordinates);
       data.append("installationTypeId", formData.installationTypeId);
-      data.append("voltageLevel", formData.voltageLevel);
+      data.append("voltageLevel", isSubstationSelected() ? formData.voltageLevel : "");
       data.append("parishId", location.parish);
 
       // Append images
@@ -290,7 +327,10 @@ export default function FacilityForm({
                 if (
                   !/[-0-9 a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\./()]/.test(e.key) &&
                   e.key !== "Backspace" &&
-                  e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Delete" && e.key !== "Tab"
+                  e.key !== "ArrowLeft" &&
+                  e.key !== "ArrowRight" &&
+                  e.key !== "Delete" &&
+                  e.key !== "Tab"
                 ) {
                   e.preventDefault();
                 }
@@ -348,7 +388,9 @@ export default function FacilityForm({
             Ubicación y Territorio
           </h4>
         </div>
-        <div className={`bg-bg-main/30 p-6 rounded-3xl border shadow-inner ${errors.location ? "border-corpoelec-red" : "border-border-main/40"}`}>
+        <div
+          className={`bg-bg-main/30 p-6 rounded-3xl border shadow-inner ${errors.location ? "border-corpoelec-red" : "border-border-main/40"}`}
+        >
           <GeographicCascade
             value={location}
             onChange={handleLocationChange}
@@ -374,34 +416,37 @@ export default function FacilityForm({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
+          {isSubstationSelected() && (
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-txt-muted uppercase tracking-widest ml-1 flex items-center gap-2">
+                <Zap size={14} className="text-amber-500" /> Nivel de Tensión *
+              </label>
+              <select
+                name="voltageLevel"
+                required
+                value={formData.voltageLevel}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                className={`input-field h-12 font-bold appearance-none cursor-pointer ${errors.voltageLevel ? "border-corpoelec-red focus:border-corpoelec-red focus:ring-corpoelec-red/10" : ""}`}
+              >
+                <option value="">Seleccione el nivel de tensión...</option>
+                {voltageOptions.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+              {errors.voltageLevel && (
+                <p className="text-[10px] text-corpoelec-red font-black uppercase mt-1 ml-1 leading-tight">
+                  {errors.voltageLevel}
+                </p>
+              )}
+            </div>
+          )}
+          <div className={`space-y-2 ${!isSubstationSelected() ? "col-span-2" : ""}`}>
             <label className="text-[10px] font-black text-txt-muted uppercase tracking-widest ml-1 flex items-center gap-2">
-              <Zap size={14} className="text-amber-500" /> Nivel de Tensión *
-            </label>
-            <select
-              name="voltageLevel"
-              required
-              value={formData.voltageLevel}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              className={`input-field h-12 font-bold appearance-none cursor-pointer ${errors.voltageLevel ? "border-corpoelec-red focus:border-corpoelec-red focus:ring-corpoelec-red/10" : ""}`}
-            >
-              <option value="">Seleccione el nivel de tensión...</option>
-              {voltageOptions.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-            {errors.voltageLevel && (
-              <p className="text-[10px] text-corpoelec-red font-black uppercase mt-1 ml-1 leading-tight">
-                {errors.voltageLevel}
-              </p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-txt-muted uppercase tracking-widest ml-1 flex items-center gap-2">
-              <Globe size={14} className="text-corpoelec-blue" /> Coordenadas (LAT, LONG)
+              <Globe size={14} className="text-corpoelec-blue" /> Coordenadas
+              (LAT, LONG)
             </label>
             <input
               type="text"
@@ -417,7 +462,10 @@ export default function FacilityForm({
                   !/[-0-9.\s]/.test(e.key) &&
                   e.key !== "Backspace" &&
                   e.key !== "," &&
-                  e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Delete" && e.key !== "Tab"
+                  e.key !== "ArrowLeft" &&
+                  e.key !== "ArrowRight" &&
+                  e.key !== "Delete" &&
+                  e.key !== "Tab"
                 ) {
                   e.preventDefault();
                 }

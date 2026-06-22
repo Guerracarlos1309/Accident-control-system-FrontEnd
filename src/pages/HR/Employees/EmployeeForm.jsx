@@ -69,6 +69,8 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
     managementId: "",
     jobTitleId: "",
     occupationId: "",
+    customJobTitle: "",
+    customOccupation: "",
     birthPlace: "",
     homeAddress: "",
     educationLevel: "",
@@ -282,11 +284,19 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
     }
 
     setFormData((prev) => {
-      const updated = { ...prev, [name]: value };
+      let updated = { ...prev, [name]: value };
       // When management changes, reset dependent selects
       if (name === "managementId") {
         updated.jobTitleId = "";
         updated.occupationId = "";
+        updated.customJobTitle = "";
+        updated.customOccupation = "";
+      }
+      if (name === "occupationId" && value !== "other") {
+        updated.customOccupation = "";
+      }
+      if (name === "jobTitleId" && value !== "other") {
+        updated.customJobTitle = "";
       }
       if (errors[name]) {
         validateField(name, value);
@@ -367,6 +377,16 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
         "Por favor, complete todos los campos obligatorios",
         "error",
       );
+      return;
+    }
+
+    if (formData.occupationId === "other" && !formData.customOccupation?.trim()) {
+      showNotification("Por favor, escriba el Cargo Institucional", "error");
+      return;
+    }
+
+    if (formData.jobTitleId === "other" && !formData.customJobTitle?.trim()) {
+      showNotification("Por favor, escriba la Ocupación Específica", "error");
       return;
     }
 
@@ -915,7 +935,27 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                     {o.name}
                   </option>
                 ))}
+                {formData.managementId && !loadingCatalogs && (
+                  <option value="other">OTROS (ESPECIFICAR...)</option>
+                )}
               </select>
+              {formData.occupationId === "other" && (
+                <div className="mt-2 space-y-1 animate-in slide-in-from-top-1 duration-200">
+                  <label className="text-[10px] font-black text-corpoelec-blue uppercase tracking-widest ml-1">
+                    Escriba el Cargo Institucional *
+                  </label>
+                  <input
+                    type="text"
+                    name="customOccupation"
+                    required
+                    value={formData.customOccupation}
+                    onChange={handleChange}
+                    className="input-field h-12 font-bold uppercase"
+                    placeholder="EJ: JEFE DE DIVISIÓN"
+                    maxLength={100}
+                  />
+                </div>
+              )}
               {!formData.managementId && !loadingCatalogs && (
                 <p className="text-[9px] text-corpoelec-blue/70 font-bold uppercase tracking-widest mt-1 ml-1">
                   ↑ Seleccione la gerencia para ver los cargos disponibles
@@ -946,7 +986,27 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                     {j.name}
                   </option>
                 ))}
+                {formData.managementId && !loadingCatalogs && (
+                  <option value="other">OTROS (ESPECIFICAR...)</option>
+                )}
               </select>
+              {formData.jobTitleId === "other" && (
+                <div className="mt-2 space-y-1 animate-in slide-in-from-top-1 duration-200">
+                  <label className="text-[10px] font-black text-corpoelec-blue uppercase tracking-widest ml-1">
+                    Escriba la Ocupación Específica *
+                  </label>
+                  <input
+                    type="text"
+                    name="customJobTitle"
+                    required
+                    value={formData.customJobTitle}
+                    onChange={handleChange}
+                    className="input-field h-12 font-bold uppercase"
+                    placeholder="EJ: TÉCNICO DE SISTEMAS"
+                    maxLength={100}
+                  />
+                </div>
+              )}
               {!formData.managementId && !loadingCatalogs && (
                 <p className="text-[9px] text-corpoelec-blue/70 font-bold uppercase tracking-widest mt-1 ml-1">
                   ↑ Seleccione la gerencia para ver las ocupaciones disponibles
