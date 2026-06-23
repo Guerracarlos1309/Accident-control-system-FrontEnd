@@ -47,7 +47,7 @@ export const NAVIGATION_CONFIG = [
         label: "Sedes Inactivas",
         allowedRoles: ["Administrador", "Inspector"],
       },
-      { path: "/infra/codes", label: "Códigos de Control" },
+      { path: "/infra/codes", label: "Controles de Inspecciones" },
       {
         path: "/infra/locations",
         label: "Ubicación Geog.",
