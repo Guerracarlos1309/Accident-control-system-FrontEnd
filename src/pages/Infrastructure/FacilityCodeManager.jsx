@@ -51,12 +51,17 @@ export default function FacilityCodeManager() {
   const [formDate, setFormDate] = useState(""); // Report Date (nullable)
   const [formInspectionDate, setFormInspectionDate] = useState(""); // Inspection Date (nullable)
   const [formMemoNumber, setFormMemoNumber] = useState(""); // Memo (nullable)
+  const [formMemoDate, setFormMemoDate] = useState(""); // Memo date (nullable)
   const [formNotes, setFormNotes] = useState(""); // Observations (nullable)
 
   // PDF state
   const [formPdfFile, setFormPdfFile] = useState(null);
   const [formExistingPdf, setFormExistingPdf] = useState(null);
   const [formDeletePdf, setFormDeletePdf] = useState(false);
+
+  const [formPdfFile2, setFormPdfFile2] = useState(null);
+  const [formExistingPdf2, setFormExistingPdf2] = useState(null);
+  const [formDeletePdf2, setFormDeletePdf2] = useState(false);
 
   const [formSequence, setFormSequence] = useState(1);
   const [formCode, setFormCode] = useState("");
@@ -68,12 +73,21 @@ export default function FacilityCodeManager() {
   const api = helpFetch();
   const { showNotification } = useNotification();
 
-  // Years for quarter and year selection
+  // Years derived from loaded records (both report date and inspection date)
   const currentYear = new Date().getFullYear();
-  const yearsList = [];
-  for (let y = 2020; y <= currentYear + 2; y++) {
-    yearsList.push(y);
-  }
+  const yearsList = Array.from(
+    new Set(
+      records
+        .flatMap((r) => [
+          r.date ? parseInt(r.date.slice(0, 4)) : null,
+          r.inspectionDate ? parseInt(r.inspectionDate.slice(0, 4)) : null,
+        ])
+        .filter((y) => y !== null && !isNaN(y))
+    )
+  ).sort((a, b) => b - a); // most recent first
+
+  // Fallback: if no records yet, show current year
+  const yearsListFinal = yearsList.length > 0 ? yearsList : [currentYear];
 
   const fetchRecords = async () => {
     setLoading(true);
@@ -133,17 +147,26 @@ export default function FacilityCodeManager() {
     autoGenerateCode();
   }, [formType, formDate, isModalOpen, editingRecord]);
 
-  // Auto-fill memo number with last 8 characters of formCode for new records
+  // Auto-fill memo number with fixed M prefix for new records
   useEffect(() => {
-    if (formCode && !editingRecord) {
-      setFormMemoNumber(formCode.slice(-8));
+    if (formSequence && !editingRecord) {
+      let year = new Date().getFullYear();
+      if (formDate) {
+        const dateParts = formDate.split("-");
+        if (dateParts[0]) {
+          year = parseInt(dateParts[0]);
+        }
+      }
+      const paddedSeq = String(formSequence).padStart(3, "0");
+      setFormMemoNumber(`ASHO-TAC-M-${paddedSeq}/${year}`);
     }
-  }, [formCode, editingRecord]);
+  }, [formSequence, formDate, editingRecord]);
 
   const handleEdit = (record) => {
     setFormDate(record.date || "");
     setFormInspectionDate(record.inspectionDate || "");
     setFormMemoNumber(record.memoNumber || "");
+    setFormMemoDate(record.memoDate || "");
     setFormSequence(record.sequence);
     setFormCode(record.code);
     setFormNotes(record.notes || "");
@@ -152,6 +175,9 @@ export default function FacilityCodeManager() {
     setFormExistingPdf(record.pdfPath || null);
     setFormDeletePdf(false);
     setFormPdfFile(null);
+    setFormExistingPdf2(record.pdfPath2 || null);
+    setFormDeletePdf2(false);
+    setFormPdfFile2(null);
     setEditingRecord(record);
     setIsModalOpen(true);
   };
@@ -180,18 +206,23 @@ export default function FacilityCodeManager() {
     setFormDate("");
     setFormInspectionDate("");
     setFormMemoNumber("");
+    setFormMemoDate("");
     setFormSequence(1);
     setFormCode("");
     setFormNotes("");
     setFormPdfFile(null);
     setFormExistingPdf(null);
     setFormDeletePdf(false);
+    setFormPdfFile2(null);
+    setFormExistingPdf2(null);
+    setFormDeletePdf2(false);
   };
 
   const handleOpenNewModal = () => {
     setFormDate("");
     setFormInspectionDate("");
     setFormMemoNumber("");
+    setFormMemoDate("");
     setFormSequence(1);
     setFormCode("");
     setFormNotes("");
@@ -200,6 +231,9 @@ export default function FacilityCodeManager() {
     setFormExistingPdf(null);
     setFormDeletePdf(false);
     setFormPdfFile(null);
+    setFormExistingPdf2(null);
+    setFormDeletePdf2(false);
+    setFormPdfFile2(null);
     setEditingRecord(null);
     setIsModalOpen(true);
   };
@@ -229,14 +263,19 @@ export default function FacilityCodeManager() {
       data.append("date", formDate || "");
       data.append("inspectionDate", formInspectionDate || "");
       data.append("memoNumber", formMemoNumber || "");
+      data.append("memoDate", formMemoDate || "");
       data.append("notes", formNotes || "");
 
       if (formPdfFile) {
         data.append("pdfFile", formPdfFile);
       }
+      if (formPdfFile2) {
+        data.append("pdfFile2", formPdfFile2);
+      }
 
       if (editingRecord) {
         data.append("deletePdf", formDeletePdf);
+        data.append("deletePdf2", formDeletePdf2);
       }
 
       let res;
@@ -467,7 +506,6 @@ export default function FacilityCodeManager() {
               >
                 <option value="">TODOS LOS TIPOS</option>
                 <option value="I">INSPECCIÓN (I)</option>
-                <option value="M">MEMORANDO (M)</option>
                 <option value="C">CARACTERIZACIÓN (C)</option>
               </select>
             </div>
@@ -585,7 +623,7 @@ export default function FacilityCodeManager() {
                     }
                     className="input-field h-11 text-xs font-bold cursor-pointer"
                   >
-                    {yearsList.map((y) => (
+                    {yearsListFinal.map((y) => (
                       <option key={y} value={y}>
                         {y}
                       </option>
@@ -605,7 +643,7 @@ export default function FacilityCodeManager() {
                   onChange={(e) => setSelectedYearFilter(e.target.value)}
                   className="input-field h-11 text-xs font-bold cursor-pointer"
                 >
-                  {yearsList.map((y) => (
+                  {yearsListFinal.map((y) => (
                     <option key={y} value={y}>
                       {y}
                     </option>
@@ -647,7 +685,7 @@ export default function FacilityCodeManager() {
                       Instalación
                     </th>
                     <th className="px-6 py-5 text-[10px] font-black text-txt-muted uppercase tracking-[0.2em]">
-                      Fecha Inspección
+                      Fecha Inspección / Caracterización
                     </th>
                     <th className="px-6 py-5 text-[10px] font-black text-txt-muted uppercase tracking-[0.2em]">
                       Número de Informe
@@ -657,6 +695,9 @@ export default function FacilityCodeManager() {
                     </th>
                     <th className="px-6 py-5 text-[10px] font-black text-txt-muted uppercase tracking-[0.2em]">
                       Memo de Entrega
+                    </th>
+                    <th className="px-6 py-5 text-[10px] font-black text-txt-muted uppercase tracking-[0.2em]">
+                      Fecha Memo
                     </th>
                     <th className="px-6 py-5 text-[10px] font-black text-txt-muted uppercase tracking-[0.2em]">
                       PDF
@@ -709,12 +750,15 @@ export default function FacilityCodeManager() {
 
                       {/* Código de control */}
                       <td className="px-6 py-4">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-sm font-black text-corpoelec-blue font-mono tracking-wider">
+                        <div className="flex flex-col gap-1.5">
+                          <span
+                            className="text-xs font-black text-corpoelec-blue font-mono tracking-wider whitespace-nowrap"
+                            title={record.code}
+                          >
                             {record.code}
                           </span>
                           <span
-                            className={`text-[8px] font-black px-1.5 py-0.5 rounded border uppercase tracking-widest self-start leading-none ${
+                            className={`text-[8px] font-black px-1.5 py-0.5 rounded border uppercase tracking-widest self-start leading-none whitespace-nowrap ${
                               record.type === "I"
                                 ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
                                 : record.type === "C"
@@ -743,9 +787,12 @@ export default function FacilityCodeManager() {
                       </td>
 
                       {/* Memo de entrega */}
-                      <td className="px-6 py-4 text-xs font-bold text-txt-main">
+                      <td className="px-6 py-4">
                         {record.memoNumber ? (
-                          <span className="font-mono tracking-wide bg-bg-surface/80 px-2 py-1 rounded border border-border-main text-[11px]">
+                          <span
+                            className="inline-block font-mono font-black tracking-wider bg-corpoelec-blue/8 text-corpoelec-blue px-2.5 py-1 rounded-lg border border-corpoelec-blue/20 text-[10px] whitespace-nowrap"
+                            title={record.memoNumber}
+                          >
                             {record.memoNumber}
                           </span>
                         ) : (
@@ -755,23 +802,50 @@ export default function FacilityCodeManager() {
                         )}
                       </td>
 
-                      {/* PDF Adjunto */}
-                      <td className="px-6 py-4">
-                        {record.pdfPath ? (
-                          <a
-                            href={`${window.BACKEND_URL || "http://localhost:3000"}${record.pdfPath}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-500/10 text-corpoelec-red hover:bg-red-500/20 rounded-lg border border-red-500/25 transition-all text-[9px] font-black uppercase tracking-wider"
-                          >
-                            <FileText size={14} />
-                            <span>Abrir PDF</span>
-                          </a>
+                      {/* Fecha del Memo */}
+                      <td className="px-6 py-4 text-xs font-bold text-txt-main">
+                        {record.memoDate ? (
+                          formatDate(record.memoDate)
                         ) : (
-                          <span className="text-[9px] font-semibold text-txt-muted/40 uppercase tracking-widest">
-                            Sin PDF
+                          <span className="text-[10px] italic text-txt-muted/50">
+                            Sin fecha
                           </span>
                         )}
+                      </td>
+
+                      {/* PDF Adjunto */}
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-1.5">
+                          {record.pdfPath ? (
+                            <a
+                              href={`${window.BACKEND_URL || "http://localhost:3000"}${record.pdfPath}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-500/10 text-corpoelec-red hover:bg-red-500/20 rounded-lg border border-red-500/25 transition-all text-[9px] font-black uppercase tracking-wider self-start"
+                            >
+                              <FileText size={14} />
+                              <span>PDF 1</span>
+                            </a>
+                          ) : null}
+
+                          {record.pdfPath2 ? (
+                            <a
+                              href={`${window.BACKEND_URL || "http://localhost:3000"}${record.pdfPath2}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-500/10 text-corpoelec-red hover:bg-red-500/20 rounded-lg border border-red-500/25 transition-all text-[9px] font-black uppercase tracking-wider self-start"
+                            >
+                              <FileText size={14} />
+                              <span>PDF 2</span>
+                            </a>
+                          ) : null}
+
+                          {!record.pdfPath && !record.pdfPath2 ? (
+                            <span className="text-[9px] font-semibold text-txt-muted/40 uppercase tracking-widest">
+                              Sin PDF
+                            </span>
+                          ) : null}
+                        </div>
                       </td>
 
                       {/* Observaciones */}
@@ -816,9 +890,6 @@ export default function FacilityCodeManager() {
                             ) : (
                               <Download size={16} />
                             )}
-                            <span className="text-[9px] font-black uppercase tracking-wider hidden lg:inline">
-                              Reporte
-                            </span>
                           </button>
                           {user?.role !== "Analista" && (
                             <>
@@ -888,11 +959,26 @@ export default function FacilityCodeManager() {
               <label className="text-[10px] font-black text-txt-muted uppercase tracking-widest block ml-1">
                 Tipo de Registro
               </label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 {[
-                  { value: "I", label: "Inspección", letter: "I", active: "bg-emerald-500/15 border-emerald-500/50 text-emerald-500", inactive: "border-border-main text-txt-muted hover:border-emerald-500/30 hover:text-emerald-500/70" },
-                  { value: "M", label: "Memorando", letter: "M", active: "bg-amber-500/15 border-amber-500/50 text-amber-500", inactive: "border-border-main text-txt-muted hover:border-amber-500/30 hover:text-amber-500/70" },
-                  { value: "C", label: "Caracterización", letter: "C", active: "bg-violet-500/15 border-violet-500/50 text-violet-400", inactive: "border-border-main text-txt-muted hover:border-violet-500/30 hover:text-violet-400/70" },
+                  {
+                    value: "I",
+                    label: "Inspección",
+                    letter: "I",
+                    active:
+                      "bg-emerald-500/15 border-emerald-500/50 text-emerald-500",
+                    inactive:
+                      "border-border-main text-txt-muted hover:border-emerald-500/30 hover:text-emerald-500/70",
+                  },
+                  {
+                    value: "C",
+                    label: "Caracterización",
+                    letter: "C",
+                    active:
+                      "bg-violet-500/15 border-violet-500/50 text-violet-400",
+                    inactive:
+                      "border-border-main text-txt-muted hover:border-violet-500/30 hover:text-violet-400/70",
+                  },
                 ].map((opt) => (
                   <button
                     key={opt.value}
@@ -900,11 +986,15 @@ export default function FacilityCodeManager() {
                     disabled={!!editingRecord}
                     onClick={() => setFormType(opt.value)}
                     className={`relative flex flex-col items-center justify-center gap-1 py-3 rounded-xl border-2 font-black transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none ${
-                      formType === opt.value ? opt.active : `bg-bg-surface ${opt.inactive}`
+                      formType === opt.value
+                        ? opt.active
+                        : `bg-bg-surface ${opt.inactive}`
                     }`}
                   >
                     <span className="text-lg leading-none">{opt.letter}</span>
-                    <span className="text-[9px] uppercase tracking-widest leading-none">{opt.label}</span>
+                    <span className="text-[9px] uppercase tracking-widest leading-none">
+                      {opt.label}
+                    </span>
                     {formType === opt.value && (
                       <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-current opacity-80" />
                     )}
@@ -968,30 +1058,43 @@ export default function FacilityCodeManager() {
               <p className="text-[9px] text-txt-muted font-semibold uppercase tracking-wider ml-1">
                 El sistema autogenera el formato{" "}
                 <span className="text-corpoelec-blue font-mono font-bold">
-                  ASHO-TAC-[I/M/C]-[CORRELATIVO]/[AÑO]
+                  ASHO-TAC-[I/C]-[CORRELATIVO]/[AÑO]
                 </span>
                 . Puede editarlo si lo desea, pero debe ser único.
               </p>
             </div>
 
-            {/* Memo de entrega */}
-            <div className="space-y-2 col-span-1 md:col-span-2">
-              <label className="text-[10px] font-black text-txt-muted uppercase tracking-widest block ml-1">
-                Memo de Entrega / Número de Memo de Remisión (Opcional)
-              </label>
-              <input
-                type="text"
-                placeholder="EJ: MEMO-ASHO-123-2026"
-                value={formMemoNumber}
-                onChange={(e) => setFormMemoNumber(e.target.value)}
-                className="input-field h-12 text-xs font-bold uppercase tracking-widest"
-              />
+            {/* Memo de entrega + Fecha de memo */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 col-span-1 md:col-span-2">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-txt-muted uppercase tracking-widest block ml-1">
+                  Memo de Entrega / Número de Memo (Opcional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="EJ: ASHO-TAC-M-001/2026"
+                  value={formMemoNumber}
+                  onChange={(e) => setFormMemoNumber(e.target.value)}
+                  className="input-field h-12 text-xs font-bold uppercase tracking-widest"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-txt-muted uppercase tracking-widest block ml-1">
+                  Fecha de Asignación del Memo (Opcional)
+                </label>
+                <input
+                  type="date"
+                  value={formMemoDate}
+                  onChange={(e) => setFormMemoDate(e.target.value)}
+                  className="input-field h-12 text-xs font-bold"
+                />
+              </div>
             </div>
 
-            {/* PDF Upload Area */}
+            {/* PDF Upload Area 1 */}
             <div className="space-y-2 col-span-1 md:col-span-2">
               <label className="text-[10px] font-black text-txt-muted uppercase tracking-widest block ml-1">
-                Documento PDF Adjunto (Opcional)
+                Documento PDF Adjunto 1 (Opcional)
               </label>
 
               {formExistingPdf && !formDeletePdf ? (
@@ -1000,7 +1103,7 @@ export default function FacilityCodeManager() {
                     <FileText className="text-emerald-500" size={24} />
                     <div>
                       <p className="text-xs font-bold text-txt-main">
-                        Archivo PDF cargado
+                        Archivo PDF 1 cargado
                       </p>
                       <a
                         href={`${window.BACKEND_URL || "http://localhost:3000"}${formExistingPdf}`}
@@ -1057,7 +1160,88 @@ export default function FacilityCodeManager() {
                     ) : (
                       <div className="text-center">
                         <span className="text-xs font-bold text-txt-main group-hover:text-corpoelec-blue transition-colors block">
-                          SELECCIONAR ARCHIVO PDF DE INSPECCIÓN
+                          SELECCIONAR ARCHIVO PDF DE INSPECCIÓN 1
+                        </span>
+                        <span className="text-[9px] text-txt-muted uppercase tracking-wider block mt-1">
+                          Solo se permiten archivos PDF (Límite 20MB)
+                        </span>
+                      </div>
+                    )}
+                  </label>
+                </div>
+              )}
+            </div>
+
+            {/* PDF Upload Area 2 */}
+            <div className="space-y-2 col-span-1 md:col-span-2">
+              <label className="text-[10px] font-black text-txt-muted uppercase tracking-widest block ml-1">
+                Documento PDF Adjunto 2 (Opcional)
+              </label>
+
+              {formExistingPdf2 && !formDeletePdf2 ? (
+                <div className="flex items-center justify-between p-4 bg-bg-main/50 border border-emerald-500/20 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <FileText className="text-emerald-500" size={24} />
+                    <div>
+                      <p className="text-xs font-bold text-txt-main">
+                        Archivo PDF 2 cargado
+                      </p>
+                      <a
+                        href={`${window.BACKEND_URL || "http://localhost:3000"}${formExistingPdf2}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] text-corpoelec-blue font-black uppercase tracking-wider hover:underline"
+                      >
+                        Ver archivo PDF actual
+                      </a>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFormDeletePdf2(true)}
+                    className="p-2 rounded-lg text-corpoelec-red hover:bg-corpoelec-red/10 transition-colors"
+                    title="Remover PDF actual"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-border-main hover:border-corpoelec-blue/50 bg-bg-surface hover:bg-bg-main/30 rounded-xl cursor-pointer transition-all group">
+                    <input
+                      type="file"
+                      accept="application/pdf"
+                      onChange={(e) => {
+                        if (e.target.files?.[0]) {
+                          setFormPdfFile2(e.target.files[0]);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                    <FileUp
+                      className="text-txt-muted group-hover:text-corpoelec-blue transition-colors mb-2"
+                      size={24}
+                    />
+                    {formPdfFile2 ? (
+                      <div className="text-center">
+                        <span className="text-xs font-bold text-corpoelec-blue uppercase break-all block px-4">
+                          {formPdfFile2.name}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setFormPdfFile2(null);
+                          }}
+                          className="text-[9px] font-black text-corpoelec-red uppercase block mx-auto mt-2 hover:underline tracking-wider"
+                        >
+                          Quitar archivo seleccionado
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <span className="text-xs font-bold text-txt-main group-hover:text-corpoelec-blue transition-colors block">
+                          SELECCIONAR ARCHIVO PDF DE INSPECCIÓN 2
                         </span>
                         <span className="text-[9px] text-txt-muted uppercase tracking-wider block mt-1">
                           Solo se permiten archivos PDF (Límite 20MB)
