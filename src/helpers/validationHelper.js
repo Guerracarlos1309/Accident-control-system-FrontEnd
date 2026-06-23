@@ -401,24 +401,69 @@ export function validateCoordinates(coordinates, required = false) {
 
   const val = coordinates.trim();
 
-  // Basic regex check for "lat, long"
-  const coordRegex = /^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/;
-  if (!coordRegex.test(val)) {
-    return { isValid: false, message: "Las coordenadas deben tener el formato 'LATITUD, LONGITUD' (ej: 12.3123, -73.3123)." };
+  // 1. Check for standard decimal coordinate pair (e.g. 7.7350, -72.2326)
+  const decimalRegex = /^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/;
+
+  // 2. Check for DMS coordinate pair (e.g. 7°44'06.1"N, 72°13'57.4"W) or single DMS coordinate (e.g. 7°44'06.1"N)
+  const dmsPairRegex = /^\d{1,2}°\d{1,2}'\d{1,2}(\.\d+)?"[NnSs],\s*\d{1,3}°\d{1,2}'\d{1,2}(\.\d+)?"[EeWwOo]$/;
+  const dmsSingleRegex = /^\d{1,3}°\d{1,2}'\d{1,2}(\.\d+)?"[NnSsEeWwOo]$/;
+
+  if (decimalRegex.test(val)) {
+    const parts = val.split(",");
+    const lat = parseFloat(parts[0].trim());
+    const lng = parseFloat(parts[1].trim());
+
+    if (isNaN(lat) || isNaN(lng)) {
+      return { isValid: false, message: "Las coordenadas contienen valores numéricos no válidos." };
+    }
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      return { isValid: false, message: "Las coordenadas deben ser reales (Latitud entre -90 y 90, Longitud entre -180 y 180)." };
+    }
+    return { isValid: true, message: "" };
   }
 
-  const parts = val.split(",");
-  const lat = parseFloat(parts[0].trim());
-  const lng = parseFloat(parts[1].trim());
-
-  if (isNaN(lat) || isNaN(lng)) {
-    return { isValid: false, message: "Las coordenadas contienen valores numéricos no válidos." };
+  if (dmsPairRegex.test(val)) {
+    const parts = val.split(",");
+    const parseDMS = (part) => {
+      const match = part.trim().match(/^(\d{1,3})°(\d{1,2})'(\d{1,2}(\.\d+)?)"/);
+      return match ? { deg: parseInt(match[1], 10), min: parseInt(match[2], 10), sec: parseFloat(match[3]) } : null;
+    };
+    const latDms = parseDMS(parts[0]);
+    const lngDms = parseDMS(parts[1]);
+    if (!latDms || !lngDms) {
+      return { isValid: false, message: "Error al interpretar el formato DMS." };
+    }
+    if (latDms.deg > 90 || latDms.min >= 60 || latDms.sec >= 60) {
+      return { isValid: false, message: "Latitud DMS inválida (Grados hasta 90, Minutos y Segundos < 60)." };
+    }
+    if (lngDms.deg > 180 || lngDms.min >= 60 || lngDms.sec >= 60) {
+      return { isValid: false, message: "Longitud DMS inválida (Grados hasta 180, Minutos y Segundos < 60)." };
+    }
+    return { isValid: true, message: "" };
   }
 
-  // Check mathematical bounds of coordinates: Latitude between -90 and 90, Longitude between -180 and 180
-  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-    return { isValid: false, message: "Las coordenadas deben ser reales (Latitud entre -90 y 90, Longitud entre -180 y 180)." };
+  if (dmsSingleRegex.test(val)) {
+    const match = val.match(/^(\d{1,3})°(\d{1,2})'(\d{1,2}(\.\d+)?)"([NnSsEeWwOo])/);
+    if (!match) return { isValid: false, message: "Error al interpretar el formato DMS." };
+    const deg = parseInt(match[1], 10);
+    const min = parseInt(match[2], 10);
+    const sec = parseFloat(match[3]);
+    const dir = match[5].toUpperCase();
+
+    if (["N", "S"].includes(dir) && deg > 90) {
+      return { isValid: false, message: "Latitud en grados no puede ser mayor de 90°." };
+    }
+    if (["E", "W", "O"].includes(dir) && deg > 180) {
+      return { isValid: false, message: "Longitud en grados no puede ser mayor de 180°." };
+    }
+    if (min >= 60 || sec >= 60) {
+      return { isValid: false, message: "Los minutos y segundos deben ser menores de 60." };
+    }
+    return { isValid: true, message: "" };
   }
 
-  return { isValid: true, message: "" };
+  return {
+    isValid: false,
+    message: "Las coordenadas deben tener el formato decimal 'LATITUD, LONGITUD' (ej: 7.7350, -72.2326) o DMS (ej: 7°44'06.1\"N, 72°13'57.4\"W o 7°44'06.1\"N)."
+  };
 }

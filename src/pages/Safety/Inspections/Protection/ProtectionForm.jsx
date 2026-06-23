@@ -62,9 +62,13 @@ export default function ProtectionForm({
           api.get("/protection/equipment"),
         ]);
 
+        // Filtrar solo empleados de la gerencia ASHO (id: 8) para el select de inspector
+        const ashoInspectors = (empRes || []).filter(
+          (e) => e.managementId === 8 || e.management?.id === 8
+        );
         setLookups({
           facilities: facRes || [],
-          inspectors: empRes || [],
+          inspectors: ashoInspectors,
           statuses: statRes || [],
         });
 

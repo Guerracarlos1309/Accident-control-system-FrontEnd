@@ -22,6 +22,7 @@ import VehicleManager from "./pages/Safety/Inspections/Vehicles/VehicleManager";
 import FacilityManager from "./pages/Infrastructure/FacilityManager";
 import InactiveFacilityManager from "./pages/Infrastructure/InactiveFacilityManager";
 import LocationSetup from "./pages/Infrastructure/LocationSetup";
+import FacilityCodeManager from "./pages/Infrastructure/FacilityCodeManager";
 import ProtectionInventory from "./pages/Safety/Protection/ProtectionInventory.jsx";
 import ProtectionSetup from "./pages/Safety/Protection/ProtectionSetup";
 import VehicleInventory from "./pages/Fleet/Inventory/VehicleInventory";
@@ -59,6 +60,7 @@ function App() {
                   <Route path="infra/facilities" element={<FacilityManager />} />
                   <Route path="infra/inactive" element={<InactiveFacilityManager />} />
                   <Route path="infra/locations" element={<LocationSetup />} />
+                  <Route path="infra/codes" element={<FacilityCodeManager />} />
 
                   {/* Accidentes */}
                   <Route path="accidents/register" element={<AccidentsManager />} />
