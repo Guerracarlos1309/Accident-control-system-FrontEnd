@@ -65,7 +65,7 @@ export default function Help() {
     },
     {
       q: "¿Quién tiene acceso a los reportes?",
-      a: "Solo los usuarios con rol de 'Administrador' o 'Analista' pueden visualizar el centro de reportes consolidados.",
+      a: "Solo los usuarios con rol de 'Administrador', 'Usuario' o 'Analista' pueden visualizar el centro de reportes consolidados.",
     },
   ];
 

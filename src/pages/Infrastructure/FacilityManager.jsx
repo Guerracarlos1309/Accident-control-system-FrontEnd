@@ -129,7 +129,7 @@ export default function FacilityManager() {
             </button>
           </div>
 
-          {user?.role !== 'Analista' && (
+          {user?.role !== "Analista" && (
             <button
               onClick={() => setIsModalOpen(true)}
               className="btn-primary shadow-lg shadow-corpoelec-blue/20 flex-1 md:flex-none"
@@ -261,13 +261,13 @@ export default function FacilityManager() {
                   <div className="mt-7 flex gap-2">
                     <button
                       onClick={() => handleView(facility)}
-                      className={`h-11 rounded-xl bg-bg-main border border-border-main text-txt-muted hover:text-corpoelec-blue hover:bg-corpoelec-blue/5 hover:border-corpoelec-blue/20 transition-all flex items-center justify-center active:scale-95 gap-2 ${user?.role === 'Analista' ? 'w-full text-[9px] font-black uppercase tracking-widest' : 'w-11'}`}
+                      className={`h-11 rounded-xl bg-bg-main border border-border-main text-txt-muted hover:text-corpoelec-blue hover:bg-corpoelec-blue/5 hover:border-corpoelec-blue/20 transition-all flex items-center justify-center active:scale-95 gap-2 ${user?.role === "Analista" ? "w-full text-[9px] font-black uppercase tracking-widest" : "w-11"}`}
                       title="Ver Ficha"
                     >
                       <Eye size={18} />
-                      {user?.role === 'Analista' && "Ver Ficha Técnica"}
+                      {user?.role === "Analista" && "Ver Ficha Técnica"}
                     </button>
-                    {user?.role !== 'Analista' && (
+                    {user?.role !== "Analista" && (
                       <>
                         <button
                           onClick={() => handleEdit(facility)}
@@ -332,7 +332,7 @@ export default function FacilityManager() {
                             )}
                           </div>
                           <div>
-                            <p className="text-sm font-black text-txt-main leading-none mb-1 group-hover:text-corpoelec-blue transition-colors">
+                            <p className="text-sm font-bold text-txt-main leading-none mb-1 group-hover:text-corpoelec-blue transition-colors">
                               {facility.name}
                             </p>
                             <p className="text-[10px] text-txt-muted font-mono">
@@ -374,7 +374,7 @@ export default function FacilityManager() {
                           >
                             <Eye size={16} />
                           </button>
-                          {user?.role !== 'Analista' && (
+                          {user?.role !== "Analista" && (
                             <>
                               <button
                                 onClick={() => handleEdit(facility)}

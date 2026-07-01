@@ -82,8 +82,8 @@ export default function FacilityCodeManager() {
           r.date ? parseInt(r.date.slice(0, 4)) : null,
           r.inspectionDate ? parseInt(r.inspectionDate.slice(0, 4)) : null,
         ])
-        .filter((y) => y !== null && !isNaN(y))
-    )
+        .filter((y) => y !== null && !isNaN(y)),
+    ),
   ).sort((a, b) => b - a); // most recent first
 
   // Fallback: if no records yet, show current year
@@ -720,7 +720,7 @@ export default function FacilityCodeManager() {
                       <td className="px-6 py-4">
                         {record.facility ? (
                           <div>
-                            <p className="text-sm font-black text-txt-main leading-none mb-1 group-hover:text-corpoelec-blue transition-colors">
+                            <p className="text-sm font-bold text-txt-main leading-none mb-1 group-hover:text-corpoelec-blue transition-colors">
                               {record.facility.name}
                             </p>
                             <p className="text-[10px] text-txt-muted">
