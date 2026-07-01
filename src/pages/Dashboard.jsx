@@ -37,6 +37,14 @@ export default function Dashboard() {
   const { showNotification } = useNotification();
 
   const [loading, setLoading] = useState(true);
+  const [periods, setPeriods] = useState([]);
+  const [selectedPeriodId, setSelectedPeriodId] = useState("all");
+
+  const [rawAccidents, setRawAccidents] = useState([]);
+  const [rawInspections, setRawInspections] = useState([]);
+  const [rawEmployeesCount, setRawEmployeesCount] = useState(0);
+  const [rawFacilitiesCount, setRawFacilitiesCount] = useState(0);
+
   const [counts, setCounts] = useState({
     facilities: 0,
     employees: 0,
@@ -63,183 +71,43 @@ export default function Dashboard() {
     const fetchDashboardData = async () => {
       setLoading(true);
       try {
-        const [accRes, empRes, facRes, insRes] = await Promise.all([
+        const [accRes, empRes, facRes, insRes, periodRes] = await Promise.all([
           api.get("/accidents"),
           api.get("/employees"),
           api.get("/facilities"),
           api.get("/inspections"),
+          api.get("/lookups/periods"),
         ]);
 
         const accidentsList = Array.isArray(accRes) ? accRes : [];
         const employeesList = Array.isArray(empRes) ? empRes : [];
         const facilitiesList = Array.isArray(facRes) ? facRes : [];
         const inspectionsList = Array.isArray(insRes) ? insRes : [];
+        const periodsList = Array.isArray(periodRes) ? periodRes : [];
 
-        // Filter inspections by category types
-        const extList = inspectionsList.filter(
-          (i) => i.type === "Extintor" || i.extinguisherInspection,
-        );
-        const protList = inspectionsList.filter(
-          (i) => i.type === "Proteccion" || i.protectionInspection,
-        );
-        const vehList = inspectionsList.filter(
-          (i) => i.type === "Vehiculo" || i.vehicleInspection,
+        const sortedPeriods = [...periodsList].sort(
+          (a, b) => parseInt(b.annuality) - parseInt(a.annuality),
         );
 
-        setCounts({
-          facilities: facilitiesList.length,
-          employees: employeesList.length,
-          accidents: accidentsList.length,
-          inspectionsTotal: inspectionsList.length,
-          extinguishersInsps: extList.length,
-          protectionInsps: protList.length,
-          vehiclesInsps: vehList.length,
-        });
+        setRawAccidents(accidentsList);
+        setRawInspections(inspectionsList);
+        setRawEmployeesCount(employeesList.length);
+        setRawFacilitiesCount(facilitiesList.length);
+        setPeriods(sortedPeriods);
 
-        // 1. Group accidents by the last 6 months dynamically
-        const months = [
-          "Ene",
-          "Feb",
-          "Mar",
-          "Abr",
-          "May",
-          "Jun",
-          "Jul",
-          "Ago",
-          "Sep",
-          "Oct",
-          "Nov",
-          "Dic",
-        ];
-        const now = new Date();
-        const chartData = [];
-
-        for (let i = 5; i >= 0; i--) {
-          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-          const mName = months[d.getMonth()];
-          const mYear = d.getFullYear().toString().substring(2);
-
-          const count = accidentsList.filter((acc) => {
-            if (!acc.date && !acc.accidentDate) return false;
-            const dateStr = acc.date || acc.accidentDate;
-            const accDate = parseLocalDate(dateStr);
-            return (
-              accDate &&
-              accDate.getMonth() === d.getMonth() &&
-              accDate.getFullYear() === d.getFullYear()
-            );
-          }).length;
-
-          chartData.push({
-            label: `${mName} '${mYear}`,
-            count: count,
-          });
+        // Find the period representing the current year
+        const currentYear = new Date().getFullYear();
+        const currentPeriod = sortedPeriods.find(
+          (p) => parseInt(p.annuality) === currentYear,
+        );
+        if (currentPeriod) {
+          setSelectedPeriodId(currentPeriod.id.toString());
+        } else if (sortedPeriods.length > 0) {
+          // Default to the most recent period by annuality (already sorted first)
+          setSelectedPeriodId(sortedPeriods[0].id.toString());
+        } else {
+          setSelectedPeriodId("all");
         }
-        setMonthlyAccidents(chartData);
-
-        // 2. Build additional custom statistics
-        const statusPending = accidentsList.filter(
-          (a) => a.processStatusId === 1 || !a.processStatusId,
-        ).length;
-        const statusInProcess = accidentsList.filter(
-          (a) => a.processStatusId === 2,
-        ).length;
-        const statusCompleted = accidentsList.filter(
-          (a) => a.processStatusId === 3,
-        ).length;
-
-        // Top accident types
-        const typesMap = {};
-        accidentsList.forEach((a) => {
-          const typeName = a.type?.name || "No clasificado";
-          typesMap[typeName] = (typesMap[typeName] || 0) + 1;
-        });
-        const topTypes = Object.entries(typesMap)
-          .map(([name, count]) => ({ name, count }))
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 4);
-
-        // Top facilities with accidents
-        const facsMap = {};
-        accidentsList.forEach((a) => {
-          const facName = a.facility?.name || "Extramuros / Externa";
-          facsMap[facName] = (facsMap[facName] || 0) + 1;
-        });
-        const topFacilities = Object.entries(facsMap)
-          .map(([name, count]) => ({ name, count }))
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 4);
-
-        setStats({
-          statusPending,
-          statusInProcess,
-          statusCompleted,
-          topTypes,
-          topFacilities,
-        });
-
-        // 3. Build combined real-time activity feed
-        const combinedEvents = [];
-
-        accidentsList.forEach((acc) => {
-          const name = acc.involvedEmployees?.[0]?.employee
-            ? `${acc.involvedEmployees[0].employee.firstName} ${acc.involvedEmployees[0].employee.lastName}`
-            : "PERSONAL";
-
-          const dateVal = acc.date || acc.accidentDate;
-
-          combinedEvents.push({
-            id: `acc-${acc.id}`,
-            type: "accident",
-            title: `Accidente: ${name}`,
-            ref: acc.facility?.name || "INSTALACIÓN",
-            time: dateVal
-              ? parseLocalDate(dateVal).toLocaleDateString("es-VE", {
-                  day: "2-digit",
-                  month: "short",
-                })
-              : "RECIENTE",
-            path: "/accidents/register",
-            rawDate: dateVal ? parseLocalDate(dateVal) : new Date(0),
-          });
-        });
-
-        inspectionsList.forEach((ins) => {
-          let typeLabel = "Auditoría ASHO";
-          let path = "/inspections/extinguishers";
-
-          if (ins.type === "Extintor" || ins.extinguisherInspection) {
-            typeLabel = "Inspecc. Extintor";
-            path = "/inspections/extinguishers";
-          } else if (ins.type === "Proteccion" || ins.protectionInspection) {
-            typeLabel = "Inspecc. EPP/EPC";
-            path = "/protection/inspections";
-          } else if (ins.type === "Vehiculo" || ins.vehicleInspection) {
-            typeLabel = "Inspecc. Vehículo";
-            path = "/inspections/vehicles";
-          }
-
-          combinedEvents.push({
-            id: `ins-${ins.id}`,
-            type: "inspection",
-            title: `${typeLabel} #${ins.inspectionNumber || ins.id}`,
-            ref: ins.facility?.name || "SEDE",
-            time: ins.date
-              ? parseLocalDate(ins.date).toLocaleDateString("es-VE", {
-                  day: "2-digit",
-                  month: "short",
-                })
-              : "RECIENTE",
-            path,
-            rawDate: ins.date ? parseLocalDate(ins.date) : new Date(0),
-          });
-        });
-
-        // Sort chronologically (newest first) and select top 5
-        const sorted = combinedEvents
-          .sort((a, b) => b.rawDate - a.rawDate)
-          .slice(0, 5);
-        setRecentActivity(sorted);
       } catch (err) {
         showNotification(
           "Error al cargar indicadores dinámicos del Dashboard",
@@ -251,6 +119,237 @@ export default function Dashboard() {
     };
     fetchDashboardData();
   }, []);
+
+  useEffect(() => {
+    if (loading) return;
+
+    // 1. Find the selected period object
+    const selectedPeriod = periods.find(
+      (p) => p.id.toString() === selectedPeriodId.toString(),
+    );
+    const selectedYear = selectedPeriod ? parseInt(selectedPeriod.annuality) : null;
+
+    // 2. Filter accidents by period
+    const filteredAccidents = rawAccidents.filter((acc) => {
+      if (selectedPeriodId === "all") return true;
+
+      // Try by periodId/period.id
+      if (acc.periodId && Number(acc.periodId) === Number(selectedPeriodId))
+        return true;
+      if (acc.period?.id && Number(acc.period.id) === Number(selectedPeriodId))
+        return true;
+
+      // Fallback: compare year of accidentDate/date to selectedPeriod's annuality
+      const dateStr = acc.date || acc.accidentDate;
+      if (dateStr && selectedYear) {
+        const d = parseLocalDate(dateStr);
+        return d && d.getFullYear() === selectedYear;
+      }
+      return false;
+    });
+
+    // 3. Filter inspections by period year
+    const filteredInspections = rawInspections.filter((insp) => {
+      if (selectedPeriodId === "all") return true;
+      if (!selectedYear) return true;
+
+      const dateStr = insp.date;
+      if (dateStr) {
+        const d = parseLocalDate(dateStr);
+        return d && d.getFullYear() === selectedYear;
+      }
+      return false;
+    });
+
+    // Filter inspections by category types
+    const extList = filteredInspections.filter(
+      (i) => i.type === "Extintor" || i.extinguisherInspection,
+    );
+    const protList = filteredInspections.filter(
+      (i) => i.type === "Proteccion" || i.protectionInspection,
+    );
+    const vehList = filteredInspections.filter(
+      (i) => i.type === "Vehiculo" || i.vehicleInspection,
+    );
+
+    setCounts({
+      facilities: rawFacilitiesCount,
+      employees: rawEmployeesCount,
+      accidents: filteredAccidents.length,
+      inspectionsTotal: filteredInspections.length,
+      extinguishersInsps: extList.length,
+      protectionInsps: protList.length,
+      vehiclesInsps: vehList.length,
+    });
+
+    // 4. Monthly chart data:
+    // If a specific period/year is selected, show 12 months for that year.
+    // If "all" is selected, show the last 6 months (as original layout).
+    const months = [
+      "Ene",
+      "Feb",
+      "Mar",
+      "Abr",
+      "May",
+      "Jun",
+      "Jul",
+      "Ago",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dic",
+    ];
+    const chartData = [];
+
+    if (selectedPeriodId === "all") {
+      const now = new Date();
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const mName = months[d.getMonth()];
+        const mYear = d.getFullYear().toString().substring(2);
+
+        const count = filteredAccidents.filter((acc) => {
+          if (!acc.date && !acc.accidentDate) return false;
+          const dateStr = acc.date || acc.accidentDate;
+          const accDate = parseLocalDate(dateStr);
+          return (
+            accDate &&
+            accDate.getMonth() === d.getMonth() &&
+            accDate.getFullYear() === d.getFullYear()
+          );
+        }).length;
+
+        chartData.push({
+          label: `${mName} '${mYear}`,
+          count: count,
+        });
+      }
+    } else if (selectedYear) {
+      // Annual distribution (12 months of the selected year)
+      for (let monthIdx = 0; monthIdx < 12; monthIdx++) {
+        const count = filteredAccidents.filter((acc) => {
+          if (!acc.date && !acc.accidentDate) return false;
+          const dateStr = acc.date || acc.accidentDate;
+          const accDate = parseLocalDate(dateStr);
+          return (
+            accDate &&
+            accDate.getMonth() === monthIdx &&
+            accDate.getFullYear() === selectedYear
+          );
+        }).length;
+
+        chartData.push({
+          label: months[monthIdx],
+          count: count,
+        });
+      }
+    }
+    setMonthlyAccidents(chartData);
+
+    // 5. Build additional custom statistics
+    const statusPending = filteredAccidents.filter(
+      (a) => a.processStatusId === 1 || !a.processStatusId,
+    ).length;
+    const statusInProcess = filteredAccidents.filter(
+      (a) => a.processStatusId === 2,
+    ).length;
+    const statusCompleted = filteredAccidents.filter(
+      (a) => a.processStatusId === 3,
+    ).length;
+
+    // Top accident types
+    const typesMap = {};
+    filteredAccidents.forEach((a) => {
+      const typeName = a.type?.name || "No clasificado";
+      typesMap[typeName] = (typesMap[typeName] || 0) + 1;
+    });
+    const topTypes = Object.entries(typesMap)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 4);
+
+    // Top facilities with accidents
+    const facsMap = {};
+    filteredAccidents.forEach((a) => {
+      const facName = a.facility?.name || "Extramuros / Externa";
+      facsMap[facName] = (facsMap[facName] || 0) + 1;
+    });
+    const topFacilities = Object.entries(facsMap)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 4);
+
+    setStats({
+      statusPending,
+      statusInProcess,
+      statusCompleted,
+      topTypes,
+      topFacilities,
+    });
+
+    // 6. Build combined real-time activity feed
+    const combinedEvents = [];
+
+    filteredAccidents.forEach((acc) => {
+      const name = acc.involvedEmployees?.[0]?.employee
+        ? `${acc.involvedEmployees[0].employee.firstName} ${acc.involvedEmployees[0].employee.lastName}`
+        : "PERSONAL";
+
+      const dateVal = acc.date || acc.accidentDate;
+
+      combinedEvents.push({
+        id: `acc-${acc.id}`,
+        type: "accident",
+        title: `Accidente: ${name}`,
+        ref: acc.facility?.name || "INSTALACIÓN",
+        time: dateVal
+          ? parseLocalDate(dateVal).toLocaleDateString("es-VE", {
+              day: "2-digit",
+              month: "short",
+            })
+          : "RECIENTE",
+        path: "/accidents/register",
+        rawDate: dateVal ? parseLocalDate(dateVal) : new Date(0),
+      });
+    });
+
+    filteredInspections.forEach((ins) => {
+      let typeLabel = "Auditoría ASHO";
+      let path = "/inspections/extinguishers";
+
+      if (ins.type === "Extintor" || ins.extinguisherInspection) {
+        typeLabel = "Inspecc. Extintor";
+        path = "/inspections/extinguishers";
+      } else if (ins.type === "Proteccion" || ins.protectionInspection) {
+        typeLabel = "Inspecc. EPP/EPC";
+        path = "/protection/inspections";
+      } else if (ins.type === "Vehiculo" || ins.vehicleInspection) {
+        typeLabel = "Inspecc. Vehículo";
+        path = "/inspections/vehicles";
+      }
+
+      combinedEvents.push({
+        id: `ins-${ins.id}`,
+        type: "inspection",
+        title: `${typeLabel} #${ins.inspectionNumber || ins.id}`,
+        ref: ins.facility?.name || "SEDE",
+        time: ins.date
+          ? parseLocalDate(ins.date).toLocaleDateString("es-VE", {
+              day: "2-digit",
+              month: "short",
+            })
+          : "RECIENTE",
+        path,
+        rawDate: ins.date ? parseLocalDate(ins.date) : new Date(0),
+      });
+    });
+
+    // Sort chronologically (newest first) and select top 5
+    const sorted = combinedEvents
+      .sort((a, b) => b.rawDate - a.rawDate)
+      .slice(0, 5);
+    setRecentActivity(sorted);
+  }, [selectedPeriodId, rawAccidents, rawInspections, periods, loading]);
 
   // Calculate scaling for dynamic chart bars
   const maxAccidentCount = Math.max(...monthlyAccidents.map((m) => m.count), 1);
@@ -276,17 +375,38 @@ export default function Dashboard() {
               extraídos de la infraestructura del sistema.
             </p>
           </div>
-          <div className="flex items-center gap-3 bg-bg-main/40 px-5 py-3.5 rounded-2xl border border-border-main/60 self-stretch md:self-auto justify-center">
-            <div className="text-left">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 self-stretch md:self-auto">
+            {/* Selector de Período/Año */}
+            <div className="flex flex-col gap-1">
               <span className="text-[8px] font-black text-txt-muted uppercase tracking-widest block">
-                Última Sincronización
+                Año / Período
               </span>
-              <span className="text-xs font-bold text-txt-main">
-                {new Date().toLocaleDateString("es-VE", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
+              <select
+                value={selectedPeriodId}
+                onChange={(e) => setSelectedPeriodId(e.target.value)}
+                className="bg-bg-main/80 border border-border-main/60 hover:border-corpoelec-blue/50 text-xs font-bold text-txt-main rounded-2xl px-4 py-3 outline-none focus:border-corpoelec-blue focus:ring-1 focus:ring-corpoelec-blue transition-all cursor-pointer min-w-[160px]"
+              >
+                <option value="all">Ver Todos</option>
+                {periods.map((p) => (
+                  <option key={p.id} value={p.id.toString()}>
+                    Gestión {p.annuality}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-3 bg-bg-main/40 px-5 py-3.5 rounded-2xl border border-border-main/60 justify-center">
+              <div className="text-left">
+                <span className="text-[8px] font-black text-txt-muted uppercase tracking-widest block">
+                  Última Sincronización
+                </span>
+                <span className="text-xs font-bold text-txt-main">
+                  {new Date().toLocaleDateString("es-VE", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -428,11 +548,13 @@ export default function Dashboard() {
                   Historial de Accidentes
                 </h4>
                 <p className="text-[9px] font-black text-txt-muted uppercase tracking-widest">
-                  Estadísticas reales de accidentabilidad de los últimos 6 meses
+                  {selectedPeriodId === "all"
+                    ? "Estadísticas reales de accidentabilidad de los últimos 6 meses"
+                    : "Distribución mensual de accidentabilidad para el año seleccionado"}
                 </p>
               </div>
               <div className="px-4 py-2 rounded-xl bg-bg-main/5 text-[9px] font-black uppercase text-txt-muted border border-border-main/50">
-                Línea de Tiempo
+                {selectedPeriodId === "all" ? "Línea de Tiempo" : "Vista Anual"}
               </div>
             </div>
 

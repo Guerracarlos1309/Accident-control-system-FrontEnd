@@ -117,48 +117,31 @@ export const helpFetch = () => {
         return res.blob();
       })
       .then(async (blob) => {
-        // Detectar si está corriendo dentro de Tauri
-        const isTauri = typeof window !== "undefined" && !!window.__TAURI__;
+        // Detectar Tauri v2 por su global interno
+        const isTauri =
+          typeof window !== "undefined" && !!window.__TAURI_INTERNALS__;
 
         if (isTauri) {
           try {
-            // Tauri v1 o Tauri v2 con API global habilitada
-            const tauriDialog = window.__TAURI__.dialog;
-            const tauriFs = window.__TAURI__.fs;
+            // Convertir Blob a Uint8Array para enviarlo al comando Rust
+            const arrayBuffer = await blob.arrayBuffer();
+            const data = Array.from(new Uint8Array(arrayBuffer));
 
-            if (tauriDialog && tauriFs) {
-              const filters = [];
-              const ext = filename.split(".").pop();
-              if (ext) {
-                filters.push({
-                  name: ext.toUpperCase(),
-                  extensions: [ext],
-                });
-              }
+            // Invocar el comando Rust save_file — guarda en carpeta Descargas del sistema
+            const savedPath = await window.__TAURI_INTERNALS__.invoke(
+              "save_file",
+              { data, filename },
+            );
 
-              // Mostrar el diálogo de guardado nativo
-              const filePath = await tauriDialog.save({
-                defaultPath: filename,
-                filters: filters,
-              });
-
-              if (filePath) {
-                // Convertir Blob a Uint8Array para Tauri
-                const arrayBuffer = await blob.arrayBuffer();
-                const binaryData = new Uint8Array(arrayBuffer);
-
-                // Guardar el archivo de forma binaria
-                await tauriFs.writeBinaryFile(filePath, binaryData);
-              }
-              return;
-            }
+            console.log("Archivo guardado en:", savedPath);
+            return;
           } catch (tauriError) {
             console.error("Error al guardar archivo en Tauri:", tauriError);
-            // Intentar fallback al navegador
+            throw tauriError;
           }
         }
 
-        // Comportamiento estándar del navegador web (fuera de Tauri)
+        // Fallback para navegador web (modo desarrollo)
         const fileUrl = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = fileUrl;

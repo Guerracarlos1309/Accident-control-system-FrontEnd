@@ -21,10 +21,31 @@ export default function Help() {
   const { showNotification } = useNotification();
   const [downloadingDb, setDownloadingDb] = useState(false);
 
-  const handleDownloadManual = () => {
-    // Placeholder logic for downloading manual
-    // In a real scenario, this would be a link to a file in the public folder
-    alert("Iniciando descarga del Manual de Usuario (Archivo Placeholder)");
+  const handleDownloadManual = async () => {
+    // Detectar si corre dentro de Tauri v2 (app de escritorio)
+    const isTauri =
+      typeof window !== "undefined" && !!window.__TAURI_INTERNALS__;
+
+    if (isTauri) {
+      try {
+        showNotification("Abriendo Manual de Usuario...", "info");
+        // Tauri v2 inyecta __TAURI_INTERNALS__.invoke globalmente en el WebView
+        await window.__TAURI_INTERNALS__.invoke("open_user_manual");
+        showNotification("Manual de Usuario abierto correctamente", "success");
+      } catch (err) {
+        console.error("Error al abrir el manual en Tauri:", err);
+        showNotification(`No se pudo abrir el manual: ${err}`, "error");
+      }
+    } else {
+      // Fallback para navegador web (modo desarrollo)
+      const link = document.createElement("a");
+      link.href = "/Manual de usuario.pdf";
+      link.download = "Manual de usuario.pdf";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showNotification("Descargando Manual de Usuario...", "success");
+    }
   };
 
   const handleDownloadBackup = async () => {

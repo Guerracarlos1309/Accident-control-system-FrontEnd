@@ -37,6 +37,14 @@ const parseLocalDate = (dateStr) => {
 
 export default function ReportCenter() {
   const [loading, setLoading] = useState(true);
+  const [periods, setPeriods] = useState([]);
+  const [selectedPeriodId, setSelectedPeriodId] = useState("all");
+
+  const [rawAccidents, setRawAccidents] = useState([]);
+  const [rawInspections, setRawInspections] = useState([]);
+  const [rawEmployeesCount, setRawEmployeesCount] = useState(0);
+  const [rawUsersCount, setRawUsersCount] = useState(0);
+
   const [downloading, setDownloading] = useState({
     payroll: false,
     accidents: false,
@@ -147,6 +155,7 @@ export default function ReportCenter() {
           facRes,
           accTypeRes,
           statusRes,
+          periodRes,
         ] = await Promise.all([
           api.get("/accidents"),
           api.get("/employees"),
@@ -156,67 +165,36 @@ export default function ReportCenter() {
           api.get("/facilities"),
           api.get("/lookups/accident-types"),
           api.get("/lookups/inspection-status"),
+          api.get("/lookups/periods"),
         ]);
 
         const accidentsList = Array.isArray(accRes) ? accRes : [];
         const inspectionsList = Array.isArray(inspRes) ? inspRes : [];
+        const periodsList = Array.isArray(periodRes) ? periodRes : [];
 
-        setStats({
-          accidents: accidentsList.length,
-          employees: Array.isArray(empRes) ? empRes.length : 0,
-          users: Array.isArray(userRes) ? userRes.length : 0,
-          inspections: inspectionsList.length,
-        });
+        const sortedPeriods = [...periodsList].sort(
+          (a, b) => parseInt(b.annuality) - parseInt(a.annuality),
+        );
 
-        // Compute accident distribution by type from real data
-        const typeColors = [
-          "#005C9E",
-          "#E30613",
-          "#F59E0B",
-          "#10B981",
-          "#8B5CF6",
-          "#EC4899",
-          "#06B6D4",
-        ];
-        const typeCounts = {};
-        accidentsList.forEach((acc) => {
-          const typeName = acc.type?.name || "Sin clasificar";
-          typeCounts[typeName] = (typeCounts[typeName] || 0) + 1;
-        });
-        const total = accidentsList.length || 1;
-        const distData = Object.entries(typeCounts)
-          .sort((a, b) => b[1] - a[1])
-          .map(([name, count], idx) => ({
-            name,
-            count,
-            pct: Math.round((count / total) * 100),
-            color: typeColors[idx % typeColors.length],
-          }));
-        setAccidentDistribution(distData);
+        setRawAccidents(accidentsList);
+        setRawInspections(inspectionsList);
+        setRawEmployeesCount(Array.isArray(empRes) ? empRes.length : 0);
+        setRawUsersCount(Array.isArray(userRes) ? userRes.length : 0);
+        setPeriods(sortedPeriods);
 
+        // Find the period representing the current year
         const currentYear = new Date().getFullYear();
-        const trendData = Array.from({ length: 12 }, (_, monthIdx) => {
-          const accCount = accidentsList.filter((acc) => {
-            const dateStr = acc.date || acc.accidentDate;
-            if (!dateStr) return false;
-            const d = parseLocalDate(dateStr);
-            return d && d.getFullYear() === currentYear && d.getMonth() === monthIdx;
-          }).length;
-
-          const inspCount = inspectionsList.filter((insp) => {
-            if (!insp.date) return false;
-            const d = parseLocalDate(insp.date);
-            return d && d.getFullYear() === currentYear && d.getMonth() === monthIdx;
-          }).length;
-
-          return {
-            monthIdx,
-            accidents: accCount,
-            inspections: inspCount,
-            total: accCount + inspCount,
-          };
-        });
-        setMonthlyTrend(trendData);
+        const currentPeriod = sortedPeriods.find(
+          (p) => parseInt(p.annuality) === currentYear,
+        );
+        if (currentPeriod) {
+          setSelectedPeriodId(currentPeriod.id.toString());
+        } else if (sortedPeriods.length > 0) {
+          // Default to latest period by annuality (already sorted first)
+          setSelectedPeriodId(sortedPeriods[0].id.toString());
+        } else {
+          setSelectedPeriodId("all");
+        }
 
         if (Array.isArray(mgtRes)) setManagements(mgtRes);
         if (Array.isArray(facRes)) setFacilities(facRes);
@@ -231,6 +209,106 @@ export default function ReportCenter() {
 
     fetchStatsAndLookups();
   }, []);
+
+  useEffect(() => {
+    if (loading) return;
+
+    // 1. Find selected period / year
+    const selectedPeriod = periods.find(
+      (p) => p.id.toString() === selectedPeriodId.toString(),
+    );
+    const selectedYear = selectedPeriod ? parseInt(selectedPeriod.annuality) : null;
+
+    // 2. Filter accidents by period
+    const filteredAccidents = rawAccidents.filter((acc) => {
+      if (selectedPeriodId === "all") return true;
+      if (acc.periodId && Number(acc.periodId) === Number(selectedPeriodId))
+        return true;
+      if (acc.period?.id && Number(acc.period.id) === Number(selectedPeriodId))
+        return true;
+
+      const dateStr = acc.date || acc.accidentDate;
+      if (dateStr && selectedYear) {
+        const d = parseLocalDate(dateStr);
+        return d && d.getFullYear() === selectedYear;
+      }
+      return false;
+    });
+
+    // 3. Filter inspections by period year
+    const filteredInspections = rawInspections.filter((insp) => {
+      if (selectedPeriodId === "all") return true;
+      if (!selectedYear) return true;
+
+      const dateStr = insp.date;
+      if (dateStr) {
+        const d = parseLocalDate(dateStr);
+        return d && d.getFullYear() === selectedYear;
+      }
+      return false;
+    });
+
+    // 4. Update general stats
+    setStats({
+      accidents: filteredAccidents.length,
+      employees: rawEmployeesCount,
+      users: rawUsersCount,
+      inspections: filteredInspections.length,
+    });
+
+    // 5. Update accident distribution
+    const typeColors = [
+      "#005C9E",
+      "#E30613",
+      "#F59E0B",
+      "#10B981",
+      "#8B5CF6",
+      "#EC4899",
+      "#06B6D4",
+    ];
+    const typeCounts = {};
+    filteredAccidents.forEach((acc) => {
+      const typeName = acc.type?.name || "Sin clasificar";
+      typeCounts[typeName] = (typeCounts[typeName] || 0) + 1;
+    });
+    const total = filteredAccidents.length || 1;
+    const distData = Object.entries(typeCounts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, count], idx) => ({
+        name,
+        count,
+        pct: Math.round((count / total) * 100),
+        color: typeColors[idx % typeColors.length],
+      }));
+    setAccidentDistribution(distData);
+
+    // 6. Update monthly trend
+    // If a year is selected, show trend for that selected year.
+    // If "all" is selected, default to current year.
+    const trendYear = selectedYear || new Date().getFullYear();
+    const trendData = Array.from({ length: 12 }, (_, monthIdx) => {
+      const accCount = filteredAccidents.filter((acc) => {
+        const dateStr = acc.date || acc.accidentDate;
+        if (!dateStr) return false;
+        const d = parseLocalDate(dateStr);
+        return d && d.getFullYear() === trendYear && d.getMonth() === monthIdx;
+      }).length;
+
+      const inspCount = filteredInspections.filter((insp) => {
+        if (!insp.date) return false;
+        const d = parseLocalDate(insp.date);
+        return d && d.getFullYear() === trendYear && d.getMonth() === monthIdx;
+      }).length;
+
+      return {
+        monthIdx,
+        accidents: accCount,
+        inspections: inspCount,
+        total: accCount + inspCount,
+      };
+    });
+    setMonthlyTrend(trendData);
+  }, [selectedPeriodId, rawAccidents, rawInspections, periods, loading]);
 
   const handleDownload = async (type, endpoint, defaultName) => {
     setDownloading((prev) => ({ ...prev, [type]: true }));
@@ -364,11 +442,25 @@ export default function ReportCenter() {
             Análisis de indicadores ASHO y gestión operativa.
           </p>
         </div>
-        <div className="flex gap-3">
-          <button className="btn-secondary h-12">
-            <Calendar size={18} />
-            <span>Últimos 30 días</span>
-          </button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full md:w-auto">
+          {/* Selector de Período/Año */}
+          <div className="flex flex-col gap-1">
+            <span className="text-[8px] font-black text-txt-muted uppercase tracking-widest block">
+              Año / Período
+            </span>
+            <select
+              value={selectedPeriodId}
+              onChange={(e) => setSelectedPeriodId(e.target.value)}
+              className="bg-bg-main/80 border border-border-main/60 hover:border-corpoelec-blue/50 text-xs font-bold text-txt-main rounded-2xl px-4 py-3 outline-none focus:border-corpoelec-blue focus:ring-1 focus:ring-corpoelec-blue transition-all cursor-pointer min-w-[160px]"
+            >
+              <option value="all">Ver Todos</option>
+              {periods.map((p) => (
+                <option key={p.id} value={p.id.toString()}>
+                  Gestión {p.annuality}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
