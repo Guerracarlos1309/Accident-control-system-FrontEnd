@@ -22,14 +22,16 @@ export default function Help() {
   const [downloadingDb, setDownloadingDb] = useState(false);
   const [downloadPDF, setDownloadPDF] = useState(false);
 
-  const handleDownloadManual = () => {
-    const link = document.createElement("a");
-    link.href = "/Manual de usuario.pdf"; // Apunta al archivo en /public
-    link.download = "Manual de usuario.pdf"; // Nombre del archivo al descargar
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showNotification("Descargando Manual de Usuario...", "success");
+  const handleDownloadManual = async () => {
+    try {
+      showNotification("Descargando Manual de Usuario...", "info");
+      const manualUrl = `${window.location.origin}/Manual de usuario.pdf`;
+      await api.download(manualUrl, "Manual de usuario.pdf");
+      showNotification("Manual de usuario descargado exitosamente", "success");
+    } catch (error) {
+      console.error("Error al descargar el manual:", error);
+      showNotification("Error al intentar descargar el manual", "error");
+    }
   };
 
   const handleDownloadBackup = async () => {

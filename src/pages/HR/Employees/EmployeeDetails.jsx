@@ -119,6 +119,9 @@ export default function EmployeeDetails({ data }) {
           <DetailItem icon={Mail} label="Correo Electrónico" value={data.email} />
           <DetailItem icon={MapPin} label="Lugar de Nacimiento" value={data.birthPlace} />
           <DetailItem icon={MapPin} label="Dirección de Habitación" value={data.homeAddress} />
+          {data.referencePoint && (
+            <DetailItem icon={MapPin} label="Punto de Referencia" value={data.referencePoint} />
+          )}
         </Section>
       </div>
     </div>

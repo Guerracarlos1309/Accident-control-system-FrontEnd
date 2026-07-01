@@ -31,13 +31,14 @@ export default function FacilityForm({
     coordinates: editingData?.coordinates || "",
     installationTypeId: editingData?.installationTypeId || "",
     voltageLevel: editingData?.voltageLevel || "",
+    referencePoint: editingData?.referencePoint || "",
   });
 
   const [errors, setErrors] = useState({});
 
   const isSubstationSelected = (typeId = formData.installationTypeId) => {
     const selectedType = installationTypes.find(
-      (t) => String(t.id) === String(typeId)
+      (t) => String(t.id) === String(typeId),
     );
     if (!selectedType) return false;
     return selectedType.name
@@ -261,8 +262,12 @@ export default function FacilityForm({
       data.append("name", formData.name);
       data.append("coordinates", formData.coordinates);
       data.append("installationTypeId", formData.installationTypeId);
-      data.append("voltageLevel", isSubstationSelected() ? formData.voltageLevel : "");
+      data.append(
+        "voltageLevel",
+        isSubstationSelected() ? formData.voltageLevel : "",
+      );
       data.append("parishId", location.parish);
+      data.append("referencePoint", formData.referencePoint || "");
 
       // Append images
       selectedFiles.forEach((file) => {
@@ -402,6 +407,20 @@ export default function FacilityForm({
             {errors.location}
           </p>
         )}
+
+        <div className="space-y-2">
+          <label className="text-[10px] font-black text-txt-muted uppercase tracking-widest ml-1">
+            Punto de Referencia (Opcional)
+          </label>
+          <textarea
+            name="referencePoint"
+            value={formData.referencePoint || ""}
+            onChange={handleChange}
+            className="input-field min-h-20 py-3 uppercase font-bold"
+            placeholder="EJ: ENTRADA PRINCIPAL A 50M DE LA AUTOPISTA"
+            maxLength={255}
+          />
+        </div>
       </div>
 
       {/* SECCIÓN 3: ESPECIFICACIONES TÉCNICAS */}
@@ -443,7 +462,9 @@ export default function FacilityForm({
               )}
             </div>
           )}
-          <div className={`space-y-2 ${!isSubstationSelected() ? "col-span-2" : ""}`}>
+          <div
+            className={`space-y-2 ${!isSubstationSelected() ? "col-span-2" : ""}`}
+          >
             <label className="text-[10px] font-black text-txt-muted uppercase tracking-widest ml-1 flex items-center gap-2">
               <Globe size={14} className="text-corpoelec-blue" /> Coordenadas
               (LAT, LONG)

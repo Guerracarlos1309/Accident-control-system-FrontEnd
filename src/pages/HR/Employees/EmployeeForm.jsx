@@ -28,19 +28,47 @@ import {
 const MANAGEMENT_FILTER_MAP = [
   {
     // ASHO / Prevención
-    keywords: ["asho", "ambiente", "prevenci", "protecci", "seguridad", "higiene"],
+    keywords: [
+      "asho",
+      "ambiente",
+      "prevenci",
+      "protecci",
+      "seguridad",
+      "higiene",
+    ],
     jobTitleIds: [1, 2, 3, 4],
     occupationIds: [1, 2, 4, 5],
   },
   {
     // Operativas / campo
-    keywords: ["distribuci", "transmisi", "generaci", "vegetaci", "mantenimiento", "liniero", "operaci"],
+    keywords: [
+      "distribuci",
+      "transmisi",
+      "generaci",
+      "vegetaci",
+      "mantenimiento",
+      "liniero",
+      "operaci",
+    ],
     jobTitleIds: [10, 11, 12, 13, 14],
     occupationIds: [1, 3, 5],
   },
   {
     // Administrativo / soporte
-    keywords: ["bienes", "servicios", "talento", "recursos humanos", "administra", "planificaci", "sistemas", "tecnolog", "finanzas", "contabilidad", "legal", "jur"],
+    keywords: [
+      "bienes",
+      "servicios",
+      "talento",
+      "recursos humanos",
+      "administra",
+      "planificaci",
+      "sistemas",
+      "tecnolog",
+      "finanzas",
+      "contabilidad",
+      "legal",
+      "jur",
+    ],
     jobTitleIds: [20, 21, 22, 23],
     occupationIds: [1, 2, 4],
   },
@@ -73,6 +101,7 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
     customOccupation: "",
     birthPlace: "",
     homeAddress: "",
+    referencePoint: "",
     educationLevel: "",
     hireDate: "",
     officePhone: "",
@@ -166,10 +195,13 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
             jobTitleId: data.jobTitleId?.toString() || "",
             occupationId: data.occupationId?.toString() || "",
             officePhone: data.officePhone || "",
+            referencePoint: data.referencePoint || "",
           });
 
           if (data.imageUrl) {
-            setImagePreview(`${window.BACKEND_URL || "http://localhost:3000"}${data.imageUrl}`);
+            setImagePreview(
+              `${window.BACKEND_URL || "http://localhost:3000"}${data.imageUrl}`,
+            );
           }
 
           // Sync ID Card prefix and number
@@ -238,7 +270,7 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
   const selectedManagementName = useMemo(() => {
     if (!formData.managementId) return "";
     const found = catalogs.managements.find(
-      (m) => String(m.id) === String(formData.managementId)
+      (m) => String(m.id) === String(formData.managementId),
     );
     return found ? found.name.toLowerCase() : "";
   }, [formData.managementId, catalogs.managements]);
@@ -247,7 +279,7 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
     if (!selectedManagementName) return null;
     return (
       MANAGEMENT_FILTER_MAP.find((rule) =>
-        rule.keywords.some((kw) => selectedManagementName.includes(kw))
+        rule.keywords.some((kw) => selectedManagementName.includes(kw)),
       ) || null
     );
   }, [selectedManagementName]);
@@ -255,14 +287,14 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
   const filteredJobTitles = useMemo(() => {
     if (!activeFilter) return catalogs.jobTitles;
     return catalogs.jobTitles.filter((jt) =>
-      activeFilter.jobTitleIds.includes(jt.id)
+      activeFilter.jobTitleIds.includes(jt.id),
     );
   }, [activeFilter, catalogs.jobTitles]);
 
   const filteredOccupations = useMemo(() => {
     if (!activeFilter) return catalogs.occupations;
     return catalogs.occupations.filter((o) =>
-      activeFilter.occupationIds.includes(o.id)
+      activeFilter.occupationIds.includes(o.id),
     );
   }, [activeFilter, catalogs.occupations]);
 
@@ -380,7 +412,10 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
       return;
     }
 
-    if (formData.occupationId === "other" && !formData.customOccupation?.trim()) {
+    if (
+      formData.occupationId === "other" &&
+      !formData.customOccupation?.trim()
+    ) {
       showNotification("Por favor, escriba el Cargo Institucional", "error");
       return;
     }
@@ -394,10 +429,16 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
     const isFirstNameValid = validateField("firstName", formData.firstName);
     const isLastNameValid = validateField("lastName", formData.lastName);
     const isIdNumberValid = validateField("idNumber", idNumber);
-    const isPersonalNumberValid = validateField("personalNumber", formData.personalNumber);
+    const isPersonalNumberValid = validateField(
+      "personalNumber",
+      formData.personalNumber,
+    );
     const isEmailValid = validateField("email", formData.email);
     const isPhoneValid = validateField("phone", formData.phone);
-    const isOfficePhoneValid = validateField("officePhone", formData.officePhone);
+    const isOfficePhoneValid = validateField(
+      "officePhone",
+      formData.officePhone,
+    );
 
     if (
       !isFirstNameValid ||
@@ -410,7 +451,7 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
     ) {
       showNotification(
         "No se puede registrar el empleado. Hay campos con datos inválidos o sospechosos.",
-        "error"
+        "error",
       );
 
       // Determine which tab has the first error and switch to it
@@ -477,7 +518,10 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
       ...formData,
       idCard: `${idPrefix}-${idNumber}`,
       // Send officePhone as null if empty so the backend stores null
-      officePhone: formData.officePhone && formData.officePhone.trim() !== "" ? formData.officePhone.trim() : null,
+      officePhone:
+        formData.officePhone && formData.officePhone.trim() !== ""
+          ? formData.officePhone.trim()
+          : null,
     };
 
     const formDataToSend = new FormData();
@@ -617,7 +661,9 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
               <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">
                 Cédula de Identidad *
               </label>
-              <div className={`flex items-stretch h-12 rounded-xl overflow-hidden border bg-bg-surface transition-all ${errors.idNumber ? "border-corpoelec-red focus-within:border-corpoelec-red focus-within:ring-corpoelec-red/10" : "border-border-main focus-within:border-corpoelec-blue focus-within:ring-corpoelec-blue/10"}`}>
+              <div
+                className={`flex items-stretch h-12 rounded-xl overflow-hidden border bg-bg-surface transition-all ${errors.idNumber ? "border-corpoelec-red focus-within:border-corpoelec-red focus-within:ring-corpoelec-red/10" : "border-border-main focus-within:border-corpoelec-blue focus-within:ring-corpoelec-blue/10"}`}
+              >
                 <select
                   value={idPrefix}
                   onChange={handleIdPrefixChange}
@@ -673,8 +719,8 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                   El número de personal no se puede modificar una vez registrado
                 </p>
               )}
-              {!data && (
-                errors.personalNumber ? (
+              {!data &&
+                (errors.personalNumber ? (
                   <p className="text-[10px] text-corpoelec-red font-black uppercase mt-1 ml-1 leading-tight">
                     {errors.personalNumber}
                   </p>
@@ -682,8 +728,7 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                   <p className="text-[9px] text-txt-muted font-bold tracking-tight mt-1 ml-1 self-end uppercase">
                     De 5 a 7 dígitos (Solo dígitos)
                   </p>
-                )
-              )}
+                ))}
             </div>
 
             <div className="space-y-1">
@@ -783,7 +828,14 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                 placeholder="04XX-XXXXXXX"
                 maxLength={15}
                 onKeyDown={(e) => {
-                  if (!/[0-9]/.test(e.key) && e.key !== "Backspace" && e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Delete" && e.key !== "Tab") {
+                  if (
+                    !/[0-9]/.test(e.key) &&
+                    e.key !== "Backspace" &&
+                    e.key !== "ArrowLeft" &&
+                    e.key !== "ArrowRight" &&
+                    e.key !== "Delete" &&
+                    e.key !== "Tab"
+                  ) {
                     e.preventDefault();
                   }
                 }}
@@ -817,6 +869,20 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                   {formData.homeAddress || "Pendiente..."}
                 </span>
               </div>
+            </div>
+
+            <div className="col-span-1 md:col-span-2 space-y-1">
+              <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">
+                Punto de Referencia (Opcional)
+              </label>
+              <textarea
+                name="referencePoint"
+                value={formData.referencePoint || ""}
+                onChange={handleChange}
+                className="input-field min-h-20 py-3 uppercase"
+                placeholder="EJ: CALLE 2 CON AV. 3, CASA NRO. 15-B"
+                maxLength={255}
+              />
             </div>
 
             <div className="space-y-1">
@@ -927,8 +993,8 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                   {loadingCatalogs
                     ? "Cargando..."
                     : !formData.managementId
-                    ? "Seleccione una gerencia primero"
-                    : "Seleccione..."}
+                      ? "Seleccione una gerencia primero"
+                      : "Seleccione..."}
                 </option>
                 {filteredOccupations.map((o) => (
                   <option key={o.id} value={o.id}>
@@ -978,8 +1044,8 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                   {loadingCatalogs
                     ? "Cargando..."
                     : !formData.managementId
-                    ? "Seleccione una gerencia primero"
-                    : "Seleccione..."}
+                      ? "Seleccione una gerencia primero"
+                      : "Seleccione..."}
                 </option>
                 {filteredJobTitles.map((j) => (
                   <option key={j.id} value={j.id}>
@@ -1057,7 +1123,9 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
             <div className="space-y-1 col-span-1 md:col-span-2">
               <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1 flex items-center gap-2">
                 <PhoneCall size={14} /> Teléfono Extensión / Oficina
-                <span className="text-txt-muted/40 font-normal normal-case tracking-normal">(Opcional)</span>
+                <span className="text-txt-muted/40 font-normal normal-case tracking-normal">
+                  (Opcional)
+                </span>
               </label>
               <input
                 type="text"
@@ -1069,7 +1137,14 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
                 placeholder="Ext. XXX o número directo (máx. 11 dígitos)"
                 maxLength={11}
                 onKeyDown={(e) => {
-                  if (!/[0-9]/.test(e.key) && e.key !== "Backspace" && e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Delete" && e.key !== "Tab") {
+                  if (
+                    !/[0-9]/.test(e.key) &&
+                    e.key !== "Backspace" &&
+                    e.key !== "ArrowLeft" &&
+                    e.key !== "ArrowRight" &&
+                    e.key !== "Delete" &&
+                    e.key !== "Tab"
+                  ) {
                     e.preventDefault();
                   }
                 }}

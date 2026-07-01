@@ -104,7 +104,7 @@ export const helpFetch = () => {
     if (token) {
       defaultHeader["Authorization"] = `Bearer ${token}`;
     }
-    const url = endpoint.startsWith("http")
+    const url = endpoint.includes("://")
       ? endpoint
       : `${BASE_URL}/${endpoint.replace(/^\//, "")}`;
 

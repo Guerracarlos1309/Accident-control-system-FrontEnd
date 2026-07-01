@@ -596,7 +596,7 @@ export default function AccidentsManager() {
                       Fecha
                     </th>
                     <th className="p-5 text-[10px] font-black text-txt-muted uppercase tracking-widest">
-                      Estado
+                      Magnitud
                     </th>
 
                     <th className="p-5 text-[10px] font-black text-txt-muted uppercase tracking-widest">
@@ -628,15 +628,12 @@ export default function AccidentsManager() {
                       <td className="p-5">
                         <div className="flex flex-col gap-1">
                           <span
-                            className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest w-fit ${
-                              acc.processStatusId === 3
-                                ? "bg-green-500/20 text-green-600"
-                                : acc.processStatusId === 2
-                                  ? "bg-corpoelec-blue/20 text-corpoelec-blue"
-                                  : "bg-amber-500/20 text-amber-600"
+                            className={`px-3 py-1 rounded-full text-[12px] uppercase font-bold text-txt-main
                             }`}
                           >
-                            {acc.processStatus?.name || "Pendiente"}
+                            {acc.magnitude?.name ||
+                              acc.magnitude?.description ||
+                              "No Especificada"}
                           </span>
                         </div>
                       </td>

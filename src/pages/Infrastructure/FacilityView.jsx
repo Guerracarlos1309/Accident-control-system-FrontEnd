@@ -180,6 +180,19 @@ export default function FacilityView({ facility }) {
                 </p>
               </div>
             </div>
+            {facility.referencePoint && (
+              <div className="flex items-start gap-3 pt-3 border-t border-border-main/30">
+                <MapPin size={18} className="text-corpoelec-blue mt-1 shrink-0" />
+                <div>
+                  <p className="text-[10px] font-black text-txt-muted uppercase tracking-[0.2em] mb-1">
+                    Punto de Referencia
+                  </p>
+                  <p className="text-sm font-bold text-txt-main">
+                    {facility.referencePoint}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
