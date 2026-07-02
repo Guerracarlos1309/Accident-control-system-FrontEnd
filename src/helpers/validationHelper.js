@@ -388,9 +388,6 @@ export function validateFacilityName(name, required = false) {
   return { isValid: true, message: "" };
 }
 
-/**
- * Validates coordinates (LAT, LONG).
- */
 export function validateCoordinates(coordinates, required = false) {
   if (!coordinates || coordinates.trim() === "") {
     if (required) {
@@ -399,15 +396,15 @@ export function validateCoordinates(coordinates, required = false) {
     return { isValid: true, message: "" };
   }
 
-  const val = coordinates.trim();
+  let val = coordinates.trim();
 
-  // 1. Check for standard decimal coordinate pair (e.g. 7.7350, -72.2326)
+  // Limpiar paréntesis iniciales y finales, barras invertidas y espacios redundantes
+  val = val.replace(/^[\s\\()]+/, "");
+  val = val.replace(/[\s\\()]+$/, "");
+  val = val.trim();
+
+  // 1. Validar formato decimal estándar (ej: 10.4881, -66.8794)
   const decimalRegex = /^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/;
-
-  // 2. Check for DMS coordinate pair (e.g. 7°44'06.1"N, 72°13'57.4"W) or single DMS coordinate (e.g. 7°44'06.1"N)
-  const dmsPairRegex = /^\d{1,2}°\d{1,2}'\d{1,2}(\.\d+)?"[NnSs],\s*\d{1,3}°\d{1,2}'\d{1,2}(\.\d+)?"[EeWwOo]$/;
-  const dmsSingleRegex = /^\d{1,3}°\d{1,2}'\d{1,2}(\.\d+)?"[NnSsEeWwOo]$/;
-
   if (decimalRegex.test(val)) {
     const parts = val.split(",");
     const lat = parseFloat(parts[0].trim());
@@ -422,48 +419,49 @@ export function validateCoordinates(coordinates, required = false) {
     return { isValid: true, message: "" };
   }
 
-  if (dmsPairRegex.test(val)) {
-    const parts = val.split(",");
-    const parseDMS = (part) => {
-      const match = part.trim().match(/^(\d{1,3})°(\d{1,2})'(\d{1,2}(\.\d+)?)"/);
-      return match ? { deg: parseInt(match[1], 10), min: parseInt(match[2], 10), sec: parseFloat(match[3]) } : null;
-    };
-    const latDms = parseDMS(parts[0]);
-    const lngDms = parseDMS(parts[1]);
-    if (!latDms || !lngDms) {
-      return { isValid: false, message: "Error al interpretar el formato DMS." };
-    }
-    if (latDms.deg > 90 || latDms.min >= 60 || latDms.sec >= 60) {
-      return { isValid: false, message: "Latitud DMS inválida (Grados hasta 90, Minutos y Segundos < 60)." };
-    }
-    if (lngDms.deg > 180 || lngDms.min >= 60 || lngDms.sec >= 60) {
-      return { isValid: false, message: "Longitud DMS inválida (Grados hasta 180, Minutos y Segundos < 60)." };
-    }
-    return { isValid: true, message: "" };
-  }
+  // 2. Validar formato DMS flexible (ej: 10° 29' 17'' N, 66° 52' 46'' O)
+  // Soporta °, º, ^o, ^\circ, *, o, espacios libres, comillas simples repetidas '', comillas dobles ", etc.
+  const dmsPartPattern = `(\\d{1,3})\\s*(?:°|º|\\^o|\\^\\\\circ|o|\\*|\\s)\\s*(\\d{1,2})\\s*'\\s*(\\d{1,2}(?:\\.\\d+)?)\\s*(?:"|'')\\s*([NnSsEeWwOo])`;
+  const dmsPairRegex = new RegExp(`^${dmsPartPattern}\\s*,\\s*${dmsPartPattern}$`);
 
-  if (dmsSingleRegex.test(val)) {
-    const match = val.match(/^(\d{1,3})°(\d{1,2})'(\d{1,2}(\.\d+)?)"([NnSsEeWwOo])/);
-    if (!match) return { isValid: false, message: "Error al interpretar el formato DMS." };
-    const deg = parseInt(match[1], 10);
-    const min = parseInt(match[2], 10);
-    const sec = parseFloat(match[3]);
-    const dir = match[5].toUpperCase();
+  const match = val.match(dmsPairRegex);
+  if (match) {
+    const latDeg = parseInt(match[1], 10);
+    const latMin = parseInt(match[2], 10);
+    const latSec = parseFloat(match[3]);
+    const latDir = match[4].toUpperCase();
 
-    if (["N", "S"].includes(dir) && deg > 90) {
-      return { isValid: false, message: "Latitud en grados no puede ser mayor de 90°." };
+    const lngDeg = parseInt(match[5], 10);
+    const lngMin = parseInt(match[6], 10);
+    const lngSec = parseFloat(match[7]);
+    const lngDir = match[8].toUpperCase();
+
+    // Validar direcciones correspondientes
+    if (!["N", "S"].includes(latDir)) {
+      return { isValid: false, message: "La latitud debe tener dirección Norte (N) o Sur (S)." };
     }
-    if (["E", "W", "O"].includes(dir) && deg > 180) {
-      return { isValid: false, message: "Longitud en grados no puede ser mayor de 180°." };
+    if (!["E", "W", "O"].includes(lngDir)) {
+      return { isValid: false, message: "La longitud debe tener dirección Este (E) u Oeste (W/O)." };
     }
-    if (min >= 60 || sec >= 60) {
+
+    // Validar límites de los grados
+    if (latDeg > 90 || (latDeg === 90 && (latMin > 0 || latSec > 0))) {
+      return { isValid: false, message: "Latitud fuera de rango (máximo 90°)." };
+    }
+    if (lngDeg > 180 || (lngDeg === 180 && (lngMin > 0 || lngSec > 0))) {
+      return { isValid: false, message: "Longitud fuera de rango (máximo 180°)." };
+    }
+
+    // Validar límites de minutos y segundos
+    if (latMin >= 60 || latSec >= 60 || lngMin >= 60 || lngSec >= 60) {
       return { isValid: false, message: "Los minutos y segundos deben ser menores de 60." };
     }
+
     return { isValid: true, message: "" };
   }
 
   return {
     isValid: false,
-    message: "Las coordenadas deben tener el formato decimal 'LATITUD, LONGITUD' (ej: 7.7350, -72.2326) o DMS (ej: 7°44'06.1\"N, 72°13'57.4\"W o 7°44'06.1\"N)."
+    message: "Formato no válido. Use decimal (ej: 10.48, -66.87) o DMS (ej: 10° 29' 17'' N, 66° 52' 46'' O)."
   };
 }

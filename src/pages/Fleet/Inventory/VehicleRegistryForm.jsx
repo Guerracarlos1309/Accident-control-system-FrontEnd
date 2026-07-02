@@ -42,6 +42,13 @@ export default function VehicleRegistryForm({
   const [selectedBrand, setSelectedBrand] = useState("");
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [customVehicleType, setCustomVehicleType] = useState("");
+
+  // Detecta si el tipo seleccionado es "Otros"
+  const selectedTypeIsOther = lookups.types.find(
+    (t) => String(t.id) === String(formData.vehicleTypeId) &&
+      t.name.trim().toUpperCase() === "OTROS"
+  );
 
   // Image handling
   const [imageFiles, setImageFiles] = useState([]);
@@ -164,6 +171,32 @@ export default function VehicleRegistryForm({
       return;
     }
 
+    // 4. Si se eligió "Otros", validar y crear el tipo nuevo
+    let finalVehicleTypeId = formData.vehicleTypeId;
+    if (selectedTypeIsOther) {
+      const customName = customVehicleType.trim();
+      if (!customName) {
+        showNotification("Por favor, especifique el tipo de vehículo", "error");
+        return;
+      }
+      try {
+        const newType = await api.post("/lookups/vehicle-types", {
+          body: JSON.stringify({ name: customName }),
+          headers: { "Content-Type": "application/json" },
+        });
+        if (!newType || newType.err) {
+          showNotification("Error al registrar el tipo de vehículo", "error");
+          return;
+        }
+        finalVehicleTypeId = newType.id;
+        // Actualizar lookups localmente
+        setLookups((prev) => ({ ...prev, types: [...prev.types, newType] }));
+      } catch {
+        showNotification("Error de conexión al crear tipo", "error");
+        return;
+      }
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -174,7 +207,9 @@ export default function VehicleRegistryForm({
 
       const sendData = new FormData();
       Object.keys(formData).forEach((key) => {
-        if (formData[key] !== "" && formData[key] !== null) {
+        if (key === "vehicleTypeId") {
+          sendData.append(key, finalVehicleTypeId);
+        } else if (formData[key] !== "" && formData[key] !== null) {
           sendData.append(key, formData[key]);
         }
       });
@@ -369,6 +404,22 @@ export default function VehicleRegistryForm({
                   </option>
                 ))}
               </select>
+              {selectedTypeIsOther && (
+                <div className="mt-2 space-y-1 animate-in slide-in-from-top-1 duration-200">
+                  <label className="text-[10px] font-bold text-corpoelec-blue uppercase tracking-widest ml-1">
+                    Especifique el tipo de vehículo *
+                  </label>
+                  <input
+                    type="text"
+                    value={customVehicleType}
+                    onChange={(e) => setCustomVehicleType(e.target.value.toUpperCase())}
+                    className="input-field h-11 font-bold uppercase"
+                    placeholder="EJ: CAMIÓN GRÚA"
+                    maxLength={50}
+                    required
+                  />
+                </div>
+              )}
             </div>
             <div className="space-y-1">
               <label className="text-[11px] font-bold text-txt-muted uppercase tracking-wider">

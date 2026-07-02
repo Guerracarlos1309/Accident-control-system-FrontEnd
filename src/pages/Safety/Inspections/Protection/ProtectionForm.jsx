@@ -15,6 +15,9 @@ import {
   BookOpen,
   ClipboardCheck,
   FolderOpen,
+  Camera,
+  X,
+  Plus,
 } from "lucide-react";
 import { helpFetch } from "../../../../helpers/helpFetch";
 import { useNotification } from "../../../../context/NotificationContext";
@@ -46,6 +49,34 @@ export default function ProtectionForm({
 
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Image upload state
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [previews, setPreviews] = useState([]);
+  const [deletedImageIds, setDeletedImageIds] = useState([]);
+
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    const validFiles = files.filter((file) => {
+      const isValid = file.type.startsWith("image/");
+      if (!isValid) showNotification(`El archivo ${file.name} no es una imagen válida`, "error");
+      return isValid;
+    });
+    setSelectedFiles((prev) => [...prev, ...validFiles]);
+    const newPreviews = validFiles.map((file) => URL.createObjectURL(file));
+    setPreviews((prev) => [...prev, ...newPreviews]);
+  };
+
+  const removeFile = (index) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+    URL.revokeObjectURL(previews[index]);
+    setPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const removeExistingImage = (imgId) => {
+    setDeletedImageIds((prev) => [...prev, imgId]);
+  };
 
   // Filters & Tabs
   const [activeTab, setActiveTab] = useState("EPP"); // EPP | EPC
@@ -309,47 +340,50 @@ export default function ProtectionForm({
       finalInspectionNumber = `EPI-${year}-${facName}-${nextSeq}`;
     }
 
-    // Structure serialized payload mapping to each equipment's categoryId
-    const payload = {
-      date: formData.date,
-      facilityId: parseInt(formData.facilityId),
-      inspectorId: formData.inspectorId,
-      statusId: parseInt(formData.statusId),
-      inspectionNumber: finalInspectionNumber,
+    const protectionData = {
+      responsibleId: formData.inspectorId,
       observations: formData.observations,
-      type: "Proteccion",
-      protectionData: {
-        responsibleId: formData.inspectorId,
-        observations: formData.observations,
-        details: equipmentToInspect.map((eq) => {
-          const totalChecked = (eq.buenos || 0) + (eq.malos || 0);
-          const operative = eq.buenos || 0;
-          const cleanComment = eq.commentText
-            ? eq.commentText
-                .trim()
-                .replace(/[|:]/g, "")
-                .slice(0, 100)
-                .toUpperCase()
-            : "";
-          // Compact pipeline format to fit into the 200 character observations string
-          const serializedObservations = `B:${eq.buenos || 0}|M:${eq.malos || 0}|Obs:${cleanComment}`;
+      details: equipmentToInspect.map((eq) => {
+        const totalChecked = (eq.buenos || 0) + (eq.malos || 0);
+        const operative = eq.buenos || 0;
+        const cleanComment = eq.commentText
+          ? eq.commentText
+              .trim()
+              .replace(/[|:]/g, "")
+              .slice(0, 100)
+              .toUpperCase()
+          : "";
+        const serializedObservations = `B:${eq.buenos || 0}|M:${eq.malos || 0}|Obs:${cleanComment}`;
 
-          return {
-            categoryId: eq.categoryId,
-            totalChecked,
-            operative,
-            observations: serializedObservations,
-          };
-        }),
-      },
+        return {
+          categoryId: eq.categoryId,
+          totalChecked,
+          operative,
+          observations: serializedObservations,
+        };
+      }),
     };
 
     const isEditing = !!initialData?.id;
     const url = isEditing ? `/inspections/${initialData.id}` : "/inspections";
     const method = isEditing ? "PUT" : "POST";
 
+    const formPayload = new FormData();
+    formPayload.append("date", formData.date);
+    formPayload.append("facilityId", parseInt(formData.facilityId));
+    formPayload.append("inspectorId", formData.inspectorId);
+    formPayload.append("statusId", parseInt(formData.statusId));
+    formPayload.append("inspectionNumber", finalInspectionNumber);
+    formPayload.append("observations", formData.observations);
+    formPayload.append("type", "Proteccion");
+    formPayload.append("protectionData", JSON.stringify(protectionData));
+    selectedFiles.forEach((file) => formPayload.append("images", file));
+    if (deletedImageIds.length > 0) {
+      formPayload.append("deletedImageIds", JSON.stringify(deletedImageIds));
+    }
+
     try {
-      const res = await api[method.toLowerCase()](url, { body: payload });
+      const res = await api[method.toLowerCase()](url, { body: formPayload });
 
       if (res && !res.err) {
         showNotification(
@@ -693,6 +727,71 @@ export default function ProtectionForm({
             className="input-field py-3 resize-none min-h-[90px] border border-border-main focus:border-corpoelec-blue placeholder:text-txt-muted/30 uppercase"
             placeholder="Registre observaciones generales sobre el lote de seguridad o incidencias específicas..."
           />
+        </div>
+      </div>
+
+      {/* REGISTRO FOTOGRÁFICO */}
+      <div className="space-y-6">
+        <div className="flex items-center gap-3 pb-3 border-b border-border-main/50">
+          <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500">
+            <Camera size={18} />
+          </div>
+          <h4 className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em]">
+            Registro Fotográfico (Opcional)
+          </h4>
+        </div>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {/* Existing images when editing */}
+            {initialData?.images
+              ?.filter((img) => !deletedImageIds.includes(img.id))
+              .map((img) => (
+                <div
+                  key={`existing-${img.id}`}
+                  className="relative aspect-square rounded-2xl overflow-hidden border border-border-main bg-bg-main group"
+                >
+                  <img
+                    src={`${window.BACKEND_URL || "http://localhost:3000"}${img.imageUrl}`}
+                    alt="Inspección"
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeExistingImage(img.id)}
+                    className="absolute top-2 right-2 w-7 h-7 rounded-full bg-corpoelec-red text-white flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all opacity-0 group-hover:opacity-100"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ))}
+            {/* New previews */}
+            {previews.map((preview, idx) => (
+              <div
+                key={`preview-${idx}`}
+                className="relative aspect-square rounded-2xl overflow-hidden border border-corpoelec-blue/30 bg-bg-main shadow-md group animate-in zoom-in duration-200"
+              >
+                <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => removeFile(idx)}
+                  className="absolute top-2 right-2 w-7 h-7 rounded-full bg-corpoelec-red text-white flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+            {/* Upload button */}
+            <label className="relative aspect-square rounded-2xl border-2 border-dashed border-border-main hover:border-corpoelec-blue/50 bg-bg-main/50 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all hover:bg-bg-main group overflow-hidden">
+              <input type="file" multiple accept="image/*" onChange={handleFileChange} className="hidden" />
+              <div className="w-10 h-10 rounded-full bg-bg-surface flex items-center justify-center text-txt-muted group-hover:text-corpoelec-blue transition-colors">
+                <Plus size={20} />
+              </div>
+              <span className="text-[9px] font-black text-txt-muted uppercase tracking-widest">Cargar Fotos</span>
+            </label>
+          </div>
+          <p className="text-[10px] text-txt-muted italic font-medium">
+            Puedes seleccionar varias imágenes a la vez. Máximo 10MB por archivo.
+          </p>
         </div>
       </div>
 

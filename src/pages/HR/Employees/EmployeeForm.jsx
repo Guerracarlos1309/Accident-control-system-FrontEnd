@@ -398,7 +398,6 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
       { key: "personalNumber", label: "N° de Personal" },
       { key: "managementId", label: "Gerencia" },
       { key: "occupationId", label: "Cargo Institucional" },
-      { key: "jobTitleId", label: "Ocupación" },
       { key: "gender", label: "Sexo" },
     ];
 
@@ -420,10 +419,6 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
       return;
     }
 
-    if (formData.jobTitleId === "other" && !formData.customJobTitle?.trim()) {
-      showNotification("Por favor, escriba la Ocupación Específica", "error");
-      return;
-    }
 
     // Run heuristic validations
     const isFirstNameValid = validateField("firstName", formData.firstName);
@@ -1025,57 +1020,6 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
               {!formData.managementId && !loadingCatalogs && (
                 <p className="text-[9px] text-corpoelec-blue/70 font-bold uppercase tracking-widest mt-1 ml-1">
                   ↑ Seleccione la gerencia para ver los cargos disponibles
-                </p>
-              )}
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">
-                Ocupación Específica *
-              </label>
-              <select
-                name="jobTitleId"
-                value={formData.jobTitleId}
-                onChange={handleChange}
-                className="input-field h-12"
-                required
-                disabled={!formData.managementId || loadingCatalogs}
-              >
-                <option value="">
-                  {loadingCatalogs
-                    ? "Cargando..."
-                    : !formData.managementId
-                      ? "Seleccione una gerencia primero"
-                      : "Seleccione..."}
-                </option>
-                {filteredJobTitles.map((j) => (
-                  <option key={j.id} value={j.id}>
-                    {j.name}
-                  </option>
-                ))}
-                {formData.managementId && !loadingCatalogs && (
-                  <option value="other">OTROS (ESPECIFICAR...)</option>
-                )}
-              </select>
-              {formData.jobTitleId === "other" && (
-                <div className="mt-2 space-y-1 animate-in slide-in-from-top-1 duration-200">
-                  <label className="text-[10px] font-black text-corpoelec-blue uppercase tracking-widest ml-1">
-                    Escriba la Ocupación Específica *
-                  </label>
-                  <input
-                    type="text"
-                    name="customJobTitle"
-                    required
-                    value={formData.customJobTitle}
-                    onChange={handleChange}
-                    className="input-field h-12 font-bold uppercase"
-                    placeholder="EJ: TÉCNICO DE SISTEMAS"
-                    maxLength={100}
-                  />
-                </div>
-              )}
-              {!formData.managementId && !loadingCatalogs && (
-                <p className="text-[9px] text-corpoelec-blue/70 font-bold uppercase tracking-widest mt-1 ml-1">
-                  ↑ Seleccione la gerencia para ver las ocupaciones disponibles
                 </p>
               )}
             </div>

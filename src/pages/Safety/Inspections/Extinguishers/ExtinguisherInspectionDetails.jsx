@@ -13,7 +13,8 @@ import {
   Check,
   X,
   FileText,
-  Download
+  Download,
+  Camera
 } from "lucide-react";
 import { helpFetch } from "../../../../helpers/helpFetch";
 import { useNotification } from "../../../../context/NotificationContext";
@@ -438,6 +439,35 @@ export default function ExtinguisherInspectionDetails({ inspectionId }) {
           })}
         </div>
       </div>
+      {/* REGISTRO FOTOGRÁFICO */}
+      {inspection.images && inspection.images.length > 0 && (
+        <div className="space-y-4 mt-8">
+          <div className="flex items-center gap-2 pb-2 border-b border-border-main">
+            <Camera size={16} className="text-purple-500" />
+            <h4 className="text-[11px] font-black text-txt-muted uppercase tracking-widest">Registro Fotográfico</h4>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {inspection.images.map((img) => (
+              <a
+                key={img.id}
+                href={`${window.BACKEND_URL || "http://localhost:3000"}${img.imageUrl}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative aspect-square rounded-2xl overflow-hidden border border-border-main bg-bg-main group block"
+              >
+                <img
+                  src={`${window.BACKEND_URL || "http://localhost:3000"}${img.imageUrl}`}
+                  alt="Inspección"
+                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <span className="text-[8px] font-black text-white uppercase tracking-widest">Ver imagen</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
 
     </div>
   );

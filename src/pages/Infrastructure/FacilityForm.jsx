@@ -476,21 +476,8 @@ export default function FacilityForm({
               onChange={handleChange}
               onBlur={handleBlur}
               className={`input-field h-12 font-mono ${errors.coordinates ? "border-corpoelec-red focus:border-corpoelec-red focus:ring-corpoelec-red/10" : ""}`}
-              placeholder="EJ: 12.3123, -73.3123"
-              maxLength={50}
-              onKeyDown={(e) => {
-                if (
-                  !/[-0-9.\s]/.test(e.key) &&
-                  e.key !== "Backspace" &&
-                  e.key !== "," &&
-                  e.key !== "ArrowLeft" &&
-                  e.key !== "ArrowRight" &&
-                  e.key !== "Delete" &&
-                  e.key !== "Tab"
-                ) {
-                  e.preventDefault();
-                }
-              }}
+              placeholder="EJ: 10° 29' 17'' N, 66° 52' 46'' O"
+              maxLength={150}
             />
             {errors.coordinates ? (
               <p className="text-[10px] text-corpoelec-red font-black uppercase mt-1 ml-1 leading-tight">
