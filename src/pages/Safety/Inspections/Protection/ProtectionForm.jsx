@@ -62,7 +62,11 @@ export default function ProtectionForm({
     if (files.length === 0) return;
     const validFiles = files.filter((file) => {
       const isValid = file.type.startsWith("image/");
-      if (!isValid) showNotification(`El archivo ${file.name} no es una imagen válida`, "error");
+      if (!isValid)
+        showNotification(
+          `El archivo ${file.name} no es una imagen válida`,
+          "error",
+        );
       return isValid;
     });
     setSelectedFiles((prev) => [...prev, ...validFiles]);
@@ -97,7 +101,7 @@ export default function ProtectionForm({
 
         // Filtrar solo empleados de la gerencia ASHO (id: 8) para el select de inspector
         const ashoInspectors = (empRes || []).filter(
-          (e) => e.managementId === 8 || e.management?.id === 8
+          (e) => e.managementId === 8 || e.management?.id === 8,
         );
         setLookups({
           facilities: facRes || [],
@@ -536,7 +540,7 @@ export default function ProtectionForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
             <label className="text-[10px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">
-              ¿La inspección es programada? *
+              ¿La inspección es programada?
             </label>
             <select
               name="isScheduled"
@@ -820,7 +824,11 @@ export default function ProtectionForm({
                 key={`preview-${idx}`}
                 className="relative aspect-square rounded-2xl overflow-hidden border border-corpoelec-blue/30 bg-bg-main shadow-md group animate-in zoom-in duration-200"
               >
-                <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                <img
+                  src={preview}
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                />
                 <button
                   type="button"
                   onClick={() => removeFile(idx)}
@@ -832,15 +840,24 @@ export default function ProtectionForm({
             ))}
             {/* Upload button */}
             <label className="relative aspect-square rounded-2xl border-2 border-dashed border-border-main hover:border-corpoelec-blue/50 bg-bg-main/50 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all hover:bg-bg-main group overflow-hidden">
-              <input type="file" multiple accept="image/*" onChange={handleFileChange} className="hidden" />
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+              />
               <div className="w-10 h-10 rounded-full bg-bg-surface flex items-center justify-center text-txt-muted group-hover:text-corpoelec-blue transition-colors">
                 <Plus size={20} />
               </div>
-              <span className="text-[9px] font-black text-txt-muted uppercase tracking-widest">Cargar Fotos</span>
+              <span className="text-[9px] font-black text-txt-muted uppercase tracking-widest">
+                Cargar Fotos
+              </span>
             </label>
           </div>
           <p className="text-[10px] text-txt-muted italic font-medium">
-            Puedes seleccionar varias imágenes a la vez. Máximo 10MB por archivo.
+            Puedes seleccionar varias imágenes a la vez. Máximo 10MB por
+            archivo.
           </p>
         </div>
       </div>
