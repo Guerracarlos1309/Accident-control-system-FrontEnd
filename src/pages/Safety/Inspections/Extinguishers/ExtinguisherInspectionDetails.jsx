@@ -338,6 +338,25 @@ export default function ExtinguisherInspectionDetails({ inspectionId }) {
               </span>
             </div>
           </div>
+          <div className="flex items-center gap-3 bg-bg-surface p-3 px-4 rounded-2xl border border-border-main shadow-sm flex-1 sm:flex-initial">
+            <div className="w-9 h-9 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-500">
+              <Calendar size={16} />
+            </div>
+            <div>
+              <span className="text-[9px] text-txt-muted uppercase font-bold block leading-none mb-1">
+                Planificación
+              </span>
+              <span className="text-xs font-bold text-txt-sub">
+                {inspection.isScheduled ? (
+                  <span className="text-purple-500 font-bold uppercase">
+                    PROGRAMADA ({parseLocalDate(inspection.scheduledDate)?.toLocaleDateString(undefined, { dateStyle: "short" }) || "-"})
+                  </span>
+                ) : (
+                  <span className="text-txt-muted">NO PROGRAMADA</span>
+                )}
+              </span>
+            </div>
+          </div>
         </div>
 
         {inspection.observations && (

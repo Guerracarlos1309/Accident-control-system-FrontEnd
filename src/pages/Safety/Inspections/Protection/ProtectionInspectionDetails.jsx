@@ -176,6 +176,18 @@ export default function ProtectionInspectionDetails({ inspectionId }) {
                      <span className="text-[9px] text-txt-muted uppercase font-bold tracking-tight block">Dirección Sede</span>
                      <p className="text-xs text-txt-sub font-semibold">{inspection.facility?.location?.address || "N/A"}</p>
                   </div>
+                  <div>
+                     <span className="text-[9px] text-purple-400 uppercase font-black tracking-tight block">Planificación</span>
+                     <p className="text-xs font-bold">
+                       {inspection.isScheduled ? (
+                         <span className="text-purple-400">
+                           PROGRAMADA ({parseLocalDate(inspection.scheduledDate)?.toLocaleDateString(undefined, { dateStyle: "short" }) || "-"})
+                         </span>
+                       ) : (
+                         <span className="text-txt-muted">NO PROGRAMADA</span>
+                       )}
+                     </p>
+                  </div>
                </div>
             </div>
 

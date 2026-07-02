@@ -72,8 +72,10 @@ export default function ReportCenter() {
       "accidentControlNumber",
       "accidentDate",
       "accidentType",
+      "magnitude",
       "facility",
-      "status",
+      "locationDetail",
+      "personnel",
     ],
     inspections: [
       "inspectionNumber",
@@ -96,9 +98,9 @@ export default function ReportCenter() {
   const handleColChange = (type, colKey, checked) => {
     const list = selectedCols[type];
     if (checked) {
-      if (list.length >= 7) {
+      if (list.length >= 10) {
         showNotification(
-          "Puedes seleccionar un máximo de 7 columnas para garantizar la legibilidad en el PDF.",
+          "Puedes seleccionar un máximo de 10 columnas para garantizar la legibilidad en el PDF.",
           "warning",
         );
         return;
@@ -122,15 +124,14 @@ export default function ReportCenter() {
   const [selectedManagement, setSelectedManagement] = useState("");
   const [selectedFacility, setSelectedFacility] = useState("");
   const [accidentTypeId, setAccidentTypeId] = useState("");
-  const [processStatusId, setProcessStatusId] = useState("");
+  const [selectedMagnitude, setSelectedMagnitude] = useState("");
   const [inspectionType, setInspectionType] = useState("");
-  const [inspectionStatusId, setInspectionStatusId] = useState("");
+  const [isScheduledFilter, setIsScheduledFilter] = useState("");
 
   // Lookups lists
   const [managements, setManagements] = useState([]);
   const [facilities, setFacilities] = useState([]);
   const [accidentTypes, setAccidentTypes] = useState([]);
-  const [inspectionStatuses, setInspectionStatuses] = useState([]);
 
   // Preview records
   const [previewRecords, setPreviewRecords] = useState(null);
@@ -154,7 +155,6 @@ export default function ReportCenter() {
           mgtRes,
           facRes,
           accTypeRes,
-          statusRes,
           periodRes,
         ] = await Promise.all([
           api.get("/accidents"),
@@ -164,7 +164,6 @@ export default function ReportCenter() {
           api.get("/lookups/managements"),
           api.get("/facilities"),
           api.get("/lookups/accident-types"),
-          api.get("/lookups/inspection-status"),
           api.get("/lookups/periods"),
         ]);
 
@@ -199,7 +198,6 @@ export default function ReportCenter() {
         if (Array.isArray(mgtRes)) setManagements(mgtRes);
         if (Array.isArray(facRes)) setFacilities(facRes);
         if (Array.isArray(accTypeRes)) setAccidentTypes(accTypeRes);
-        if (Array.isArray(statusRes)) setInspectionStatuses(statusRes);
       } catch (error) {
         console.error("Error loading stats and lookups:", error);
       } finally {
@@ -354,16 +352,9 @@ export default function ReportCenter() {
       const idsParam = previewRecords.map((r) => r.id).join(",");
       let queryParams = `?reportType=${customReportType}&ids=${idsParam}`;
 
-      if (customMode[customReportType]) {
-        const cols = selectedCols[customReportType];
-        if (cols.length === 0) {
-          showNotification(
-            "Selecciona al menos una columna para exportar",
-            "warning",
-          );
-          setCustomDownloading(false);
-          return;
-        }
+      // Always send the selected columns for the custom report generator
+      const cols = selectedCols[customReportType];
+      if (cols && cols.length > 0) {
         queryParams += `&columns=${cols.join(",")}`;
       }
 
@@ -396,13 +387,13 @@ export default function ReportCenter() {
         if (selectedManagement)
           queryParams += `&managementId=${selectedManagement}`;
         if (accidentTypeId) queryParams += `&accidentTypeId=${accidentTypeId}`;
-        if (processStatusId)
-          queryParams += `&processStatusId=${processStatusId}`;
+        if (selectedMagnitude)
+          queryParams += `&magnitude=${encodeURIComponent(selectedMagnitude)}`;
       } else {
         if (selectedFacility) queryParams += `&facilityId=${selectedFacility}`;
         if (inspectionType) queryParams += `&inspectionType=${inspectionType}`;
-        if (inspectionStatusId)
-          queryParams += `&statusId=${inspectionStatusId}`;
+        if (isScheduledFilter !== "")
+          queryParams += `&isScheduled=${isScheduledFilter}`;
       }
 
       const res = await api.get(`/reports/custom${queryParams}`);
@@ -863,14 +854,16 @@ export default function ReportCenter() {
                     {[
                       {
                         key: "accidentControlNumber",
-                        label: "Código / Control",
+                        label: "N° de Control",
                       },
                       { key: "accidentDate", label: "Fecha" },
                       { key: "accidentTime", label: "Hora" },
                       { key: "accidentType", label: "Tipo de Accidente" },
-                      { key: "facility", label: "Instalación" },
+                      { key: "magnitude", label: "Magnitud" },
+                      { key: "facility", label: "Instalación / Lugar" },
+                      { key: "locationDetail", label: "Detalle Ubicación" },
                       { key: "management", label: "Gerencia" },
-                      { key: "status", label: "Estatus" },
+                      { key: "personnel", label: "Personal Afectado" },
                       { key: "description", label: "Descripción" },
                       { key: "medicalCenterName", label: "Centro Médico" },
                       { key: "medicalObservations", label: "Obs. Médicas" },
@@ -1046,9 +1039,9 @@ export default function ReportCenter() {
                   setSelectedManagement("");
                   setSelectedFacility("");
                   setAccidentTypeId("");
-                  setProcessStatusId("");
+                  setSelectedMagnitude("");
                   setInspectionType("");
-                  setInspectionStatusId("");
+                  setIsScheduledFilter("");
                   setPreviewRecords(null);
                 }}
                 className="w-full bg-bg-surface border border-border-main rounded-xl px-3 py-2.5 text-xs font-semibold text-txt-main focus:outline-none focus:border-corpoelec-blue"
@@ -1130,22 +1123,21 @@ export default function ReportCenter() {
                   </select>
                 </div>
 
-                {/* A3. Estatus de Proceso */}
+                {/* A3. Magnitud del Accidente */}
                 <div className="flex flex-col space-y-2">
                   <label className="text-[9px] font-black uppercase text-txt-muted tracking-wider">
-                    Estado del Proceso
+                    Magnitud del Accidente
                   </label>
                   <select
-                    value={processStatusId}
-                    onChange={(e) => setProcessStatusId(e.target.value)}
+                    value={selectedMagnitude}
+                    onChange={(e) => setSelectedMagnitude(e.target.value)}
                     className="w-full bg-bg-surface border border-border-main rounded-xl px-3 py-2.5 text-xs font-semibold text-txt-main focus:outline-none focus:border-corpoelec-blue"
                   >
-                    <option value="">TODOS LOS ESTADOS</option>
-                    {inspectionStatuses.map((status) => (
-                      <option key={status.id} value={status.id}>
-                        {status.name.toUpperCase()}
-                      </option>
-                    ))}
+                    <option value="">TODAS LAS MAGNITUDES</option>
+                    <option value="Leve">LEVE</option>
+                    <option value="Grave">GRAVE</option>
+                    <option value="Muy Grave">MUY GRAVE</option>
+                    <option value="Mortal">MORTAL</option>
                   </select>
                 </div>
               </div>
@@ -1193,28 +1185,91 @@ export default function ReportCenter() {
                   </select>
                 </div>
 
-                {/* I3. Estado Inspección */}
+                {/* I3. Modalidad de la Inspección */}
                 <div className="flex flex-col space-y-2">
                   <label className="text-[9px] font-black uppercase text-txt-muted tracking-wider">
-                    Estado de Evaluación
+                    Modalidad de Inspección
                   </label>
                   <select
-                    value={inspectionStatusId}
-                    onChange={(e) => setInspectionStatusId(e.target.value)}
+                    value={isScheduledFilter}
+                    onChange={(e) => setIsScheduledFilter(e.target.value)}
                     className="w-full bg-bg-surface border border-border-main rounded-xl px-3 py-2.5 text-xs font-semibold text-txt-main focus:outline-none focus:border-corpoelec-blue"
                   >
-                    <option value="">TODOS LOS ESTADOS</option>
-                    {inspectionStatuses.map((status) => (
-                      <option key={status.id} value={status.id}>
-                        {status.name.toUpperCase()}
-                      </option>
-                    ))}
+                    <option value="">TODAS LAS MODALIDADES</option>
+                    <option value="true">PROGRAMADA</option>
+                    <option value="false">NO PROGRAMADA</option>
                   </select>
                 </div>
               </div>
             )}
           </div>
         </div>
+
+        {/* Column selection for the custom PDF */}
+        <div className="bg-bg-main/10 p-4 rounded-2xl border border-border-main/30">
+          <span className="text-[9px] font-black text-corpoelec-blue uppercase tracking-widest block mb-3">
+            Campos a incluir en el PDF exportado
+          </span>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-2">
+            {customReportType === "accidents"
+              ? [
+                  { key: "accidentControlNumber", label: "N° Control" },
+                  { key: "accidentDate", label: "Fecha" },
+                  { key: "accidentTime", label: "Hora" },
+                  { key: "accidentType", label: "Tipo Accidente" },
+                  { key: "magnitude", label: "Magnitud" },
+                  { key: "facility", label: "Instalación / Lugar" },
+                  { key: "locationDetail", label: "Detalle Ubicación" },
+                  { key: "management", label: "Gerencia" },
+                  { key: "personnel", label: "Personal Afectado" },
+                  { key: "description", label: "Descripción" },
+                  { key: "medicalCenterName", label: "Centro Médico" },
+                  { key: "medicalObservations", label: "Obs. Médicas" },
+                  { key: "globalObservations", label: "Obs. Globales" },
+                ].map((col) => (
+                  <label
+                    key={col.key}
+                    className="flex items-center gap-2 text-[10px] font-semibold text-txt-sub cursor-pointer hover:text-txt-main transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedCols.accidents.includes(col.key)}
+                      onChange={(e) =>
+                        handleColChange("accidents", col.key, e.target.checked)
+                      }
+                      className="accent-corpoelec-blue rounded cursor-pointer"
+                    />
+                    <span>{col.label}</span>
+                  </label>
+                ))
+              : [
+                  { key: "inspectionNumber", label: "Código" },
+                  { key: "date", label: "Fecha" },
+                  { key: "facility", label: "Instalación" },
+                  { key: "inspector", label: "Inspector" },
+                  { key: "typeStatus", label: "Tipo Inspección" },
+                  { key: "status", label: "Estatus" },
+                  { key: "coordinates", label: "Coordenadas" },
+                  { key: "observations", label: "Observaciones" },
+                ].map((col) => (
+                  <label
+                    key={col.key}
+                    className="flex items-center gap-2 text-[10px] font-semibold text-txt-sub cursor-pointer hover:text-txt-main transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedCols.inspections.includes(col.key)}
+                      onChange={(e) =>
+                        handleColChange("inspections", col.key, e.target.checked)
+                      }
+                      className="accent-corpoelec-blue rounded cursor-pointer"
+                    />
+                    <span>{col.label}</span>
+                  </label>
+                ))}
+          </div>
+        </div>
+
 
         {/* Action Controls */}
         <div className="flex justify-between items-center gap-4 border-b border-border-main/30 pb-4">
@@ -1292,13 +1347,14 @@ export default function ReportCenter() {
                   <thead className="sticky top-0 z-20 bg-bg-surface border-b border-border-main shadow-sm">
                     {customReportType === "accidents" ? (
                       <tr className="bg-bg-main/20 text-[9px] uppercase font-black text-txt-muted tracking-widest border-b border-border-main">
-                        <th className="px-5 py-3">Nro de Caso</th>
-                        <th className="px-5 py-3">Fecha del Accidente</th>
-                        <th className="px-5 py-3">Tipo de Lesión</th>
-                        <th className="px-5 py-3">Gerencia Responsable</th>
-                        <th className="px-5 py-3">Instalación</th>
-                        <th className="px-5 py-3">Estatus</th>
-                        <th className="px-5 py-3 text-center">Excluir</th>
+                        <th className="px-4 py-3">N° Control</th>
+                        <th className="px-4 py-3">Fecha</th>
+                        <th className="px-4 py-3">Tipo Accidente</th>
+                        <th className="px-4 py-3">Magnitud</th>
+                        <th className="px-4 py-3">Instalación / Lugar</th>
+                        <th className="px-4 py-3">Detalle Ubicación</th>
+                        <th className="px-4 py-3">Personal Afectado</th>
+                        <th className="px-4 py-3 text-center">Excluir</th>
                       </tr>
                     ) : (
                       <tr className="bg-bg-main/20 text-[9px] uppercase font-black text-txt-muted tracking-widest border-b border-border-main">
@@ -1314,33 +1370,92 @@ export default function ReportCenter() {
                   </thead>
                   <tbody className="divide-y divide-border-main/20 text-xs text-txt-sub">
                     {customReportType === "accidents"
-                      ? previewRecords.map((acc, index) => (
+                      ? previewRecords.map((acc) => {
+                        // Compute location value
+                        let locationVal = acc.facility?.name || "-";
+                        if (!acc.facilityId) {
+                          if (acc.parish) {
+                            const parts = [];
+                            if (acc.parish.name) parts.push(acc.parish.name);
+                            if (acc.parish.city?.name) parts.push(acc.parish.city.name);
+                            if (acc.parish.city?.state?.name) parts.push(acc.parish.city.state.name);
+                            locationVal = parts.join(", ") || "Fuera de sede";
+                          } else {
+                            locationVal = acc.customAddressDetails || "Fuera de sede";
+                          }
+                        }
+                        // Compute location detail
+                        let locationDetail = acc.customAddressDetails || "";
+                        if (!locationDetail) {
+                          if (acc.parish) {
+                            const parts = [];
+                            if (acc.parish.name) parts.push(`Parroquia: ${acc.parish.name}`);
+                            if (acc.parish.city?.name) parts.push(`Ciudad: ${acc.parish.city.name}`);
+                            if (acc.parish.city?.state?.name) parts.push(`Edo: ${acc.parish.city.state.name}`);
+                            locationDetail = parts.join(" | ");
+                          } else if (acc.facility?.location?.name) {
+                            locationDetail = `Sede: ${acc.facility.location.name}`;
+                          }
+                        }
+                        // Compute personnel list
+                        const employees = acc.involvedEmployees || [];
+                        let personnelStr = "-";
+                        if (employees.length > 0) {
+                          personnelStr = employees
+                            .map((ie) => {
+                              const emp = ie.employee;
+                              if (emp) {
+                                return `${emp.lastName || ""}, ${emp.firstName || ""}`.trim() || `Ficha: ${ie.employeePersonalNumber}`;
+                              }
+                              return `Ficha: ${ie.employeePersonalNumber || "N/E"}`;
+                            })
+                            .join(" | ");
+                        }
+                        return (
                           <tr
                             key={acc.id}
                             className="hover:bg-bg-main/10 transition-colors"
                           >
-                            <td className="px-5 py-3.5 font-bold font-mono text-corpoelec-blue">
-                              {acc.inpsaselFileNumber ||
+                            <td className="px-4 py-3 font-bold font-mono text-corpoelec-blue text-xs whitespace-nowrap">
+                              {acc.accidentControlNumber ||
+                                acc.inpsaselFileNumber ||
                                 `ACC-${String(acc.id).padStart(4, "0")}`}
                             </td>
-                            <td className="px-5 py-3.5 font-semibold">
+                            <td className="px-4 py-3 font-semibold text-xs whitespace-nowrap">
                               {formatLocalDate(acc.accidentDate)}
                             </td>
-                            <td className="px-5 py-3.5 font-bold text-txt-main uppercase">
+                            <td className="px-4 py-3 font-bold text-txt-main uppercase text-xs">
                               {acc.type?.name || "General"}
                             </td>
-                            <td className="px-5 py-3.5 font-semibold uppercase">
-                              {acc.management?.name || "-"}
-                            </td>
-                            <td className="px-5 py-3.5 font-semibold uppercase text-txt-muted">
-                              {acc.facility?.name || "-"}
-                            </td>
-                            <td className="px-5 py-3.5">
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black bg-corpoelec-red/10 text-corpoelec-red border border-corpoelec-red/20 uppercase tracking-tighter">
-                                {acc.processStatus?.name || "REGISTRADO"}
+                            <td className="px-4 py-3 text-xs">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black bg-purple-500/10 text-purple-400 border border-purple-500/20 uppercase tracking-tighter whitespace-nowrap">
+                                {acc.magnitude?.name || acc.magnitude?.description || "-"}
                               </span>
                             </td>
-                            <td className="px-5 py-3.5 text-center">
+                            <td className="px-4 py-3 font-semibold uppercase text-txt-muted text-xs">
+                              {locationVal}
+                            </td>
+                            <td className="px-4 py-3 font-semibold text-txt-muted text-[10px]">
+                              {locationDetail || "-"}
+                            </td>
+                            <td className="px-4 py-3 text-[10px] text-txt-sub">
+                              {personnelStr !== "-" ? (
+                                <div className="space-y-0.5">
+                                  {employees.map((ie, idx) => {
+                                    const emp = ie.employee;
+                                    return (
+                                      <div key={idx} className="flex items-center gap-1">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-corpoelec-blue/60 flex-shrink-0" />
+                                        <span>{emp ? `${emp.lastName || ""}, ${emp.firstName || ""}`.trim() : `Ficha: ${ie.employeePersonalNumber}`}</span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <span className="text-txt-muted">-</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-center">
                               <button
                                 onClick={() => handleExcludeRecord(acc.id)}
                                 className="p-1.5 hover:bg-corpoelec-red/10 text-corpoelec-red rounded-lg transition-colors inline-flex items-center justify-center border border-transparent hover:border-corpoelec-red/20"
@@ -1350,7 +1465,8 @@ export default function ReportCenter() {
                               </button>
                             </td>
                           </tr>
-                        ))
+                        );
+                      })
                       : previewRecords.map((insp, index) => {
                           let typeStr = "General";
                           if (insp.extinguisherInspection)

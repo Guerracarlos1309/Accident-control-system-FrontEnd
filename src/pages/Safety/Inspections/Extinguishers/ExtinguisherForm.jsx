@@ -37,6 +37,8 @@ export default function ExtinguisherForm({
     inspectionNumber: "", // Generated dynamically right before submission if creating
     observations: "", // General observations in base Inspection
     extinguishers: [], // List of inspected extinguishers
+    isScheduled: false,
+    scheduledDate: "",
   });
 
   const [lookups, setLookups] = useState({
@@ -294,6 +296,8 @@ export default function ExtinguisherForm({
             inspectionNumber: initialData.inspectionNumber || "",
             observations: initialData.observations || "",
             extinguishers: loadedExtinguishers,
+            isScheduled: !!initialData.isScheduled,
+            scheduledDate: initialData.scheduledDate || "",
           });
         }
       } catch (error) {
@@ -615,6 +619,10 @@ export default function ExtinguisherForm({
     formPayload.append("inspectionNumber", finalInspectionNumber);
     formPayload.append("observations", formData.observations);
     formPayload.append("type", "Extintor");
+    formPayload.append("isScheduled", formData.isScheduled ? "true" : "false");
+    if (formData.isScheduled && formData.scheduledDate) {
+      formPayload.append("scheduledDate", formData.scheduledDate);
+    }
     formPayload.append("extinguisherData", JSON.stringify(extinguisherData));
     selectedFiles.forEach((file) => formPayload.append("images", file));
     if (deletedImageIds.length > 0) {
@@ -1103,6 +1111,48 @@ export default function ExtinguisherForm({
                 ))}
               </select>
             </div>
+          </div>
+
+          {/* Nueva sección: Planificación / Programación */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
+                ¿La inspección es programada? *
+              </label>
+              <select
+                name="isScheduled"
+                required
+                value={formData.isScheduled ? "true" : "false"}
+                onChange={(e) => {
+                  const val = e.target.value === "true";
+                  setFormData((prev) => ({
+                    ...prev,
+                    isScheduled: val,
+                    scheduledDate: val ? prev.scheduledDate : "",
+                  }));
+                }}
+                className="input-field h-12 border border-border-main focus:border-corpoelec-blue font-bold"
+              >
+                <option value="false">NO PROGRAMADA</option>
+                <option value="true">PROGRAMADA</option>
+              </select>
+            </div>
+
+            {formData.isScheduled && (
+              <div className="space-y-1">
+                <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.2em] ml-1">
+                  Fecha Programada *
+                </label>
+                <input
+                  type="date"
+                  name="scheduledDate"
+                  required={formData.isScheduled}
+                  value={formData.scheduledDate}
+                  onChange={handleChange}
+                  className="input-field h-12 border border-border-main focus:border-corpoelec-blue"
+                />
+              </div>
+            )}
           </div>
 
           <div className="space-y-1">

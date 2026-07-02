@@ -7,7 +7,9 @@ export default function FacilityInspectionForm({ onCancel }) {
     inspectedArea: "",
     inspectorName: "",
     status: "1",
-    observations: ""
+    observations: "",
+    isScheduled: false,
+    scheduledDate: ""
   });
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -93,6 +95,42 @@ export default function FacilityInspectionForm({ onCancel }) {
             </label>
           </div>
         </div>
+
+        {/* Nueva sección: Planificación / Programación */}
+        <div className="space-y-1 md:col-span-2">
+          <label className="text-sm font-medium text-slate-300">¿La inspección es programada? *</label>
+          <select
+            name="isScheduled"
+            required
+            value={formData.isScheduled ? "true" : "false"}
+            onChange={(e) => {
+              const val = e.target.value === "true";
+              setFormData((prev) => ({
+                ...prev,
+                isScheduled: val,
+                scheduledDate: val ? prev.scheduledDate : ""
+              }));
+            }}
+            className="input-field w-full bg-slate-800 border-slate-700 text-slate-300 font-bold"
+          >
+            <option value="false">NO PROGRAMADA</option>
+            <option value="true">PROGRAMADA</option>
+          </select>
+        </div>
+
+        {formData.isScheduled && (
+          <div className="space-y-1 md:col-span-2">
+            <label className="text-sm font-medium text-slate-300">Fecha Programada *</label>
+            <input
+              type="date"
+              name="scheduledDate"
+              required={formData.isScheduled}
+              value={formData.scheduledDate}
+              onChange={handleChange}
+              className="input-field w-full bg-slate-800 border-slate-700 text-slate-300"
+            />
+          </div>
+        )}
 
         <div className="space-y-1 md:col-span-2">
           <label htmlFor="observations" className="text-sm font-medium text-slate-300">Observaciones y Novedades *</label>

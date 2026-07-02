@@ -200,6 +200,23 @@ export default function VehicleInspectionDetails({ inspectionId }) {
                     <span className="text-xs font-bold text-txt-sub">{inspection.facility?.name}</span>
                   </div>
                </div>
+               <div className="flex items-center gap-3 bg-bg-surface p-3 rounded-2xl border border-border-main shadow-sm">
+                  <div className="w-8 h-8 rounded-full bg-purple-500/10 flex items-center justify-center border border-purple-500/15">
+                    <Calendar size={14} className="text-purple-500" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[9px] text-txt-muted uppercase font-bold">Planificación</span>
+                    <span className="text-xs font-bold text-txt-sub">
+                      {inspection.isScheduled ? (
+                        <span className="text-purple-500 font-bold uppercase">
+                          PROGRAMADA ({parseLocalDate(inspection.scheduledDate)?.toLocaleDateString(undefined, { dateStyle: "short" }) || "-"})
+                        </span>
+                      ) : (
+                        <span className="text-txt-muted">NO PROGRAMADA</span>
+                      )}
+                    </span>
+                  </div>
+               </div>
             </div>
          </div>
       </div>
