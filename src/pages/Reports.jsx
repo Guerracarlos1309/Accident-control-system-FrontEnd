@@ -124,7 +124,7 @@ export default function ReportCenter() {
   const [selectedManagement, setSelectedManagement] = useState("");
   const [selectedFacility, setSelectedFacility] = useState("");
   const [accidentTypeId, setAccidentTypeId] = useState("");
-  const [selectedMagnitude, setSelectedMagnitude] = useState("");
+  const [selectedMagnitudeId, setSelectedMagnitudeId] = useState("");
   const [inspectionType, setInspectionType] = useState("");
   const [isScheduledFilter, setIsScheduledFilter] = useState("");
 
@@ -132,6 +132,7 @@ export default function ReportCenter() {
   const [managements, setManagements] = useState([]);
   const [facilities, setFacilities] = useState([]);
   const [accidentTypes, setAccidentTypes] = useState([]);
+  const [magnitudes, setMagnitudes] = useState([]);
 
   // Preview records
   const [previewRecords, setPreviewRecords] = useState(null);
@@ -156,6 +157,7 @@ export default function ReportCenter() {
           facRes,
           accTypeRes,
           periodRes,
+          res8,
         ] = await Promise.all([
           api.get("/accidents"),
           api.get("/employees"),
@@ -165,6 +167,7 @@ export default function ReportCenter() {
           api.get("/facilities"),
           api.get("/lookups/accident-types"),
           api.get("/lookups/periods"),
+          api.get("/lookups/magnitudes"),
         ]);
 
         const accidentsList = Array.isArray(accRes) ? accRes : [];
@@ -198,6 +201,7 @@ export default function ReportCenter() {
         if (Array.isArray(mgtRes)) setManagements(mgtRes);
         if (Array.isArray(facRes)) setFacilities(facRes);
         if (Array.isArray(accTypeRes)) setAccidentTypes(accTypeRes);
+        if (Array.isArray(res8)) setMagnitudes(res8);
       } catch (error) {
         console.error("Error loading stats and lookups:", error);
       } finally {
@@ -387,8 +391,8 @@ export default function ReportCenter() {
         if (selectedManagement)
           queryParams += `&managementId=${selectedManagement}`;
         if (accidentTypeId) queryParams += `&accidentTypeId=${accidentTypeId}`;
-        if (selectedMagnitude)
-          queryParams += `&magnitude=${encodeURIComponent(selectedMagnitude)}`;
+        if (selectedMagnitudeId)
+          queryParams += `&magnitudeId=${selectedMagnitudeId}`;
       } else {
         if (selectedFacility) queryParams += `&facilityId=${selectedFacility}`;
         if (inspectionType) queryParams += `&inspectionType=${inspectionType}`;
@@ -1039,7 +1043,7 @@ export default function ReportCenter() {
                   setSelectedManagement("");
                   setSelectedFacility("");
                   setAccidentTypeId("");
-                  setSelectedMagnitude("");
+                  setSelectedMagnitudeId("");
                   setInspectionType("");
                   setIsScheduledFilter("");
                   setPreviewRecords(null);
@@ -1129,15 +1133,16 @@ export default function ReportCenter() {
                     Magnitud del Accidente
                   </label>
                   <select
-                    value={selectedMagnitude}
-                    onChange={(e) => setSelectedMagnitude(e.target.value)}
+                    value={selectedMagnitudeId}
+                    onChange={(e) => setSelectedMagnitudeId(e.target.value)}
                     className="w-full bg-bg-surface border border-border-main rounded-xl px-3 py-2.5 text-xs font-semibold text-txt-main focus:outline-none focus:border-corpoelec-blue"
                   >
                     <option value="">TODAS LAS MAGNITUDES</option>
-                    <option value="Leve">LEVE</option>
-                    <option value="Grave">GRAVE</option>
-                    <option value="Muy Grave">MUY GRAVE</option>
-                    <option value="Mortal">MORTAL</option>
+                    {magnitudes.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.description.toUpperCase()}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
