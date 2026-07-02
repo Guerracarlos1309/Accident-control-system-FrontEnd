@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { 
-  Loader2, 
-  Calendar, 
-  User, 
-  MapPin, 
-  Shield, 
+import {
+  Loader2,
+  Calendar,
+  User,
+  MapPin,
+  Shield,
   AlertCircle,
   Hash,
   Settings,
@@ -14,7 +14,7 @@ import {
   X,
   FileText,
   Download,
-  Camera
+  Camera,
 } from "lucide-react";
 import { helpFetch } from "../../../../helpers/helpFetch";
 import { useNotification } from "../../../../context/NotificationContext";
@@ -63,9 +63,9 @@ export default function ExtinguisherInspectionDetails({ inspectionId }) {
       accessOk: true,
       impulseType: "DIRECTO",
       physicalArea: "No especificada",
-      observationsText: ""
+      observationsText: "",
     };
-    
+
     if (!str || !str.startsWith("CHECKLIST:")) {
       data.observationsText = str || "";
       return data;
@@ -77,13 +77,13 @@ export default function ExtinguisherInspectionDetails({ inspectionId }) {
       const impulsePart = parts[1] || "";
       const areaPart = parts[2] || "";
       const obsPart = parts[3] || "";
-      
+
       data.locationOk = checklistPart.includes("Ubicacion=OK");
       data.signageOk = checklistPart.includes("Señalizacion=OK");
       data.demarcationOk = checklistPart.includes("Demarcacion=OK");
       data.accessOk = checklistPart.includes("Acceso=OK");
       data.operationOk = checklistPart.includes("Funcionamiento=OK");
-      
+
       if (impulsePart.includes("Impulsor: ")) {
         data.impulseType = impulsePart.replace("Impulsor: ", "");
       }
@@ -102,7 +102,7 @@ export default function ExtinguisherInspectionDetails({ inspectionId }) {
   // Compressed detail observations parser helper
   const parseDetailObservations = (observationsStr, extinguisherNumber) => {
     const data = {
-      code: `EXT-${String(extinguisherNumber).padStart(3, '0')}`,
+      code: `EXT-${String(extinguisherNumber).padStart(3, "0")}`,
       physicalArea: "No especificada",
       impulseType: "DIRECTO",
       locationOk: true,
@@ -111,7 +111,7 @@ export default function ExtinguisherInspectionDetails({ inspectionId }) {
       accessOk: true,
       operationOk: true,
       maintenancePart: "",
-      observationsText: ""
+      observationsText: "",
     };
 
     if (!observationsStr) return data;
@@ -127,7 +127,7 @@ export default function ExtinguisherInspectionDetails({ inspectionId }) {
 
     try {
       const parts = observationsStr.split("|");
-      parts.forEach(part => {
+      parts.forEach((part) => {
         const [key, value] = part.split(":");
         if (!key || !value) return;
         const cleanKey = key.trim();
@@ -135,7 +135,8 @@ export default function ExtinguisherInspectionDetails({ inspectionId }) {
 
         if (cleanKey === "Code") data.code = cleanValue;
         else if (cleanKey === "Area") data.physicalArea = cleanValue;
-        else if (cleanKey === "Imp") data.impulseType = cleanValue.toUpperCase();
+        else if (cleanKey === "Imp")
+          data.impulseType = cleanValue.toUpperCase();
         else if (cleanKey === "Obs") data.observationsText = cleanValue;
         else if (cleanKey === "Maint") data.maintenancePart = cleanValue;
         else if (cleanKey === "CK") {
@@ -157,10 +158,15 @@ export default function ExtinguisherInspectionDetails({ inspectionId }) {
 
   // Combines legacy and new data seamlessly
   const getExtinguisherData = (detail, extInsp) => {
-    if (detail && (!detail.observations || !detail.observations.includes("|"))) {
+    if (
+      detail &&
+      (!detail.observations || !detail.observations.includes("|"))
+    ) {
       const parsed = parseGeneralObservations(extInsp.generalObservations);
       return {
-        code: extInsp.extinguisherCode || `EXT-${String(detail.extinguisherNumber || 1).padStart(3, '0')}`,
+        code:
+          extInsp.extinguisherCode ||
+          `EXT-${String(detail.extinguisherNumber || 1).padStart(3, "0")}`,
         physicalArea: parsed.physicalArea || "No especificada",
         impulseType: parsed.impulseType || "DIRECTO",
         locationOk: parsed.locationOk,
@@ -168,20 +174,25 @@ export default function ExtinguisherInspectionDetails({ inspectionId }) {
         demarcationOk: parsed.demarcationOk,
         accessOk: parsed.accessOk,
         operationOk: parsed.operationOk,
-        maintenancePart: detail.observations?.startsWith("Mantenimiento: ") 
-          ? detail.observations.replace("Mantenimiento: ", "").toUpperCase() 
+        maintenancePart: detail.observations?.startsWith("Mantenimiento: ")
+          ? detail.observations.replace("Mantenimiento: ", "").toUpperCase()
           : "",
-        observationsText: parsed.observationsText || ""
+        observationsText: parsed.observationsText || "",
       };
     }
-    return parseDetailObservations(detail?.observations, detail?.extinguisherNumber);
+    return parseDetailObservations(
+      detail?.observations,
+      detail?.extinguisherNumber,
+    );
   };
 
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 space-y-4 text-txt-muted">
         <Loader2 size={40} className="text-corpoelec-blue animate-spin" />
-        <p className="text-[10px] font-black uppercase tracking-[0.2em]">Recuperando reporte técnico de extintor...</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.2em]">
+          Recuperando reporte técnico de extintor...
+        </p>
       </div>
     );
   }
@@ -189,8 +200,13 @@ export default function ExtinguisherInspectionDetails({ inspectionId }) {
   if (!inspection) {
     return (
       <div className="text-center py-20 text-txt-muted">
-        <AlertCircle size={40} className="mx-auto mb-4 opacity-20 text-corpoelec-red" />
-        <p className="text-sm font-bold uppercase tracking-widest">No se pudo cargar la información del reporte.</p>
+        <AlertCircle
+          size={40}
+          className="mx-auto mb-4 opacity-20 text-corpoelec-red"
+        />
+        <p className="text-sm font-bold uppercase tracking-widest">
+          No se pudo cargar la información del reporte.
+        </p>
       </div>
     );
   }
@@ -199,7 +215,10 @@ export default function ExtinguisherInspectionDetails({ inspectionId }) {
     setDownloading(true);
     try {
       showNotification("Generando PDF...", "info");
-      await api.download(`/reports/inspections/${inspectionId}`, `inspeccion_${inspection.inspectionNumber || inspection.id}.pdf`);
+      await api.download(
+        `/reports/inspections/${inspectionId}`,
+        `inspeccion_${inspection.inspectionNumber || inspection.id}.pdf`,
+      );
       showNotification("PDF descargado con éxito", "success");
     } catch (e) {
       showNotification("Error al generar PDF", "error");
@@ -213,14 +232,17 @@ export default function ExtinguisherInspectionDetails({ inspectionId }) {
 
   return (
     <div className="space-y-8 pb-4 text-txt-main">
-
       {/* TOP HEADER WITH EXPORT BUTTON */}
       <div className="flex justify-between items-center bg-bg-main/30 p-4 rounded-2xl border border-border-main">
         <div>
-          <h3 className="text-xs font-black text-txt-main uppercase tracking-widest">Reporte Técnico (Cilindros)</h3>
-          <p className="text-[9px] text-txt-muted font-bold uppercase tracking-wider mt-0.5">Inspección de Extintores contra Incendios</p>
+          <h3 className="text-xs font-black text-txt-main uppercase tracking-widest">
+            Reporte Técnico (Cilindros)
+          </h3>
+          <p className="text-[9px] text-txt-muted font-bold uppercase tracking-wider mt-0.5">
+            Inspección de Extintores contra Incendios
+          </p>
         </div>
-        <button 
+        <button
           disabled={downloading}
           onClick={handleDownloadPdf}
           className="btn-primary h-10 text-[10px] font-black uppercase tracking-widest gap-2 bg-corpoelec-blue hover:bg-corpoelec-blue/90 px-4 rounded-xl text-white transition-all flex items-center"
@@ -233,41 +255,56 @@ export default function ExtinguisherInspectionDetails({ inspectionId }) {
           <span>Exportar PDF</span>
         </button>
       </div>
-      
+
       {/* HEADER: STATUS & KEY INFO */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
         <div className="bg-bg-main/40 border border-border-main p-5 rounded-2xl">
-          <span className="text-[10px] font-black uppercase text-txt-muted tracking-widest block mb-2">Estado del Reporte</span>
-          <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase border ${
-            inspection.statusId === 3 ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : 
-            inspection.statusId === 2 ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : 
-            "bg-txt-muted/10 text-txt-muted border-border-main"
-          }`}>
+          <span className="text-[10px] font-black uppercase text-txt-muted tracking-widest block mb-2">
+            Estado del Reporte
+          </span>
+          <div
+            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase border ${
+              inspection.statusId === 3
+                ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                : inspection.statusId === 2
+                  ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                  : "bg-txt-muted/10 text-txt-muted border-border-main"
+            }`}
+          >
             <Shield size={12} />
             {inspection.status?.name || "Procesado"}
           </div>
         </div>
-        
+
         <div className="bg-bg-main/40 border border-border-main p-5 rounded-2xl flex items-center gap-4">
-           <div className="w-10 h-10 rounded-xl bg-corpoelec-blue/10 flex items-center justify-center text-corpoelec-blue">
-              <Calendar size={20} />
-           </div>
-           <div>
-              <span className="text-[9px] font-bold text-txt-muted uppercase tracking-tighter">Fecha de Auditoría</span>
-              <p className="text-sm font-bold text-txt-main">{parseLocalDate(inspection.date)?.toLocaleDateString(undefined, { dateStyle: 'long' })}</p>
-           </div>
+          <div className="w-10 h-10 rounded-xl bg-corpoelec-blue/10 flex items-center justify-center text-corpoelec-blue">
+            <Calendar size={20} />
+          </div>
+          <div>
+            <span className="text-[9px] font-bold text-txt-muted uppercase tracking-tighter">
+              Fecha de Auditoría
+            </span>
+            <p className="text-sm font-bold text-txt-main">
+              {parseLocalDate(inspection.date)?.toLocaleDateString(undefined, {
+                dateStyle: "long",
+              })}
+            </p>
+          </div>
         </div>
 
         <div className="bg-bg-main/40 border border-border-main p-5 rounded-2xl flex items-center gap-4">
-           <div className="w-10 h-10 rounded-xl bg-corpoelec-blue/10 flex items-center justify-center text-corpoelec-blue">
-              <Hash size={20} />
-           </div>
-           <div>
-              <span className="text-[9px] font-bold text-txt-muted uppercase tracking-tighter">N° de Inspección / Reporte</span>
-              <p className="text-sm font-mono font-bold text-corpoelec-blue">
-                {inspection.inspectionNumber || `#${inspection.id.toString().padStart(6, '0')}`}
-              </p>
-           </div>
+          <div className="w-10 h-10 rounded-xl bg-corpoelec-blue/10 flex items-center justify-center text-corpoelec-blue">
+            <Hash size={20} />
+          </div>
+          <div>
+            <span className="text-[9px] font-bold text-txt-muted uppercase tracking-tighter">
+              N° de Inspección / Reporte
+            </span>
+            <p className="text-sm font-mono font-bold text-corpoelec-blue">
+              {inspection.inspectionNumber ||
+                `#${inspection.id.toString().padStart(6, "0")}`}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -279,8 +316,13 @@ export default function ExtinguisherInspectionDetails({ inspectionId }) {
               <User size={16} />
             </div>
             <div>
-              <span className="text-[9px] text-txt-muted uppercase font-bold block leading-none mb-1">Inspector Responsable</span>
-              <span className="text-xs font-bold text-txt-sub">{inspection.inspector?.firstName} {inspection.inspector?.lastName}</span>
+              <span className="text-[9px] text-txt-muted uppercase font-bold block leading-none mb-1">
+                Inspector Responsable
+              </span>
+              <span className="text-xs font-bold text-txt-sub">
+                {inspection.inspector?.firstName}{" "}
+                {inspection.inspector?.lastName}
+              </span>
             </div>
           </div>
           <div className="flex items-center gap-3 bg-bg-surface p-3 px-4 rounded-2xl border border-border-main shadow-sm flex-1 sm:flex-initial">
@@ -288,8 +330,12 @@ export default function ExtinguisherInspectionDetails({ inspectionId }) {
               <Building2 size={16} />
             </div>
             <div>
-              <span className="text-[9px] text-txt-muted uppercase font-bold block leading-none mb-1">Sede / Instalación</span>
-              <span className="text-xs font-bold text-txt-sub">{inspection.facility?.name}</span>
+              <span className="text-[9px] text-txt-muted uppercase font-bold block leading-none mb-1">
+                Sede / Instalación
+              </span>
+              <span className="text-xs font-bold text-txt-sub">
+                {inspection.facility?.name}
+              </span>
             </div>
           </div>
         </div>
@@ -316,11 +362,14 @@ export default function ExtinguisherInspectionDetails({ inspectionId }) {
         <div className="grid grid-cols-1 gap-6">
           {detailsList.map((detail, idx) => {
             const parsed = getExtinguisherData(detail, extInsp);
-            const isLegacy = !detail.observations || !detail.observations.includes("|");
+            const isLegacy =
+              !detail.observations || !detail.observations.includes("|");
 
             const checkBadge = (val, label) => (
               <div className="flex items-center justify-between p-2.5 px-3 bg-bg-main/5 border border-border-main/50 rounded-xl">
-                <span className="text-[10px] font-bold text-txt-sub">{label}</span>
+                <span className="text-[10px] font-bold text-txt-sub">
+                  {label}
+                </span>
                 {val ? (
                   <span className="inline-flex items-center gap-1 text-[9px] font-black text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
                     <Check size={10} />
@@ -336,66 +385,99 @@ export default function ExtinguisherInspectionDetails({ inspectionId }) {
             );
 
             return (
-              <div 
+              <div
                 key={detail.id || idx}
                 className="bg-bg-surface border border-border-main rounded-[2rem] p-6 shadow-sm hover:shadow-md hover:border-corpoelec-blue/20 transition-all flex flex-col gap-6"
               >
-                
                 {/* Extinguisher Top Header */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-border-main/40">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl font-black text-corpoelec-blue tracking-tighter uppercase">{parsed.code}</span>
+                    <span className="text-2xl font-black text-corpoelec-blue tracking-tighter uppercase">
+                      {parsed.code}
+                    </span>
                     <span className="px-3 py-1 bg-bg-main border border-border-main text-[10px] font-black uppercase text-txt-sub rounded-lg">
-                      {detail.agentType?.name || "Extintor"} - {detail.capacity || "10 Lb"}
+                      {detail.agentType?.name || "Extintor"} -{" "}
+                      {detail.capacity || "10 Lb"}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <span className="text-[9px] font-black text-txt-muted uppercase tracking-wider mr-1">Operatividad:</span>
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase border ${
-                      detail.generalStatus === "OPERATIVO" ? "bg-green-500/10 text-green-500 border-green-500/20" :
-                      detail.generalStatus === "MANTENIMIENTO" ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
-                      "bg-red-500/10 text-red-500 border-red-500/20"
-                    }`}>{detail.generalStatus}</span>
+                    <span className="text-[9px] font-black text-txt-muted uppercase tracking-wider mr-1">
+                      Operatividad:
+                    </span>
+                    <span
+                      className={`px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase border ${
+                        detail.generalStatus === "OPERATIVO"
+                          ? "bg-green-500/10 text-green-500 border-green-500/20"
+                          : detail.generalStatus === "MANTENIMIENTO"
+                            ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                            : "bg-red-500/10 text-red-500 border-red-500/20"
+                      }`}
+                    >
+                      {detail.generalStatus}
+                    </span>
                   </div>
                 </div>
 
                 {/* Card Sub-grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  
                   {/* Left Column: Tech Data */}
                   <div className="space-y-4 bg-bg-main/5 p-5 rounded-2xl border border-border-main/40">
                     <h5 className="text-[9px] font-black text-txt-muted uppercase tracking-[0.15em] mb-2 flex items-center gap-1.5">
                       <Settings size={12} className="text-corpoelec-blue" />
                       Especificaciones Técnicas
                     </h5>
-                    
+
                     <div className="grid grid-cols-2 gap-4 text-xs">
                       <div>
-                        <span className="text-[9px] font-bold text-txt-muted uppercase block leading-none mb-1">Área Ubicado</span>
-                        <span className="font-bold text-txt-main">{parsed.physicalArea === "OTRA" ? parsed.physicalAreaOther : parsed.physicalArea}</span>
-                      </div>
-                      <div>
-                        <span className="text-[9px] font-bold text-txt-muted uppercase block leading-none mb-1">Agente Impulsor</span>
-                        <span className="font-bold text-txt-main uppercase">{parsed.impulseType}</span>
-                      </div>
-                      <div>
-                        <span className="text-[9px] font-bold text-txt-muted uppercase block leading-none mb-1">Fecha Recarga</span>
-                        <span className="font-semibold text-txt-sub">
-                          {detail.rechargeDate ? parseLocalDate(detail.rechargeDate)?.toLocaleDateString() : "N/R"}
+                        <span className="text-[9px] font-bold text-txt-muted uppercase block leading-none mb-1">
+                          Área Ubicado
+                        </span>
+                        <span className="font-bold text-txt-main">
+                          {parsed.physicalArea === "OTRA"
+                            ? parsed.physicalAreaOther
+                            : parsed.physicalArea}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[9px] font-bold text-txt-muted uppercase block leading-none mb-1">Vencimiento</span>
+                        <span className="text-[9px] font-bold text-txt-muted uppercase block leading-none mb-1">
+                          Agente Impulsor
+                        </span>
+                        <span className="font-bold text-txt-main uppercase">
+                          {parsed.impulseType}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] font-bold text-txt-muted uppercase block leading-none mb-1">
+                          Fecha Recarga
+                        </span>
                         <span className="font-semibold text-txt-sub">
-                          {detail.expirationDate ? parseLocalDate(detail.expirationDate)?.toLocaleDateString() : "N/R"}
+                          {detail.rechargeDate
+                            ? parseLocalDate(
+                                detail.rechargeDate,
+                              )?.toLocaleDateString()
+                            : "N/R"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] font-bold text-txt-muted uppercase block leading-none mb-1">
+                          Vencimiento
+                        </span>
+                        <span className="font-semibold text-txt-sub">
+                          {detail.expirationDate
+                            ? parseLocalDate(
+                                detail.expirationDate,
+                              )?.toLocaleDateString()
+                            : "N/R"}
                         </span>
                       </div>
                     </div>
 
                     {parsed.maintenancePart && (
                       <div className="border-t border-border-main/50 pt-3 mt-1 text-xs">
-                        <span className="text-[9px] font-bold text-corpoelec-red uppercase block leading-none mb-1">Repuesto / Parte en Falla</span>
+                        <span className="text-[9px] font-bold text-corpoelec-red uppercase block leading-none mb-1">
+                          Repuesto / Parte en Falla
+                        </span>
                         <span className="inline-flex items-center gap-1.5 text-[9px] font-black text-corpoelec-red bg-corpoelec-red/5 px-3 py-1 rounded-lg border border-corpoelec-red/10 uppercase">
                           <AlertCircle size={10} />
                           {parsed.maintenancePart}
@@ -412,28 +494,30 @@ export default function ExtinguisherInspectionDetails({ inspectionId }) {
                     </h5>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {checkBadge(parsed.locationOk, "Ubicación Correcta")}
-                      {checkBadge(parsed.signageOk, "Señalización Visible")}
-                      {checkBadge(parsed.demarcationOk, "Área Demarcada")}
-                      {checkBadge(parsed.accessOk, "Acceso Despejado")}
+                      {checkBadge(parsed.locationOk, "Ubicación")}
+                      {checkBadge(parsed.signageOk, "Señalización")}
+                      {checkBadge(parsed.demarcationOk, "Demarcación")}
+                      {checkBadge(parsed.accessOk, "Acceso al Extintor")}
                       <div className="sm:col-span-2">
-                        {checkBadge(parsed.operationOk, "Manómetro / Precinto")}
+                        {checkBadge(parsed.operationOk, "Extintor")}
                       </div>
                     </div>
                   </div>
-
                 </div>
 
                 {/* Specific Cylinder observations */}
                 {parsed.observationsText && (
                   <div className="bg-bg-main/5 border border-border-main/40 p-4 rounded-2xl flex items-start gap-2 text-xs italic">
-                    <Info size={14} className="text-txt-muted shrink-0 mt-0.5" />
+                    <Info
+                      size={14}
+                      className="text-txt-muted shrink-0 mt-0.5"
+                    />
                     <p className="text-[11px] text-txt-sub leading-normal">
-                      <strong>Obs. del Cilindro:</strong> {parsed.observationsText}
+                      <strong>Obs. del Cilindro:</strong>{" "}
+                      {parsed.observationsText}
                     </p>
                   </div>
                 )}
-
               </div>
             );
           })}
@@ -444,7 +528,9 @@ export default function ExtinguisherInspectionDetails({ inspectionId }) {
         <div className="space-y-4 mt-8">
           <div className="flex items-center gap-2 pb-2 border-b border-border-main">
             <Camera size={16} className="text-purple-500" />
-            <h4 className="text-[11px] font-black text-txt-muted uppercase tracking-widest">Registro Fotográfico</h4>
+            <h4 className="text-[11px] font-black text-txt-muted uppercase tracking-widest">
+              Registro Fotográfico
+            </h4>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {inspection.images.map((img) => (
@@ -461,14 +547,15 @@ export default function ExtinguisherInspectionDetails({ inspectionId }) {
                   className="w-full h-full object-cover transition-transform group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <span className="text-[8px] font-black text-white uppercase tracking-widest">Ver imagen</span>
+                  <span className="text-[8px] font-black text-white uppercase tracking-widest">
+                    Ver imagen
+                  </span>
                 </div>
               </a>
             ))}
           </div>
         </div>
       )}
-
     </div>
   );
 }
