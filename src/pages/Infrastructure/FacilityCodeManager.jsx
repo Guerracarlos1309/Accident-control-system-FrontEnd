@@ -675,37 +675,36 @@ export default function FacilityCodeManager() {
             </p>
           </div>
         ) : (
-          /* Table View */
-          <div className="glass-panel rounded-[2rem] overflow-hidden border border-border-main/50 shadow-sm">
+             <div className="glass-panel rounded-[2rem] overflow-hidden border border-border-main/50 shadow-sm">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse table-fixed">
                 <thead>
                   <tr className="bg-bg-main/50 border-b border-border-main">
-                    <th className="px-6 py-5 text-[10px] font-black text-txt-muted uppercase tracking-[0.2em]">
+                    <th className="w-[18%] px-3 py-4 text-[9px] font-black text-txt-muted uppercase tracking-widest">
                       Instalación
                     </th>
-                    <th className="px-6 py-5 text-[10px] font-black text-txt-muted uppercase tracking-[0.2em]">
-                      Fecha Inspección / Caracterización
+                    <th className="w-[11%] px-3 py-4 text-[9px] font-black text-txt-muted uppercase tracking-widest">
+                      Fecha Insp.
                     </th>
-                    <th className="px-6 py-5 text-[10px] font-black text-txt-muted uppercase tracking-[0.2em]">
-                      Número de Informe
+                    <th className="w-[15%] px-3 py-4 text-[9px] font-black text-txt-muted uppercase tracking-widest">
+                      Nro. Informe
                     </th>
-                    <th className="px-6 py-5 text-[10px] font-black text-txt-muted uppercase tracking-[0.2em]">
-                      Fecha Informe
+                    <th className="w-[10%] px-3 py-4 text-[9px] font-black text-txt-muted uppercase tracking-widest">
+                      Fecha Inf.
                     </th>
-                    <th className="px-6 py-5 text-[10px] font-black text-txt-muted uppercase tracking-[0.2em]">
-                      Memo de Entrega
+                    <th className="w-[13%] px-3 py-4 text-[9px] font-black text-txt-muted uppercase tracking-widest">
+                      Memo Entrega
                     </th>
-                    <th className="px-6 py-5 text-[10px] font-black text-txt-muted uppercase tracking-[0.2em]">
+                    <th className="w-[10%] px-3 py-4 text-[9px] font-black text-txt-muted uppercase tracking-widest">
                       Fecha Memo
                     </th>
-                    <th className="px-6 py-5 text-[10px] font-black text-txt-muted uppercase tracking-[0.2em]">
+                    <th className="w-[8%] px-3 py-4 text-[9px] font-black text-txt-muted uppercase tracking-widest">
                       PDF
                     </th>
-                    <th className="px-6 py-5 text-[10px] font-black text-txt-muted uppercase tracking-[0.2em]">
+                    <th className="w-[15%] px-3 py-4 text-[9px] font-black text-txt-muted uppercase tracking-widest">
                       Observaciones
                     </th>
-                    <th className="px-6 py-5 text-right text-[10px] font-black text-txt-muted uppercase tracking-[0.2em]">
+                    <th className="w-[10%] px-3 py-4 text-right text-[9px] font-black text-txt-muted uppercase tracking-widest">
                       Acciones
                     </th>
                   </tr>
@@ -717,48 +716,45 @@ export default function FacilityCodeManager() {
                       className="hover:bg-bg-main/30 transition-colors group"
                     >
                       {/* Sede */}
-                      <td className="px-6 py-4">
+                      <td className="px-3 py-3.5 overflow-hidden">
                         {record.facility ? (
-                          <div>
-                            <p className="text-sm font-bold text-txt-main leading-none mb-1 group-hover:text-corpoelec-blue transition-colors">
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-txt-main truncate leading-tight mb-0.5 group-hover:text-corpoelec-blue transition-colors" title={record.facility.name}>
                               {record.facility.name}
                             </p>
-                            <p className="text-[10px] text-txt-muted">
-                              {record.facility.location?.parish?.city?.name ||
-                                "N/A"}
-                              ,{" "}
-                              {record.facility.location?.parish?.name || "N/A"}
+                            <p className="text-[9px] text-txt-muted truncate">
+                              {record.facility.location?.parish?.city?.name || "N/A"}, {record.facility.location?.parish?.name || "N/A"}
                             </p>
                           </div>
                         ) : (
-                          <span className="text-xs italic text-txt-muted/60">
-                            Sin instalación vinculada
+                          <span className="text-[10px] italic text-txt-muted/60">
+                            Sin sede vinculada
                           </span>
                         )}
                       </td>
 
                       {/* Fecha de la Inspección */}
-                      <td className="px-6 py-4 text-xs font-bold text-txt-main">
+                      <td className="px-3 py-3.5 text-xs font-bold text-txt-main whitespace-nowrap">
                         {record.inspectionDate ? (
                           formatDate(record.inspectionDate)
                         ) : (
                           <span className="text-[10px] italic text-txt-muted/50">
-                            No especificada
+                            —
                           </span>
                         )}
                       </td>
 
                       {/* Código de control */}
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col gap-1.5">
+                      <td className="px-3 py-3.5">
+                        <div className="flex flex-col gap-1 min-w-0">
                           <span
-                            className="text-xs font-black text-corpoelec-blue font-mono tracking-wider whitespace-nowrap"
+                            className="text-[11px] font-black text-corpoelec-blue font-mono tracking-wider truncate"
                             title={record.code}
                           >
                             {record.code}
                           </span>
                           <span
-                            className={`text-[8px] font-black px-1.5 py-0.5 rounded border uppercase tracking-widest self-start leading-none whitespace-nowrap ${
+                            className={`text-[8px] font-black px-1 py-0.5 rounded border uppercase tracking-wider self-start leading-none truncate whitespace-nowrap ${
                               record.type === "I"
                                 ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
                                 : record.type === "C"
@@ -767,63 +763,63 @@ export default function FacilityCodeManager() {
                             }`}
                           >
                             {record.type === "I"
-                              ? "Inspección (I)"
+                              ? "Inspección"
                               : record.type === "C"
-                                ? "Caracterización (C)"
-                                : "Memorando (M)"}
+                                ? "Caracteriz."
+                                : "Memorando"}
                           </span>
                         </div>
                       </td>
 
                       {/* Fecha del Informe */}
-                      <td className="px-6 py-4 text-xs font-bold text-txt-main">
+                      <td className="px-3 py-3.5 text-xs font-bold text-txt-main whitespace-nowrap">
                         {record.date ? (
                           formatDate(record.date)
                         ) : (
                           <span className="text-[10px] italic text-txt-muted/50">
-                            No registrada
+                            —
                           </span>
                         )}
                       </td>
 
                       {/* Memo de entrega */}
-                      <td className="px-6 py-4">
+                      <td className="px-3 py-3.5 overflow-hidden">
                         {record.memoNumber ? (
                           <span
-                            className="inline-block font-mono font-black tracking-wider bg-corpoelec-blue/8 text-corpoelec-blue px-2.5 py-1 rounded-lg border border-corpoelec-blue/20 text-[10px] whitespace-nowrap"
+                            className="inline-block font-mono font-black tracking-wider bg-corpoelec-blue/8 text-corpoelec-blue px-2 py-0.5 rounded border border-corpoelec-blue/10 text-[9px] truncate max-w-full"
                             title={record.memoNumber}
                           >
                             {record.memoNumber}
                           </span>
                         ) : (
                           <span className="text-[10px] italic text-txt-muted/50">
-                            No registrado
+                            —
                           </span>
                         )}
                       </td>
 
                       {/* Fecha del Memo */}
-                      <td className="px-6 py-4 text-xs font-bold text-txt-main">
+                      <td className="px-3 py-3.5 text-xs font-bold text-txt-main whitespace-nowrap">
                         {record.memoDate ? (
                           formatDate(record.memoDate)
                         ) : (
                           <span className="text-[10px] italic text-txt-muted/50">
-                            Sin fecha
+                            —
                           </span>
                         )}
                       </td>
 
                       {/* PDF Adjunto */}
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col gap-1.5">
+                      <td className="px-3 py-3.5">
+                        <div className="flex flex-col gap-1 min-w-0">
                           {record.pdfPath ? (
                             <a
                               href={`${window.BACKEND_URL || "http://localhost:3000"}${record.pdfPath}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-500/10 text-corpoelec-red hover:bg-red-500/20 rounded-lg border border-red-500/25 transition-all text-[9px] font-black uppercase tracking-wider self-start"
+                              className="inline-flex items-center justify-center gap-1 px-1.5 py-0.5 bg-red-500/10 text-corpoelec-red hover:bg-red-500/20 rounded border border-red-500/25 transition-all text-[8px] font-black uppercase tracking-wider w-fit"
                             >
-                              <FileText size={14} />
+                              <FileText size={10} />
                               <span>PDF 1</span>
                             </a>
                           ) : null}
@@ -833,79 +829,73 @@ export default function FacilityCodeManager() {
                               href={`${window.BACKEND_URL || "http://localhost:3000"}${record.pdfPath2}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-500/10 text-corpoelec-red hover:bg-red-500/20 rounded-lg border border-red-500/25 transition-all text-[9px] font-black uppercase tracking-wider self-start"
+                              className="inline-flex items-center justify-center gap-1 px-1.5 py-0.5 bg-red-500/10 text-corpoelec-red hover:bg-red-500/20 rounded border border-red-500/25 transition-all text-[8px] font-black uppercase tracking-wider w-fit"
                             >
-                              <FileText size={14} />
+                              <FileText size={10} />
                               <span>PDF 2</span>
                             </a>
                           ) : null}
 
                           {!record.pdfPath && !record.pdfPath2 ? (
-                            <span className="text-[9px] font-semibold text-txt-muted/40 uppercase tracking-widest">
-                              Sin PDF
+                            <span className="text-[8px] font-semibold text-txt-muted/40 uppercase tracking-wider">
+                              —
                             </span>
                           ) : null}
                         </div>
                       </td>
 
                       {/* Observaciones */}
-                      <td className="px-6 py-4" style={{ maxWidth: "240px" }}>
+                      <td className="px-3 py-3.5 overflow-hidden">
                         {record.notes ? (
-                          <div>
-                            <p
-                              className="text-xs text-txt-muted line-clamp-2 leading-relaxed"
-                              title={record.notes}
-                            >
-                              {record.notes}
-                            </p>
-                          </div>
+                          <p
+                            className="text-[11px] text-txt-muted truncate leading-normal"
+                            title={record.notes}
+                          >
+                            {record.notes}
+                          </p>
                         ) : (
-                          <span className="text-[10px] italic text-txt-muted/50">
-                            Sin observaciones
+                          <span className="text-[10px] italic text-txt-muted/40">
+                            —
                           </span>
                         )}
                       </td>
 
                       {/* Acciones */}
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                      <td className="px-3 py-3.5 text-right">
+                        <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => handleDownloadReport(record)}
                             disabled={
                               downloadingReportId === record.id ||
                               !record.facilityId
                             }
-                            className="p-2 rounded-lg text-txt-muted hover:text-corpoelec-blue hover:bg-corpoelec-blue/10 transition-all flex items-center gap-1.5 disabled:opacity-30 disabled:pointer-events-none"
-                            title={
-                              record.facilityId
-                                ? "Generar Informe Completo (Código + Inspecciones)"
-                                : "Instalación requerida para generar reporte"
-                            }
+                            className="p-1.5 rounded text-txt-muted hover:text-corpoelec-blue hover:bg-corpoelec-blue/10 transition-all disabled:opacity-30"
+                            title="Informe Completo"
                           >
                             {downloadingReportId === record.id ? (
                               <Loader2
-                                size={16}
+                                size={14}
                                 className="animate-spin text-corpoelec-blue"
                               />
                             ) : (
-                              <Download size={16} />
+                              <Download size={14} />
                             )}
                           </button>
                           {user?.role !== "Analista" && (
                             <>
                               <button
                                 onClick={() => handleEdit(record)}
-                                className="p-2 rounded-lg text-txt-muted hover:text-corpoelec-blue hover:bg-corpoelec-blue/10 transition-all"
+                                className="p-1.5 rounded text-txt-muted hover:text-corpoelec-blue hover:bg-corpoelec-blue/10 transition-all"
                                 title="Editar"
                               >
-                                <Edit2 size={16} />
+                                <Edit2 size={14} />
                               </button>
                               <button
                                 onClick={() => setItemToDelete(record)}
-                                className="p-2 rounded-lg text-txt-muted hover:text-corpoelec-red hover:bg-corpoelec-red/10 transition-all"
+                                className="p-1.5 rounded text-txt-muted hover:text-corpoelec-red hover:bg-corpoelec-red/10 transition-all"
                                 title="Eliminar"
                               >
-                                <Trash2 size={16} />
+                                <Trash2 size={14} />
                               </button>
                             </>
                           )}
