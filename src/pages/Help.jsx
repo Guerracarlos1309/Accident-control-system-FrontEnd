@@ -194,40 +194,8 @@ export default function Help() {
 
             <p className="text-xs text-txt-muted leading-relaxed font-medium">
               Si experimentas errores técnicos, lentitud o necesitas restablecer
-              tu acceso, contacta con la División de Informática.
+              tu acceso, Revisa el Manual de Usuario.
             </p>
-
-            <div className="space-y-3">
-              <div className="flex items-center gap-4 p-4 bg-bg-main/5 rounded-2xl border border-border-main/30 group hover:border-corpoelec-blue/30 transition-colors">
-                <Mail
-                  className="text-txt-muted group-hover:text-corpoelec-blue"
-                  size={18}
-                />
-                <div>
-                  <p className="text-[10px] font-black text-txt-muted uppercase tracking-widest leading-none mb-1">
-                    Email Interno
-                  </p>
-                  <p className="text-xs font-bold text-txt-main">
-                    soporte.asho@corpoelec.gob.ve
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 p-4 bg-bg-main/5 rounded-2xl border border-border-main/30 group hover:border-corpoelec-blue/30 transition-colors">
-                <div className="w-[18px] h-[18px] flex items-center justify-center">
-                  <ShieldCheck
-                    size={18}
-                    className="text-txt-muted group-hover:text-corpoelec-blue"
-                  />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black text-txt-muted uppercase tracking-widest leading-none mb-1">
-                    Extensión Interna
-                  </p>
-                  <p className="text-xs font-bold text-txt-main">2245 / 2246</p>
-                </div>
-              </div>
-            </div>
 
             <div className="pt-4">
               <div className="p-4 bg-corpoelec-blue/5 border border-corpoelec-blue/10 rounded-2xl space-y-2">
@@ -235,10 +203,10 @@ export default function Help() {
                   <FileText size={12} /> Versión del Sistema
                 </p>
                 <p className="text-xs font-bold text-txt-sub">
-                  Corpoelec ASHO v2.5.0
+                  Corpoelec ASHO v1.0
                 </p>
                 <p className="text-[9px] text-txt-muted font-black uppercase tracking-widest">
-                  Fecha de Actualización: 2024
+                  Fecha de Creación: 2026
                 </p>
               </div>
             </div>
