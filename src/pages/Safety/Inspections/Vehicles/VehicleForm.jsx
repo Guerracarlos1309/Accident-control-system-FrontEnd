@@ -201,15 +201,7 @@ export default function VehicleForm({
     return lookups.vehicles.find((v) => v.plate === formData.selectedPlate);
   }, [formData.selectedPlate, lookups.vehicles]);
 
-  // Auto-fill facility from the selected vehicle whenever plate changes
-  useEffect(() => {
-    if (selectedVehicle?.facilityId && !initialData) {
-      setFormData((prev) => ({
-        ...prev,
-        facilityId: String(selectedVehicle.facilityId),
-      }));
-    }
-  }, [selectedVehicle, initialData]);
+
 
   const generatedInspectionNumber = useMemo(() => {
     if (initialData?.inspectionNumber) {
@@ -453,30 +445,20 @@ export default function VehicleForm({
             <label className="text-[10px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">
               Centro de Trabajo *
             </label>
-            {selectedVehicle?.facility ? (
-              // Sede auto-rellenada desde el vehículo → solo lectura
-              <div className="input-field h-12 flex items-center gap-2 bg-corpoelec-blue/5 border-dashed border-corpoelec-blue/30 cursor-not-allowed select-none">
-                <MapPin size={14} className="text-corpoelec-blue shrink-0" />
-                <span className="text-xs font-black text-corpoelec-blue uppercase tracking-wider truncate">
-                  {selectedVehicle.facility.name}
-                </span>
-              </div>
-            ) : (
               <select
                 name="facilityId"
                 required
                 value={formData.facilityId}
                 onChange={handleChange}
-                className="input-field h-12"
+                className="input-field h-12 cursor-pointer font-bold uppercase [&>option]:bg-bg-surface"
               >
-                <option value="">Seleccione sede...</option>
+                <option value="">Seleccione la sede del centro de trabajo...</option>
                 {lookups.facilities.map((f) => (
                   <option key={f.id} value={f.id}>
                     {f.name}
                   </option>
                 ))}
               </select>
-            )}
           </div>
           <div className="space-y-1">
             <label className="text-[10px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">
@@ -621,13 +603,13 @@ export default function VehicleForm({
                     {selectedVehicle.color}
                   </span>
                 </div>
-                {selectedVehicle.facility && (
+                {selectedVehicle.management && (
                   <div className="flex flex-col">
                     <span className="text-[9px] uppercase font-black text-txt-muted tracking-[0.1em]">
-                      Sede Asignada
+                      Gerencia / Cuadrilla
                     </span>
                     <span className="text-xs font-black text-corpoelec-blue">
-                      {selectedVehicle.facility.name}
+                      {selectedVehicle.management.name}
                     </span>
                   </div>
                 )}

@@ -29,26 +29,30 @@ export default function VehicleRegistryForm({
     vehicleTypeId: initialData?.vehicleTypeId || "",
     color: initialData?.color || "",
     year: initialData?.year || new Date().getFullYear(),
-    facilityId: initialData?.facilityId || "",
+    managementId: initialData?.managementId || "",
   });
 
   const [lookups, setLookups] = useState({
     brands: [],
     models: [],
     types: [],
-    facilities: [],
+    managements: [],
   });
 
   const [selectedBrand, setSelectedBrand] = useState("");
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customVehicleType, setCustomVehicleType] = useState("");
+  const [customManagement, setCustomManagement] = useState("");
 
   // Detecta si el tipo seleccionado es "Otros"
   const selectedTypeIsOther = lookups.types.find(
     (t) => String(t.id) === String(formData.vehicleTypeId) &&
       t.name.trim().toUpperCase() === "OTROS"
   );
+
+  // Detecta si la gerencia seleccionada es "Otros/Otras"
+  const selectedManagementIsOther = formData.managementId === "OTRAS";
 
   // Image handling
   const [imageFiles, setImageFiles] = useState([]);
@@ -61,21 +65,21 @@ export default function VehicleRegistryForm({
   useEffect(() => {
     const fetchLookups = async () => {
       try {
-        const [brandsRes, modelsRes, typesRes, facRes] = await Promise.all([
+        const [brandsRes, modelsRes, typesRes, mngRes] = await Promise.all([
           api.get("/lookups/brands"),
           api.get("/lookups/models"),
           api.get("/lookups/vehicle-types"),
-          api.get("/facilities"),
+          api.get("/lookups/managements"),
         ]);
 
         setLookups({
           brands: Array.isArray(brandsRes) ? brandsRes : [],
           models: Array.isArray(modelsRes) ? modelsRes : [],
           types: Array.isArray(typesRes) ? typesRes : [],
-          facilities: Array.isArray(facRes) ? facRes : [],
+          managements: Array.isArray(mngRes) ? mngRes : [],
         });
 
-        if (brandsRes?.err || modelsRes?.err || typesRes?.err) {
+        if (brandsRes?.err || modelsRes?.err || typesRes?.err || mngRes?.err) {
           showNotification("Algunos catálogos no pudieron cargarse", "warning");
         }
 
@@ -154,9 +158,9 @@ export default function VehicleRegistryForm({
       return;
     }
 
-    // 2. Facility validation
-    if (!formData.facilityId) {
-      showNotification("Debe seleccionar la sede o instalación asignada al vehículo", "error");
+    // 2. Management validation
+    if (!formData.managementId) {
+      showNotification("Debe seleccionar la gerencia o cuadrilla asignada al vehículo", "error");
       return;
     }
 
@@ -196,6 +200,31 @@ export default function VehicleRegistryForm({
       }
     }
 
+    // 5. Si se eligió "OTRAS" en gerencia, validar y crear la gerencia nueva
+    let finalManagementId = formData.managementId;
+    if (selectedManagementIsOther) {
+      const customMngName = customManagement.trim();
+      if (!customMngName) {
+        showNotification("Por favor, especifique la gerencia o cuadrilla", "error");
+        return;
+      }
+      try {
+        const newMng = await api.post("/lookups/managements", {
+          body: { name: customMngName },
+        });
+        if (!newMng || newMng.err) {
+          showNotification("Error al registrar la gerencia o cuadrilla", "error");
+          return;
+        }
+        finalManagementId = newMng.id;
+        // Actualizar lookups localmente
+        setLookups((prev) => ({ ...prev, managements: [...prev.managements, newMng] }));
+      } catch {
+        showNotification("Error de conexión al crear gerencia", "error");
+        return;
+      }
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -208,6 +237,8 @@ export default function VehicleRegistryForm({
       Object.keys(formData).forEach((key) => {
         if (key === "vehicleTypeId") {
           sendData.append(key, finalVehicleTypeId);
+        } else if (key === "managementId") {
+          sendData.append(key, finalManagementId);
         } else if (formData[key] !== "" && formData[key] !== null) {
           sendData.append(key, formData[key]);
         }
@@ -299,25 +330,42 @@ export default function VehicleRegistryForm({
                 className="input-field h-11"
               />
             </div>
-            {/* Sede Asignada — span completo */}
+            {/* Gerencia / Cuadrilla Asignada — span completo */}
             <div className="space-y-1 md:col-span-2">
               <label className="text-[11px] font-bold text-txt-muted uppercase tracking-wider flex items-center gap-1">
-                <MapPin size={12} className="text-corpoelec-blue" /> Sede / Instalación Asignada *
+                <Shield size={12} className="text-corpoelec-blue" /> Gerencia / Cuadrilla *
               </label>
               <select
-                name="facilityId"
+                name="managementId"
                 required
-                value={formData.facilityId}
+                value={formData.managementId}
                 onChange={handleChange}
-                className="input-field h-11 cursor-pointer"
+                className="input-field h-11 cursor-pointer font-bold uppercase [&>option]:bg-bg-surface"
               >
-                <option value="">Seleccione la sede del vehículo...</option>
-                {lookups.facilities.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name}
+                <option value="">Seleccione la gerencia o cuadrilla...</option>
+                {lookups.managements.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
                   </option>
                 ))}
+                <option value="OTRAS">OTRAS / CONTROL DE CUADRILLA (NUEVA)</option>
               </select>
+              {selectedManagementIsOther && (
+                <div className="mt-2 space-y-1 animate-in slide-in-from-top-1 duration-200">
+                  <label className="text-[10px] font-bold text-corpoelec-blue uppercase tracking-widest ml-1">
+                    Especifique la Gerencia / Cuadrilla *
+                  </label>
+                  <input
+                    type="text"
+                    value={customManagement}
+                    onChange={(e) => setCustomManagement(e.target.value.toUpperCase())}
+                    className="input-field h-11 font-bold uppercase"
+                    placeholder="EJ: GERENCIA DE COMUNICACIONES"
+                    maxLength={100}
+                    required
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -5,7 +5,8 @@ import {
   Settings, 
   Image as ImageIcon,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Shield
 } from "lucide-react";
 
 export default function VehicleDetails({ data }) {
@@ -59,6 +60,7 @@ export default function VehicleDetails({ data }) {
           <DetailItem icon={Calendar} label="Año de Fabricación" value={data.year} />
           <DetailItem icon={Palette} label="Color Predominante" value={data.color} />
           <DetailItem icon={Settings} label="Clasificación" value={data.type?.name} />
+          <DetailItem icon={Shield} label="Gerencia / Cuadrilla" value={data.management?.name} />
         </div>
       </div>
 
