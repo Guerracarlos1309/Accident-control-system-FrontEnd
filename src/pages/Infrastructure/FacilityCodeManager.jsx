@@ -22,6 +22,7 @@ import { useAuth } from "../../context/AuthContext";
 
 export default function FacilityCodeManager() {
   const { user } = useAuth();
+  const todayStr = new Date().toLocaleDateString("en-CA");
   const [records, setRecords] = useState([]);
   const [facilities, setFacilities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -575,6 +576,7 @@ export default function FacilityCodeManager() {
                   type="date"
                   value={selectedDateFilter}
                   onChange={(e) => setSelectedDateFilter(e.target.value)}
+                  max={todayStr}
                   className="input-field h-11 text-xs font-bold"
                 />
               </div>
@@ -1002,6 +1004,7 @@ export default function FacilityCodeManager() {
                 type="date"
                 value={formInspectionDate}
                 onChange={(e) => setFormInspectionDate(e.target.value)}
+                max={todayStr}
                 className="input-field h-12 text-xs font-bold"
               />
             </div>
@@ -1015,6 +1018,7 @@ export default function FacilityCodeManager() {
                 type="date"
                 value={formDate}
                 onChange={(e) => setFormDate(e.target.value)}
+                max={todayStr}
                 className="input-field h-12 text-xs font-bold"
               />
             </div>
@@ -1076,6 +1080,7 @@ export default function FacilityCodeManager() {
                   type="date"
                   value={formMemoDate}
                   onChange={(e) => setFormMemoDate(e.target.value)}
+                  max={todayStr}
                   className="input-field h-12 text-xs font-bold"
                 />
               </div>

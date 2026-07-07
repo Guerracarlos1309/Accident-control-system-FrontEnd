@@ -953,7 +953,7 @@ export default function EmployeeForm({ data, onCancel, onSubmit }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="space-y-1">
               <label className="text-[11px] font-black text-txt-muted uppercase tracking-[0.15em] ml-1">
-                Gerencia
+                Gerencia *
               </label>
               <select
                 name="managementId"
