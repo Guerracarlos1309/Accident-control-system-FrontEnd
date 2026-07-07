@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import MasterEntityManager from "../../../components/MasterEntityManager";
 import { helpFetch } from "../../../helpers/helpFetch";
-import { Loader2 } from "lucide-react";
+import { Loader2, Car, Settings2 } from "lucide-react";
 
 export default function FleetSetup() {
   const [brands, setBrands] = useState([]);
@@ -38,6 +38,7 @@ export default function FleetSetup() {
     <div className="space-y-12 animate-in fade-in duration-700">
       <section>
         <MasterEntityManager 
+          icon={Car}
           title="Marcas de Vehículos" 
           entityName="Marca" 
           apiPath="/lookups/brands"
@@ -47,6 +48,7 @@ export default function FleetSetup() {
 
       <section className="pt-8 border-t border-slate-800/50">
         <MasterEntityManager 
+          icon={Settings2}
           title="Modelos y Versiones" 
           entityName="Modelo" 
           apiPath="/lookups/models"

@@ -181,8 +181,7 @@ export default function VehicleRegistryForm({
       }
       try {
         const newType = await api.post("/lookups/vehicle-types", {
-          body: JSON.stringify({ name: customName }),
-          headers: { "Content-Type": "application/json" },
+          body: { name: customName },
         });
         if (!newType || newType.err) {
           showNotification("Error al registrar el tipo de vehículo", "error");

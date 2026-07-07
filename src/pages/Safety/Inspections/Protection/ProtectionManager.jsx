@@ -180,8 +180,9 @@ export default function ProtectionManager() {
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-txt-main tracking-tight">
-            Inspección de Equipos de Protección (EPI / EPC)
+          <h2 className="text-2xl font-bold text-txt-main tracking-tight flex items-center gap-3">
+            <Layers size={24} className="text-corpoelec-blue shrink-0" />
+            <span>Inspección de Equipos de Protección (EPI / EPC)</span>
           </h2>
           <p className="text-txt-muted mt-1 text-sm md:text-base">
             Control de inventario, operatividad y novedades de los equipos de

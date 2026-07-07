@@ -1,3 +1,4 @@
+import { UserX } from "lucide-react";
 import MasterEntityManager from "../../../components/MasterEntityManager";
 import EmployeeForm from "./EmployeeForm";
 import EmployeeDetails from "./EmployeeDetails";
@@ -5,6 +6,7 @@ import EmployeeDetails from "./EmployeeDetails";
 export default function InactiveEmployeeManager() {
   return (
     <MasterEntityManager
+      icon={UserX}
       title="Personal Inactivo / Histórico"
       description="Historial del personal desactivado. Aquí puede reactivar empleados o eliminarlos permanentemente."
       entityName="Empleado"

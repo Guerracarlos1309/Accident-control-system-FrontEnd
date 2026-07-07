@@ -82,8 +82,9 @@ export default function ProfilePage() {
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500">
       <div className="flex justify-between items-end">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-500">
-            Mi Perfil
+          <h2 className="text-2xl font-bold tracking-tight text-slate-500 flex items-center gap-3">
+            <UserCircle size={24} className="text-corpoelec-blue shrink-0" />
+            <span>Mi Perfil</span>
           </h2>
           <p className="text-sm text-slate-500">
             Gestione su información personal y configuración de acceso.

@@ -70,6 +70,7 @@ export default function LocationSetup() {
         {!selectedStateId && (
           <div className="glass-panel p-8 rounded-[2rem] border border-border-main/50 relative overflow-hidden animate-in fade-in slide-in-from-top-4 duration-500">
             <MasterEntityManager
+              icon={Globe}
               title="Estados"
               description="Gestión de las entidades federales principales."
               entityName="Estado"
@@ -86,10 +87,11 @@ export default function LocationSetup() {
             />
           </div>
         )}
-
+ 
         {/* CIUDADES / MUNICIPIOS */}
         <div className="glass-panel p-8 rounded-[2rem] border border-border-main/50 relative overflow-hidden">
           <MasterEntityManager
+            icon={Map}
             title={selectedStateId ? `Ciudades en ${states.find(s => s.id == selectedStateId)?.name}` : "Ciudades / Municipios"}
             description="Relación de ciudades pertenecientes a los estados."
             entityName="Ciudad"
@@ -113,10 +115,11 @@ export default function LocationSetup() {
             ]}
           />
         </div>
-
+ 
         {/* PARROQUIAS */}
         <div className="glass-panel p-8 rounded-[2rem] border border-border-main/50 relative overflow-hidden">
           <MasterEntityManager
+            icon={MapPin}
             title={selectedStateId ? `Parroquias en ${states.find(s => s.id == selectedStateId)?.name}` : "Parroquias / Localidades"}
             description="Nivel de detalle máximo por cada municipio."
             entityName="Parroquia"

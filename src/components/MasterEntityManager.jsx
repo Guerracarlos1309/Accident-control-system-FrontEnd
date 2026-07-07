@@ -41,6 +41,7 @@ export default function MasterEntityManager({
   allowReactivate = false,
   onSuccess,
   initialLimit = 5, // Default limit for display
+  icon: Icon = null,
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -260,8 +261,9 @@ export default function MasterEntityManager({
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-txt-main tracking-tight">
-            {title}
+          <h2 className="text-2xl font-bold text-txt-main tracking-tight flex items-center gap-3">
+            {Icon && <Icon size={24} className="text-corpoelec-blue shrink-0" />}
+            <span>{title}</span>
           </h2>
           <p className="text-txt-sub mt-1 text-sm">
             {description ||

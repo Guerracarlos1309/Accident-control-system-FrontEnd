@@ -13,6 +13,7 @@ import {
   X,
   SlidersHorizontal,
   Shield,
+  Car,
 } from "lucide-react";
 import Modal from "../../../../components/Modal";
 import VehicleForm from "./VehicleForm";
@@ -177,8 +178,9 @@ export default function VehicleManager() {
     <div className="space-y-6 animate-in fade-in duration-500 text-txt-main">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-black tracking-tighter text-txt-main">
-            Inspección de Vehículos
+          <h2 className="text-2xl font-black tracking-tighter text-txt-main flex items-center gap-3">
+            <Car size={24} className="text-corpoelec-blue shrink-0" />
+            <span>Inspección de Vehículos</span>
           </h2>
           <p className="text-txt-muted mt-1 text-sm md:text-base">
             Control y registro de auditorías preventivas del parque automotor.

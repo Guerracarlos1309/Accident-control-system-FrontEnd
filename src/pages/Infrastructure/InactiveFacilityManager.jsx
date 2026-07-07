@@ -1,3 +1,4 @@
+import { Archive } from "lucide-react";
 import MasterEntityManager from "../../components/MasterEntityManager";
 import FacilityForm from "./FacilityForm";
 import FacilityView from "./FacilityView";
@@ -6,6 +7,7 @@ export default function InactiveFacilityManager() {
   return (
     <div className="space-y-8">
       <MasterEntityManager 
+        icon={Archive}
         title="Sedes Inactivas / Histórico" 
         description="Listado de instalaciones fuera de servicio o desactivadas. Puede reactivarlas o eliminarlas definitivamente."
         entityName="Sede" 

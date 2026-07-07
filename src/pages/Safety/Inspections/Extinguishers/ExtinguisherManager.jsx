@@ -11,6 +11,7 @@ import {
   Search,
   X,
   SlidersHorizontal,
+  Flame,
 } from "lucide-react";
 import Modal from "../../../../components/Modal";
 import ExtinguisherForm from "./ExtinguisherForm";
@@ -181,8 +182,9 @@ export default function ExtinguisherManager() {
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-black text-txt-main tracking-tighter">
-            Inspección de Extintores
+          <h2 className="text-2xl font-black text-txt-main tracking-tighter flex items-center gap-3">
+            <Flame size={24} className="text-corpoelec-blue shrink-0" />
+            <span>Inspección de Extintores</span>
           </h2>
           <p className="text-txt-muted mt-1 text-sm md:text-base">
             Mantenimiento y estado preventivo de la red de equipos de extinción

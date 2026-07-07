@@ -248,8 +248,9 @@ export default function AccidentsManager() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-black text-txt-main tracking-tighter">
-            Control de Accidentes
+          <h2 className="text-2xl font-black text-txt-main tracking-tighter flex items-center gap-3">
+            <AlertCircle size={24} className="text-corpoelec-blue shrink-0" />
+            <span>Control de Accidentes</span>
           </h2>
           <div className="flex flex-wrap items-center gap-4 mt-2">
             {uniqueYears.length === 0 ? (
