@@ -101,8 +101,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Called after user successfully changes their forced password
+  const clearMustChangePassword = () => {
+    setUser((prev) => prev ? { ...prev, mustChangePassword: false } : prev);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, updateUser, isAuthenticated: !!user, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser, clearMustChangePassword, isAuthenticated: !!user, loading }}>
       {children}
     </AuthContext.Provider>
   );

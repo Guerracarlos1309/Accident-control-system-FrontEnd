@@ -12,13 +12,14 @@ import {
 import logoCorpoelec from "../assets/logoCorpoelecSinFondo.png";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
+import ForcePasswordChangeModal from "../components/ForcePasswordChangeModal";
 
 import { useState, useEffect } from "react";
 import { NAVIGATION_CONFIG } from "../config/navigation";
 
 export default function MainLayout() {
   const { theme, toggleTheme } = useTheme();
-  const { user } = useAuth();
+  const { user, clearMustChangePassword } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [openMenus, setOpenMenus] = useState({});
@@ -109,6 +110,10 @@ export default function MainLayout() {
 
   return (
     <div className="h-screen w-screen flex bg-bg-main text-txt-main selection:bg-corpoelec-blue/30 overflow-hidden">
+      {/* Force Password Change Modal — blocks app until resolved */}
+      {user?.mustChangePassword && (
+        <ForcePasswordChangeModal onSuccess={clearMustChangePassword} />
+      )}
       {/* Mobile Overlay */}
       {isMobile && sidebarOpen && (
         <div

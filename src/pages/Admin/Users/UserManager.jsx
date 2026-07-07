@@ -6,6 +6,10 @@ import {
   Trash2,
   Loader2,
   AlertTriangle,
+  KeyRound,
+  Eye,
+  EyeOff,
+  ShieldCheck,
 } from "lucide-react";
 import Modal from "../../../components/Modal";
 import UserForm from "./UserForm";
@@ -19,6 +23,12 @@ export default function UserManager() {
   const [editingUser, setEditingUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, user: null });
+
+  // Reset password modal state
+  const [resetModal, setResetModal] = useState({ isOpen: false, user: null });
+  const [resetPassword, setResetPassword] = useState("");
+  const [showResetPwd, setShowResetPwd] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
   const api = helpFetch();
   const { showNotification } = useNotification();
@@ -70,6 +80,39 @@ export default function UserManager() {
   const handleOpenCreate = () => {
     setEditingUser(null);
     setIsModalOpen(true);
+  };
+
+  const handleOpenReset = (user) => {
+    setResetPassword("");
+    setShowResetPwd(false);
+    setResetModal({ isOpen: true, user });
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetPassword.trim() || resetPassword.trim().length < 4) {
+      showNotification("La contraseña debe tener al menos 4 caracteres", "error");
+      return;
+    }
+    setResetLoading(true);
+    try {
+      const res = await api.put(`users/${resetModal.user.id}/reset-password`, {
+        body: { newPassword: resetPassword },
+      });
+      if (res && !res.err) {
+        showNotification(
+          `Contraseña restablecida para "${resetModal.user.username}". Deberá cambiarla al iniciar sesión.`,
+          "success"
+        );
+        setResetModal({ isOpen: false, user: null });
+        setResetPassword("");
+      } else {
+        showNotification(res.message || "Error al restablecer contraseña", "error");
+      }
+    } catch {
+      showNotification("Error de conexión", "error");
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   const filteredUsers = users.filter(
@@ -139,10 +182,15 @@ export default function UserManager() {
                           <div className="w-11 h-11 rounded-2xl bg-bg-surface border border-border-main flex items-center justify-center text-corpoelec-blue font-black text-xs shadow-sm shadow-black/5 uppercase">
                             {user.username.substring(0, 2)}
                           </div>
-                          <div className="flex flex-col">
+                          <div className="flex flex-col gap-1">
                             <span className="text-sm font-bold text-txt-main tracking-tight">
                               {user.username}
                             </span>
+                            {user.mustChangePassword && (
+                              <span className="inline-flex items-center gap-1 text-[8px] font-black uppercase tracking-wider text-amber-600 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
+                                <ShieldCheck size={9} /> Cambio de clave pendiente
+                              </span>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -162,6 +210,14 @@ export default function UserManager() {
                       </td>
                       <td className="px-8 py-5 text-right">
                         <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {/* Reset Password Button */}
+                          <button
+                            onClick={() => handleOpenReset(user)}
+                            className="p-2.5 text-txt-muted hover:text-amber-500 hover:bg-amber-500/10 rounded-xl transition-all"
+                            title="Restablecer Contraseña"
+                          >
+                            <KeyRound size={16} />
+                          </button>
                           <button
                             onClick={() => handleEdit(user)}
                             className="p-2.5 text-txt-muted hover:text-corpoelec-blue hover:bg-corpoelec-blue/10 rounded-xl transition-all"
@@ -217,6 +273,77 @@ export default function UserManager() {
             fetchUsers();
           }}
         />
+      </Modal>
+
+      {/* Modal Restablecer Contraseña */}
+      <Modal
+        isOpen={resetModal.isOpen}
+        onClose={() => setResetModal({ isOpen: false, user: null })}
+        title="Restablecer Contraseña"
+        maxWidth="max-w-md"
+      >
+        <div className="space-y-6 py-2">
+          {/* Info banner */}
+          <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4">
+            <KeyRound size={20} className="text-amber-500 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-bold text-txt-main">
+                Restablecer contraseña de{" "}
+                <span className="text-amber-500">{resetModal.user?.username}</span>
+              </p>
+              <p className="text-xs text-txt-muted mt-1 leading-relaxed">
+                Define una contraseña temporal. Al iniciar sesión, el usuario
+                será obligado a cambiarla antes de poder acceder al sistema.
+              </p>
+            </div>
+          </div>
+
+          {/* Password input */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-txt-muted uppercase tracking-widest">
+              Contraseña Temporal
+            </label>
+            <div className="relative">
+              <input
+                type={showResetPwd ? "text" : "password"}
+                value={resetPassword}
+                onChange={(e) => setResetPassword(e.target.value)}
+                placeholder="Mínimo 4 caracteres"
+                className="input-field pr-10 h-12 w-full"
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={() => setShowResetPwd(!showResetPwd)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-txt-muted hover:text-txt-main transition-colors p-1"
+              >
+                {showResetPwd ? <EyeOff size={15} /> : <Eye size={15} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={() => setResetModal({ isOpen: false, user: null })}
+              className="flex-1 px-4 py-3 text-xs font-black uppercase tracking-widest text-txt-muted hover:text-txt-main bg-bg-main/5 rounded-2xl transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleResetPassword}
+              disabled={resetLoading}
+              className="flex-1 bg-amber-500 hover:bg-amber-600 text-white text-xs font-black uppercase tracking-widest py-3 rounded-2xl transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
+            >
+              {resetLoading ? (
+                <Loader2 size={15} className="animate-spin" />
+              ) : (
+                <KeyRound size={15} />
+              )}
+              {resetLoading ? "Aplicando..." : "Restablecer"}
+            </button>
+          </div>
+        </div>
       </Modal>
 
       {/* Modal Confirmación Borrado */}
