@@ -193,6 +193,17 @@ export default function VehicleInspectionDetails({ inspectionId }) {
                </div>
                <div className="flex items-center gap-3 bg-bg-surface p-3 rounded-2xl border border-border-main shadow-sm">
                   <div className="w-8 h-8 rounded-full bg-bg-main/20 flex items-center justify-center border border-border-main">
+                    <Building2 size={14} className="text-txt-sub" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[9px] text-txt-muted uppercase font-bold">Gerencia / Cuadrilla</span>
+                    <span className="text-xs font-bold text-txt-sub">
+                      {vehicle.management?.name || <span className="italic text-txt-muted">No asignada</span>}
+                    </span>
+                  </div>
+               </div>
+               <div className="flex items-center gap-3 bg-bg-surface p-3 rounded-2xl border border-border-main shadow-sm">
+                  <div className="w-8 h-8 rounded-full bg-bg-main/20 flex items-center justify-center border border-border-main">
                     <MapPin size={14} className="text-txt-sub" />
                   </div>
                   <div className="flex flex-col">
